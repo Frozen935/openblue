@@ -1,0 +1,97 @@
+# Stack root Kconfig (ByteBlue-decoupled)
+# Provides a clean entry point for menuconfig, and stubs for a few external symbols.
+
+mainmenu "ByteBlue Bluetooth Configuration"
+
+config BIG_ENDIAN
+	bool "Big-endian"
+	default n
+	help
+	  This option tells the build system that the target system is big-endian.
+	  Little-endian architecture is the default and should leave this option
+	  unselected.
+
+config LITTLE_ENDIAN
+	bool "Little-endian"
+	depends on !BIG_ENDIAN
+	default y
+	help
+	  This option tells the build system that the target system is little-endian.
+
+config BYTEBLUE_CRYPTO_USE_MBEDTLS
+	bool "Use mbed TLS for crypto"
+	default y
+	help
+	  This option enables using mbed TLS for crypto operations.
+
+config BYTEBLUE_BT_DRIVER
+	bool "Enable Bluetooth driver"
+	default y
+	help
+	  This option enables building the Bluetooth driver.
+
+if BYTEBLUE_BT_DRIVER
+choice BYTEBLUE_BT_DRIVER_TYPE
+	prompt "Bluetooth driver type"
+	default BYTEBLUE_BT_DRIVER_TYPE_NATIVE
+	help
+	  Select the Bluetooth driver type to use.
+
+config BYTEBLUE_BT_DRIVER_TYPE_H4
+	bool "H4 driver"
+	help
+	  Use the H4 Bluetooth driver.
+
+config BYTEBLUE_BT_DRIVER_TYPE_NATIVE
+	bool "Native driver"
+	help
+	  Use the native Bluetooth driver.
+
+config BYTEBLUE_BT_DRIVER_TYPE_LIBUSB
+	bool "LIBUSB driver"
+	help
+	  Use the LIBUSB Bluetooth driver.
+
+config BYTEBLUE_BT_DRIVER_TYPE_USERCHAN
+	bool "socket User channel driver"
+	help
+	  Use the user channel Bluetooth driver.
+endchoice
+endif
+
+config BYTEBLUE_SAMPLES
+	bool "Enable samples"
+	default n
+	help
+	  This option enables building samples.
+
+config BYTEBLUE_TESTS
+	bool "Enable tests"
+	default n
+	help
+	  This option enables building tests.
+
+choice BYTEBLUE_PLATFORM
+	prompt "Target Platform"
+	default BYTEBLUE_PLATFORM_LINUX
+	help
+	    Select the target platform.
+	
+	config BYTEBLUE_PLATFORM_LINUX
+	    bool "Linux platform"
+	    help
+	        Run on Linux platform.
+	
+	config BYTEBLUE_PLATFORM_NUTTX
+	    bool "NuttX platform"
+	    help
+	        Run on NuttX platform.
+
+	config BYTEBLUE_PLATFORM_WINDOWS
+	    bool "Windows platform"
+	    help
+	        Run on Windows platform.
+endchoice
+
+# Source Bluetooth Kconfig tree (relative paths work with Kconfiglib)
+source "bluetooth/Kconfig"

@@ -3,6 +3,8 @@
 
 mainmenu "OpenBlue Bluetooth Configuration"
 
+rsource "Kconfig.constants"
+
 config BIG_ENDIAN
 	bool "Big-endian"
 	default n
@@ -100,4 +102,4 @@ choice OPENBLUE_PLATFORM
 endchoice
 
 # Source Bluetooth Kconfig tree (relative paths work with Kconfiglib)
-source "bluetooth/Kconfig"
+rsource "bluetooth/Kconfig"

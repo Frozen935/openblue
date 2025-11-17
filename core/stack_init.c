@@ -21,7 +21,7 @@ extern int bt_work_main_work_init(void);
 int bt_stack_init_once(void)
 {
 	bt_work_main_work_init();
-	bt_driver_userchan_init();
+	//bt_driver_userchan_init();
 
 	return 0;
 }

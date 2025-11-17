@@ -42,7 +42,6 @@ CSRCS += \
 
 # Include Directories
 CFLAGS += -I$(OPENBLUE_ROOT)/include
-CFLAGS += -I$(OPENBLUE_ROOT)/include/generated
 CFLAGS += -I$(OPENBLUE_ROOT)/bluetooth
 CFLAGS += -I$(OPENBLUE_ROOT)/bluetooth/host
 CFLAGS += -I$(OPENBLUE_ROOT)/bluetooth/host/classic

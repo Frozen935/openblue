@@ -13,6 +13,19 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <assert.h>
+
+/* Fallback: if assert macro is not available for any reason, make it a no-op */
+#ifndef assert
+#define assert(x) ((void)0)
+#endif
+
+/* Kconfig autoconf header generated at configure time */
+#if defined(__has_include)
+#  if __has_include(<autoconf.h>)
+#    include <autoconf.h>
+#  endif
+#endif
 
 #include "bt_toolchain_macro.h"
 #include "bt_storage.h"

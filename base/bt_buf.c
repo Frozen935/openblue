@@ -3,8 +3,8 @@
 #include <errno.h>
 #include <stddef.h>
 #include <string.h>
-#include <assert.h>
 
+#include <base/bt_assert.h>
 #include <base/byteorder.h>
 #include <base/bt_buf.h>
 
@@ -44,8 +44,8 @@ static inline struct bt_buf *pool_get_uninit(struct bt_buf_pool *pool, uint16_t 
 
 void bt_buf_reset(struct bt_buf *buf)
 {
-	assert(buf->flags == 0U);
-	assert(buf->frags == NULL);
+	__ASSERT_NO_MSG(buf->flags == 0U);
+	__ASSERT_NO_MSG(buf->frags == NULL);
 
 	bt_buf_simple_reset(&buf->b);
 }
@@ -204,7 +204,7 @@ struct bt_buf *bt_buf_alloc_len(struct bt_buf_pool *pool, size_t size, int32_t t
 {
 	struct bt_buf *buf;
 
-	assert(pool);
+	__ASSERT_NO_MSG(pool);
 
 	BT_BUF_DBG("%s():%d: pool %p size %zu", func, line, pool, size);
 
@@ -260,7 +260,7 @@ success:
 			return NULL;
 		}
 
-		assert(req_size <= size);
+		__ASSERT_NO_MSG(req_size <= size);
 	} else {
 		buf->__buf = NULL;
 	}
@@ -308,8 +308,8 @@ static os_mutex_t bt_buf_slist_lock = OS_MUTEX_INITIALIZER;
 
 void bt_buf_slist_put(bt_slist_t *list, struct bt_buf *buf)
 {
-	assert(list);
-	assert(buf);
+	__ASSERT_NO_MSG(list);
+	__ASSERT_NO_MSG(buf);
 
 	os_mutex_lock(&bt_buf_slist_lock, OS_TIMEOUT_FOREVER);
 	bt_slist_append(list, &buf->node);
@@ -320,7 +320,7 @@ struct bt_buf *bt_buf_slist_get(bt_slist_t *list)
 {
 	struct bt_buf *buf;
 
-	assert(list);
+	__ASSERT_NO_MSG(list);
 
 	os_mutex_lock(&bt_buf_slist_lock, OS_TIMEOUT_FOREVER);
 
@@ -337,13 +337,13 @@ void bt_buf_unref_debug(struct bt_buf *buf, const char *func, int line)
 void bt_buf_unref(struct bt_buf *buf)
 #endif
 {
-	assert(buf);
+	__ASSERT_NO_MSG(buf);
 
 	while (buf) {
 		struct bt_buf *frags = buf->frags;
 		struct bt_buf_pool *pool;
 
-		assert(buf->ref);
+		__ASSERT_NO_MSG(buf->ref);
 		if (!buf->ref) {
 			BT_BUF_ERR("%s():%d: buf %p double free", func, line, buf);
 			return;
@@ -373,7 +373,7 @@ void bt_buf_unref(struct bt_buf *buf)
 
 struct bt_buf *bt_buf_ref(struct bt_buf *buf)
 {
-	assert(buf);
+	__ASSERT_NO_MSG(buf);
 
 	BT_BUF_DBG("buf %p (old) ref %u pool %p", buf, buf->ref, buf->pool);
 	buf->ref++;
@@ -385,7 +385,7 @@ struct bt_buf *bt_buf_clone(struct bt_buf *buf, int32_t timeout)
 	struct bt_buf_pool *pool;
 	struct bt_buf *clone;
 
-	assert(buf);
+	__ASSERT_NO_MSG(buf);
 
 	pool = buf->pool;
 
@@ -419,7 +419,7 @@ struct bt_buf *bt_buf_clone(struct bt_buf *buf, int32_t timeout)
 	}
 
 	/* user_data_size should be the same for buffers from the same pool */
-	assert(buf->user_data_size == clone->user_data_size);
+	__ASSERT_NO_MSG(buf->user_data_size == clone->user_data_size);
 
 	memcpy(clone->user_data, buf->user_data, clone->user_data_size);
 
@@ -428,8 +428,8 @@ struct bt_buf *bt_buf_clone(struct bt_buf *buf, int32_t timeout)
 
 int bt_buf_user_data_copy(struct bt_buf *dst, const struct bt_buf *src)
 {
-	assert(dst);
-	assert(src);
+	__ASSERT_NO_MSG(dst);
+	__ASSERT_NO_MSG(src);
 
 	if (dst == src) {
 		return 0;
@@ -446,7 +446,7 @@ int bt_buf_user_data_copy(struct bt_buf *dst, const struct bt_buf *src)
 
 struct bt_buf *bt_buf_frag_last(struct bt_buf *buf)
 {
-	assert(buf);
+	__ASSERT_NO_MSG(buf);
 
 	while (buf->frags) {
 		buf = buf->frags;
@@ -457,8 +457,8 @@ struct bt_buf *bt_buf_frag_last(struct bt_buf *buf)
 
 void bt_buf_frag_insert(struct bt_buf *parent, struct bt_buf *frag)
 {
-	assert(parent);
-	assert(frag);
+	__ASSERT_NO_MSG(parent);
+	__ASSERT_NO_MSG(frag);
 
 	if (parent->frags) {
 		bt_buf_frag_last(frag)->frags = parent->frags;
@@ -469,7 +469,7 @@ void bt_buf_frag_insert(struct bt_buf *parent, struct bt_buf *frag)
 
 struct bt_buf *bt_buf_frag_add(struct bt_buf *head, struct bt_buf *frag)
 {
-	assert(frag);
+	__ASSERT_NO_MSG(frag);
 
 	if (!head) {
 		return bt_buf_ref(frag);
@@ -484,11 +484,11 @@ struct bt_buf *bt_buf_frag_del(struct bt_buf *parent, struct bt_buf *frag)
 {
 	struct bt_buf *next_frag;
 
-	assert(frag);
+	__ASSERT_NO_MSG(frag);
 
 	if (parent) {
-		assert(parent->frags);
-		assert(parent->frags == frag);
+		__ASSERT_NO_MSG(parent->frags);
+		__ASSERT_NO_MSG(parent->frags == frag);
 		parent->frags = frag->frags;
 	}
 

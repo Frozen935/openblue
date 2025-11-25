@@ -14,6 +14,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+/* Kconfig autoconf header generated at configure time */
+#if defined(__has_include)
+#if __has_include(<autoconf.h>)
+#include <autoconf.h>
+#endif
+#endif
+
 #include "bt_toolchain_macro.h"
 #include "bt_storage.h"
 
@@ -27,11 +34,11 @@
 #include <utils/bt_slist.h>
 #include <utils/bt_dlist.h>
 
-#include <base/bt_debug.h>
 #include <base/log.h>
+#include <base/bt_assert.h>
+#include <base/bt_debug.h>
 #include <base/byteorder.h>
 #include <base/utils.h>
-#include <base/assert.h>
 #include <base/queue/bt_queue.h>
 #include <base/queue/bt_fifo.h>
 #include <base/bt_mem_pool.h>

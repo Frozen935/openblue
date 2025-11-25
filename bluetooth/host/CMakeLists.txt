@@ -1,19 +1,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
-stack_library()
-stack_library_link_libraries(subsys__bluetooth)
+openblue_library()
+openblue_library_link_libraries(openblue__bluetooth)
 
-stack_add_subdirectory_ifdef(CONFIG_BT_CLASSIC classic)
-stack_add_subdirectory_ifdef(CONFIG_BT_SHELL shell)
+openblue_add_subdirectory_ifdef(CONFIG_BT_CLASSIC classic)
+openblue_add_subdirectory_ifdef(CONFIG_BT_SHELL shell)
 
-stack_library_sources_ifdef(CONFIG_BT_HCI_RAW          hci_raw.c hci_common.c)
-stack_library_sources_ifdef(CONFIG_BT_MONITOR          monitor.c)
-stack_library_sources_ifdef(CONFIG_BT_SETTINGS         settings.c)
-stack_library_sources_ifdef(CONFIG_BT_HOST_CCM         aes_ccm.c)
-stack_library_sources_ifdef(CONFIG_BT_LONG_WQ          long_wq.c)
+openblue_library_sources_ifdef(CONFIG_BT_HCI_RAW          hci_raw.c hci_common.c)
+openblue_library_sources_ifdef(CONFIG_BT_MONITOR          monitor.c)
+openblue_library_sources_ifdef(CONFIG_BT_SETTINGS         settings.c)
+openblue_library_sources_ifdef(CONFIG_BT_HOST_CCM         aes_ccm.c)
+openblue_library_sources_ifdef(CONFIG_BT_LONG_WQ          long_wq.c)
 
 if(CONFIG_BT_HCI_HOST)
-  stack_library_sources(
+  openblue_library_sources(
     uuid.c
     addr.c
     buf.c
@@ -22,27 +22,27 @@ if(CONFIG_BT_HCI_HOST)
     hci_common.c
     id.c
     )
-  stack_library_sources_ifdef(
+  openblue_library_sources_ifdef(
     CONFIG_BT_BROADCASTER
     adv.c
     )
-  stack_library_sources_ifdef(
+  openblue_library_sources_ifdef(
     CONFIG_BT_OBSERVER
     scan.c
     )
 
-  stack_library_sources_ifdef(
+  openblue_library_sources_ifdef(
     CONFIG_BT_HOST_CRYPTO
     crypto_psa.c
     )
 
-  stack_library_sources_ifdef(
+  openblue_library_sources_ifdef(
     CONFIG_BT_ECC
     ecc.c
     )
 
   if(CONFIG_BT_CONN)
-    stack_library_sources(
+    openblue_library_sources(
       conn.c
       l2cap.c
       att.c
@@ -50,30 +50,30 @@ if(CONFIG_BT_HCI_HOST)
       )
 
     if(CONFIG_BT_SMP)
-      stack_library_sources(
+      openblue_library_sources(
         smp.c
         keys.c
         )
     else()
-      stack_library_sources(
+      openblue_library_sources(
         smp_null.c
         )
     endif()
   endif()
 
-  stack_library_sources_ifdef(
+  openblue_library_sources_ifdef(
     CONFIG_BT_ISO
     iso.c
     conn.c
     )
 
-  stack_library_sources_ifdef(
+  openblue_library_sources_ifdef(
     CONFIG_BT_CHANNEL_SOUNDING
     cs.c
     )
 
   if(CONFIG_BT_DF)
-    stack_library_sources(
+    openblue_library_sources(
       direction.c
       )
   endif()
@@ -114,8 +114,8 @@ if(CONFIG_BT_CONN_DISABLE_SECURITY)
     )
 endif()
 
-stack_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
-stack_library_include_directories_ifdef(CONFIG_BUILD_WITH_TFM
+openblue_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
+openblue_library_include_directories_ifdef(CONFIG_BUILD_WITH_TFM
   $<TARGET_PROPERTY:tfm,TFM_BINARY_DIR>/api_ns/interface/include
 )
 
@@ -123,5 +123,5 @@ stack_library_include_directories_ifdef(CONFIG_BUILD_WITH_TFM
 # In order to compile Bsim tests with these test features
 # and PSA enabled, the libraries must be linked.
 if(CONFIG_BT_MESH AND CONFIG_BT_TESTING)
-  stack_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
+  openblue_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
 endif()

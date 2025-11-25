@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "shim/include/preinclude.h"
 #include <bluetooth/bluetooth.h>
 
 

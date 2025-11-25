@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <string.h>
-#include <assert.h>
 #include <setjmp.h>
 
 #if defined(__has_include)

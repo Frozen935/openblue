@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
-stack_library()
+openblue_library()
 
-stack_library_sources(bt_crypto.c)
+openblue_library_sources(bt_crypto.c)
 
-stack_library_sources(bt_crypto_psa.c)
-stack_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
-stack_library_include_directories_ifdef(CONFIG_BUILD_WITH_TFM
+openblue_library_sources(bt_crypto_psa.c)
+openblue_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
+openblue_library_include_directories_ifdef(CONFIG_BUILD_WITH_TFM
     $<TARGET_PROPERTY:tfm,TFM_BINARY_DIR>/api_ns/interface/include
 )
 

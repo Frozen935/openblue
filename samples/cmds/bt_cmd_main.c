@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "shim/include/preinclude.h"
 #include "bt_stack_init.h"
 #include "common/bt_shell_private.h"
 

@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
-#include <assert.h>
 
 #include <base/byteorder.h>
 #include <base/bt_buf.h>
+#include <base/bt_assert.h>
 
 void bt_buf_simple_init_with_data(struct bt_buf_simple *buf, void *data, size_t size)
 {
@@ -16,8 +16,8 @@ void bt_buf_simple_init_with_data(struct bt_buf_simple *buf, void *data, size_t 
 
 void bt_buf_simple_reserve(struct bt_buf_simple *buf, size_t reserve)
 {
-	assert(buf);
-	assert(buf->len == 0U);
+	__ASSERT_NO_MSG(buf);
+	__ASSERT_NO_MSG(buf->len == 0U);
 
 	buf->data = buf->__buf + reserve;
 }
@@ -31,7 +31,7 @@ void *bt_buf_simple_add(struct bt_buf_simple *buf, size_t len)
 {
 	uint8_t *tail = bt_buf_simple_tail(buf);
 
-	assert(bt_buf_simple_tailroom(buf) >= len);
+	__ASSERT_NO_MSG(bt_buf_simple_tailroom(buf) >= len);
 
 	buf->len += len;
 	return tail;
@@ -114,7 +114,7 @@ void bt_buf_simple_add_be64(struct bt_buf_simple *buf, uint64_t val)
 
 void *bt_buf_simple_remove_mem(struct bt_buf_simple *buf, size_t len)
 {
-	assert(buf->len >= len);
+	__ASSERT_NO_MSG(buf->len >= len);
 
 	buf->len -= len;
 	return buf->data + buf->len;
@@ -229,7 +229,7 @@ uint64_t bt_buf_simple_remove_be64(struct bt_buf_simple *buf)
 
 void *bt_buf_simple_push(struct bt_buf_simple *buf, size_t len)
 {
-	assert(bt_buf_simple_headroom(buf) >= len);
+	__ASSERT_NO_MSG(bt_buf_simple_headroom(buf) >= len);
 
 	buf->data -= len;
 	buf->len += len;
@@ -310,7 +310,7 @@ void bt_buf_simple_push_be64(struct bt_buf_simple *buf, uint64_t val)
 
 void *bt_buf_simple_pull(struct bt_buf_simple *buf, size_t len)
 {
-	assert(buf->len >= len);
+	__ASSERT_NO_MSG(buf->len >= len);
 
 	buf->len -= len;
 	return buf->data += len;
@@ -320,7 +320,7 @@ void *bt_buf_simple_pull_mem(struct bt_buf_simple *buf, size_t len)
 {
 	void *data = buf->data;
 
-	assert(buf->len >= len);
+	__ASSERT_NO_MSG(buf->len >= len);
 
 	buf->len -= len;
 	buf->data += len;

@@ -5,7 +5,7 @@
  */
 
 #include <bluetooth/mesh.h>
-#include <assert.h>
+#include <common/assert.h>
 #include "blob.h"
 #include "net.h"
 #include "transport.h"

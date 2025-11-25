@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <base/bt_assert.h>
 #include <utils/bt_utils.h>
 
 #ifndef CHECKIF
@@ -17,7 +18,7 @@
 #ifndef CODE_UNREACHABLE
 #define CODE_UNREACHABLE                                                                           \
 	do {                                                                                       \
-		assert(0);                                                                         \
+		__ASSERT_NO_MSG(0);                                                                         \
 	} while (0)
 #endif
 

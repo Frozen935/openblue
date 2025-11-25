@@ -14,7 +14,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
-#include <assert.h>
+
+#include <base/bt_assert.h>
+#include <base/log.h>
 
 #define BSWAP_16(x) ((uint16_t)((((x) >> 8) & 0xff) | (((x) & 0xff) << 8)))
 #define BSWAP_24(x) ((uint32_t)((((x) >> 16) & 0xff) | (((x)) & 0xff00) | (((x) & 0xff) << 16)))
@@ -498,8 +500,8 @@ static inline void sys_memcpy_swap(void *dst, const void *src, size_t length)
 	uint8_t *pdst = (uint8_t *)dst;
 	const uint8_t *psrc = (const uint8_t *)src;
 
-	assert((psrc < pdst && (psrc + length) <= pdst) ||
-	       (psrc > pdst && (pdst + length) <= psrc));
+	__ASSERT_NO_MSG((psrc < pdst && (psrc + length) <= pdst) ||
+			(psrc > pdst && (pdst + length) <= psrc));
 
 	psrc += length - 1;
 

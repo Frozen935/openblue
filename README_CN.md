@@ -63,7 +63,7 @@ cmake --build build --target genconfig
 **分步:**
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
+cmake --build build -j4
 ```
 
 **单行:**
@@ -106,7 +106,7 @@ make menuconfig
 
 ### 构建项目
 ```bash
-make clean; make all
+make clean; make all -j4
 ```
 
 这将生成:

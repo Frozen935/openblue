@@ -63,7 +63,7 @@ You can use either the step-by-step commands or the one-liner.
 **Step-by-step:**
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
+cmake --build build -j4
 ```
 
 **One-liner:**
@@ -106,7 +106,7 @@ make menuconfig
 
 ### Build the Project
 ```bash
-make clean; make all
+make clean; make all -j4
 ```
 
 This will generate:

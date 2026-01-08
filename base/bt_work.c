@@ -43,7 +43,7 @@ static inline uint32_t flags_get(const uint32_t *flagp)
 /* Lock to protect the internal state of all work items, work queues,
  * and pending_cancels.
  */
-static os_mutex_t lock;
+static os_mutex_t lock = OS_MUTEX_INITIALIZER;
 
 /* Invoked by work thread */
 static void handle_flush(struct bt_work *work)
@@ -59,7 +59,7 @@ static inline void init_flusher(struct bt_work_flusher *flusher)
 }
 
 /* List of pending cancellations. */
-static bt_slist_t pending_cancels;
+static bt_slist_t pending_cancels = BT_SLIST_STATIC_INIT(pending_cancels);
 
 static inline void init_work_cancel(struct bt_work_canceller *canceler, struct bt_work *work)
 {

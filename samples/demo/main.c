@@ -8,22 +8,24 @@
 static void ready_cb(int err)
 {
     if (err) {
-        LOG_DBG("Bluetooth enable failed: %d", err);
+        LOG_INF("Bluetooth enable failed: %d", err);
         return;
     }
-    
-    LOG_DBG("Bluetooth ready");
+
+    LOG_INF("Bluetooth ready");
 }
 
 int main(void)
 {
-	LOG_DBG("Hello World!");
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
+	LOG_INF("Hello World!");
 
     bt_stack_init_once();
 
     bt_enable(ready_cb);
 
-    LOG_DBG("Bluetooth enabled");
+    LOG_INF("Bluetooth enabled");
 
     while (1) {
         os_sleep_ms(1000);

@@ -43,10 +43,10 @@ enum hci_connection_type {
 	HCI_TCP,
 	HCI_UNIX,
 };
-static enum hci_connection_type conn_type = HCI_USERCHAN;
+static enum hci_connection_type conn_type = HCI_UNIX;
 static char ip_addr[TCP_ADDR_BUFF_SIZE];
 static unsigned int port;
-static char socket_path[UNIX_ADDR_BUFF_SIZE];
+static char socket_path[UNIX_ADDR_BUFF_SIZE] = "/tmp/hci_bridge.sock";
 
 static bool is_hci_event_discardable(const struct bt_hci_evt_hdr *evt)
 {

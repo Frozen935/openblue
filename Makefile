@@ -23,6 +23,9 @@ CFLAGS += -MMD -MP
 # Add flags for GNU source compatibility
 CFLAGS += -D_GNU_SOURCE
 
+# Enable debug logs by default for local builds
+CFLAGS += -DCONFIG_STACK_LOG_LEVEL=LOG_LEVEL_DBG
+
 # Generated config header, must be after .config include
 AUTOCONF_H = include/generated/autoconf.h
 

@@ -182,7 +182,6 @@ typedef struct os_thread_start_info {
 	void *arg;
 	EventGroupHandle_t join_group;
 	EventBits_t join_bit;
-	int32_t delay_ms;
 } os_thread_start_info_t;
 
 static void os_thread_trampoline(void *pv)
@@ -192,10 +191,6 @@ static void os_thread_trampoline(void *pv)
 		vTaskDelete(NULL);
 		return;
 	}
-	if (info->delay_ms > 0) {
-		vTaskDelay(pdMS_TO_TICKS((uint32_t)info->delay_ms));
-	}
-
 	if (info->fn) {
 		info->fn(info->arg);
 	}
@@ -230,7 +225,6 @@ int os_thread_create(os_thread_t *thr, void (*start_routine)(void *), void *arg,
 	info->arg = arg;
 	info->join_group = g;
 	info->join_bit = (EventBits_t)0x01;
-	info->delay_ms = delay_ms;
 
 	/* Convert stack size in bytes to FreeRTOS stack depth (words) */
 	UBaseType_t stack_depth = (stack_size > 0) ? (UBaseType_t)(stack_size / sizeof(StackType_t))
@@ -347,6 +341,15 @@ uint64_t os_time_get_ms(void)
 	return (uint64_t)ticks * portTICK_PERIOD_MS;
 }
 
+static void os_timer_trampoline(TimerHandle_t handle)
+{
+	os_timer_t *timer = (os_timer_t *)pvTimerGetTimerID(handle);
+
+	if (timer && timer->cb) {
+		timer->cb(timer, timer->arg);
+	}
+}
+
 int os_timer_create(os_timer_t *timer, os_timer_cb_t cb, void *arg)
 {
 	if (!timer || !cb) {
@@ -356,7 +359,7 @@ int os_timer_create(os_timer_t *timer, os_timer_cb_t cb, void *arg)
 	timer->cb = cb;
 	timer->arg = arg;
 
-	timer->handle = xTimerCreate(NULL, pdMS_TO_TICKS(1), pdFALSE, timer, );
+	timer->handle = xTimerCreate("os_tmr", pdMS_TO_TICKS(1), pdFALSE, timer, os_timer_trampoline);
 	if (timer->handle == NULL) {
 		return -ENOMEM;
 	}
@@ -366,38 +369,40 @@ int os_timer_create(os_timer_t *timer, os_timer_cb_t cb, void *arg)
 
 int os_timer_start(os_timer_t *timer, uint32_t timeout_ms)
 {
-	if (!timer) {
+	if (!timer || timer->handle == NULL) {
 		return -EINVAL;
 	}
 
-	xTimerChangePeriod(timer->handle, pdMS_TO_TICKS(timeout_ms));
+	if (xTimerChangePeriod(timer->handle, pdMS_TO_TICKS(timeout_ms), portMAX_DELAY) != pdPASS) {
+		return -EAGAIN;
+	}
 
-	return xTimerStart(timer->handle, portMAX_DELAY);
+	return (xTimerStart(timer->handle, portMAX_DELAY) == pdPASS) ? 0 : -EAGAIN;
 }
 
 int os_timer_stop(os_timer_t *timer)
 {
-	if (!timer) {
+	if (!timer || timer->handle == NULL) {
 		return -EINVAL;
 	}
 
-	return xTimerStop(timer->handle, portMAX_DELAY);
+	return (xTimerStop(timer->handle, portMAX_DELAY) == pdPASS) ? 0 : -EAGAIN;
 }
 
 int os_timer_delete(os_timer_t *timer)
 {
-	if (!timer) {
+	if (!timer || timer->handle == NULL) {
 		return -EINVAL;
 	}
 
-	return xTimerDelete(timer->handle, portMAX_DELAY);
+	return (xTimerDelete(timer->handle, portMAX_DELAY) == pdPASS) ? 0 : -EAGAIN;
 }
 
 uint64_t os_timer_remaining_ms(const os_timer_t *timer)
 {
 	TickType_t remaining_ticks;
-	if (!timer) {
-		return -EINVAL;
+	if (!timer || timer->handle == NULL) {
+		return 0;
 	}
 
 	remaining_ticks = xTimerGetExpiryTime(timer->handle) - xTaskGetTickCount();

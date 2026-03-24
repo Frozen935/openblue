@@ -17,6 +17,7 @@
 #include "task.h"
 #include "semphr.h"
 #include "event_groups.h"
+#include "timers.h"
 
 #ifdef __cplusplus
 extern "C" {

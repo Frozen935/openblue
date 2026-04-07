@@ -22,7 +22,7 @@ void bt_addr_le_copy_resolved(bt_addr_le_t *dst, const bt_addr_le_t *src);
  * It must be the address field taken directly from an HCI LE event structure.
  * In those events, the address "type" uses the Identity Address values to
  * indicate that resolution has occurred; this function only checks that bit.
- * Do not use this with any @ref bt_addr_le_t obtained from host APIs.
+ * Do not use this with any @ref bt_addr_le_t obtained from Zephyr host APIs.
  *
  * The complete (at time of writing) list of events that contain at least one field like this:
  * - LE Advertising Report event (@ref bt_hci_evt_le_advertising_report)

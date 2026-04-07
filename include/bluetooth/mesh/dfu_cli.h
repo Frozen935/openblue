@@ -12,10 +12,8 @@
  * @brief API for the Bluetooth Mesh Firmware Update Client model
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_DFU_CLI_H___
-#define __INCLUDE_BLUETOOTH_MESH_DFU_CLI_H___
-
-#include "osdep/os.h"
+#ifndef __INCLUDE_BLUETOOTH_MESH_DFU_CLI_H__
+#define __INCLUDE_BLUETOOTH_MESH_DFU_CLI_H__
 
 #include <bluetooth/mesh/access.h>
 #include <bluetooth/mesh/blob_cli.h>

@@ -23,6 +23,8 @@
 #include <bluetooth/uuid.h>
 #include <sys/types.h>
 
+#include <osdep/os.h>
+
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 
@@ -38,10 +40,10 @@ static struct write_stats {
 
 static void update_write_stats(uint16_t len)
 {
-	static uint32_t stamp = 0;
-	uint32_t delta;
+	static uint64_t ms_stamp;
+	uint64_t delta;
 
-	delta = os_time_get_ms() - stamp;
+	delta = (os_time_get_ms() - ms_stamp) * 1000000ULL;
 
 	if (!delta) {
 		delta = 1;
@@ -53,14 +55,14 @@ static void update_write_stats(uint16_t len)
 	/* if last data rx-ed was greater than 1 second in the past,
 	 * reset the metrics.
 	 */
-	if (delta > MSEC_PER_SEC) {
+	if (delta > NSEC_PER_SEC) {
 		write_stats.len = 0U;
 		write_stats.rate = 0U;
-		stamp = os_time_get_ms();
+		ms_stamp = os_time_get_ms();
 	} else {
 		write_stats.len += len;
 		write_stats.rate = ((uint64_t)write_stats.len << 3) *
-			MSEC_PER_SEC / delta;
+			NSEC_PER_SEC / delta;
 	}
 }
 
@@ -132,8 +134,49 @@ static int cmd_exchange_mtu(const struct bt_shell *sh,
 	return err;
 }
 
-static struct bt_gatt_discover_params discover_params;
-static struct bt_uuid_16 uuid = BT_UUID_INIT_16(0);
+#define GATT_OP_POOL_SIZE (1U + UTIL_COND_CODE(IS_ENABLED(CONFIG_BT_EATT), (CONFIG_BT_EATT_MAX), (0U)))
+#define GATT_READ_MAX_HANDLES 8
+
+static struct gatt_op_context {
+	struct bt_gatt_discover_params discover;
+	struct bt_gatt_read_params read;
+	uint16_t read_handles[GATT_READ_MAX_HANDLES];
+	struct bt_gatt_write_params write;
+	uint8_t write_buf[BT_ATT_MAX_ATTRIBUTE_LEN];
+	struct bt_uuid_16 uuid;
+} gatt_ctx[GATT_OP_POOL_SIZE];
+
+static struct gatt_op_context *gatt_ctx_discover_alloc(void)
+{
+	for (size_t i = 0U; i < ARRAY_SIZE(gatt_ctx); i++) {
+		if (gatt_ctx[i].discover.func == NULL) {
+			gatt_ctx[i].uuid.uuid.type = BT_UUID_TYPE_16;
+			return &gatt_ctx[i];
+		}
+	}
+	return NULL;
+}
+
+static struct gatt_op_context *gatt_ctx_read_alloc(void)
+{
+	for (size_t i = 0U; i < ARRAY_SIZE(gatt_ctx); i++) {
+		if (gatt_ctx[i].read.func == NULL) {
+			gatt_ctx[i].uuid.uuid.type = BT_UUID_TYPE_16;
+			return &gatt_ctx[i];
+		}
+	}
+	return NULL;
+}
+
+static struct gatt_op_context *gatt_ctx_write_alloc(void)
+{
+	for (size_t i = 0U; i < ARRAY_SIZE(gatt_ctx); i++) {
+		if (gatt_ctx[i].write.func == NULL) {
+			return &gatt_ctx[i];
+		}
+	}
+	return NULL;
+}
 
 static void print_chrc_props(uint8_t properties)
 {
@@ -161,10 +204,6 @@ static void print_chrc_props(uint8_t properties)
 
 	if (properties & BT_GATT_CHRC_INDICATE) {
 		bt_shell_print("[indicate]");
-	}
-
-	if (properties & BT_GATT_CHRC_AUTH) {
-		bt_shell_print("[auth]");
 	}
 
 	if (properties & BT_GATT_CHRC_EXT_PROP) {
@@ -221,6 +260,7 @@ static uint8_t discover_func(struct bt_conn *conn,
 
 static int cmd_discover(const struct bt_shell *sh, size_t argc, char *argv[])
 {
+	struct gatt_op_context *ctx;
 	int err;
 
 	if (!default_conn) {
@@ -228,47 +268,49 @@ static int cmd_discover(const struct bt_shell *sh, size_t argc, char *argv[])
 		return -ENOEXEC;
 	}
 
-	if (discover_params.func) {
-		bt_shell_print("Discover ongoing");
+	ctx = gatt_ctx_discover_alloc();
+	if (ctx == NULL) {
+		bt_shell_error("No available operation slots");
 		return -ENOEXEC;
 	}
 
-	discover_params.func = discover_func;
-	discover_params.start_handle = BT_ATT_FIRST_ATTRIBUTE_HANDLE;
-	discover_params.end_handle = BT_ATT_LAST_ATTRIBUTE_HANDLE;
-	SET_CHAN_OPT_ANY(discover_params);
+	ctx->discover.func = discover_func;
+	ctx->discover.start_handle = BT_ATT_FIRST_ATTRIBUTE_HANDLE;
+	ctx->discover.end_handle = BT_ATT_LAST_ATTRIBUTE_HANDLE;
+	SET_CHAN_OPT_ANY(ctx->discover);
 
 	if (argc > 1) {
 		/* Only set the UUID if the value is valid (non zero) */
-		uuid.val = strtoul(argv[1], NULL, 16);
-		if (uuid.val) {
-			discover_params.uuid = &uuid.uuid;
+		ctx->uuid.val = strtoul(argv[1], NULL, 16);
+		if (ctx->uuid.val) {
+			ctx->discover.uuid = &ctx->uuid.uuid;
 		}
 	}
 
 	if (argc > 2) {
-		discover_params.start_handle = strtoul(argv[2], NULL, 16);
+		ctx->discover.start_handle = strtoul(argv[2], NULL, 16);
 		if (argc > 3) {
-			discover_params.end_handle = strtoul(argv[3], NULL, 16);
+			ctx->discover.end_handle = strtoul(argv[3], NULL, 16);
 		}
 	}
 
 	if (!strcmp(argv[0], "discover")) {
-		discover_params.type = BT_GATT_DISCOVER_ATTRIBUTE;
+		ctx->discover.type = BT_GATT_DISCOVER_ATTRIBUTE;
 	} else if (!strcmp(argv[0], "discover-secondary")) {
-		discover_params.type = BT_GATT_DISCOVER_SECONDARY;
+		ctx->discover.type = BT_GATT_DISCOVER_SECONDARY;
 	} else if (!strcmp(argv[0], "discover-include")) {
-		discover_params.type = BT_GATT_DISCOVER_INCLUDE;
+		ctx->discover.type = BT_GATT_DISCOVER_INCLUDE;
 	} else if (!strcmp(argv[0], "discover-characteristic")) {
-		discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
+		ctx->discover.type = BT_GATT_DISCOVER_CHARACTERISTIC;
 	} else if (!strcmp(argv[0], "discover-descriptor")) {
-		discover_params.type = BT_GATT_DISCOVER_DESCRIPTOR;
+		ctx->discover.type = BT_GATT_DISCOVER_DESCRIPTOR;
 	} else {
-		discover_params.type = BT_GATT_DISCOVER_PRIMARY;
+		ctx->discover.type = BT_GATT_DISCOVER_PRIMARY;
 	}
 
-	err = bt_gatt_discover(default_conn, &discover_params);
+	err = bt_gatt_discover(default_conn, &ctx->discover);
 	if (err) {
+		(void)memset(&ctx->discover, 0, sizeof(ctx->discover));
 		bt_shell_error("Discover failed (err %d)", err);
 	} else {
 		bt_shell_print("Discover pending");
@@ -276,8 +318,6 @@ static int cmd_discover(const struct bt_shell *sh, size_t argc, char *argv[])
 
 	return err;
 }
-
-static struct bt_gatt_read_params read_params;
 
 static uint8_t read_func(struct bt_conn *conn, uint8_t err,
 			 struct bt_gatt_read_params *params,
@@ -297,6 +337,7 @@ static uint8_t read_func(struct bt_conn *conn, uint8_t err,
 
 static int cmd_read(const struct bt_shell *sh, size_t argc, char *argv[])
 {
+	struct gatt_op_context *ctx;
 	int err;
 
 	if (!default_conn) {
@@ -304,23 +345,25 @@ static int cmd_read(const struct bt_shell *sh, size_t argc, char *argv[])
 		return -ENOEXEC;
 	}
 
-	if (read_params.func) {
-		bt_shell_print("Read ongoing");
-		return -ENOEXEC;
+	ctx = gatt_ctx_read_alloc();
+	if (ctx == NULL) {
+		bt_shell_error("No available operation slots");
+		return -EBUSY;
 	}
 
-	read_params.func = read_func;
-	read_params.handle_count = 1;
-	read_params.single.handle = strtoul(argv[1], NULL, 16);
-	read_params.single.offset = 0U;
-	SET_CHAN_OPT_ANY(read_params);
+	ctx->read.func = read_func;
+	ctx->read.handle_count = 1;
+	ctx->read.single.handle = strtoul(argv[1], NULL, 16);
+	ctx->read.single.offset = 0U;
+	SET_CHAN_OPT_ANY(ctx->read);
 
 	if (argc > 2) {
-		read_params.single.offset = strtoul(argv[2], NULL, 16);
+		ctx->read.single.offset = strtoul(argv[2], NULL, 16);
 	}
 
-	err = bt_gatt_read(default_conn, &read_params);
+	err = bt_gatt_read(default_conn, &ctx->read);
 	if (err) {
+		(void)memset(&ctx->read, 0, sizeof(ctx->read));
 		bt_shell_error("Read failed (err %d)", err);
 	} else {
 		bt_shell_print("Read pending");
@@ -331,7 +374,7 @@ static int cmd_read(const struct bt_shell *sh, size_t argc, char *argv[])
 
 static int cmd_mread(const struct bt_shell *sh, size_t argc, char *argv[])
 {
-	uint16_t h[8];
+	struct gatt_op_context *ctx;
 	size_t i;
 	int err;
 
@@ -340,29 +383,34 @@ static int cmd_mread(const struct bt_shell *sh, size_t argc, char *argv[])
 		return -ENOEXEC;
 	}
 
-	if (read_params.func) {
-		bt_shell_print("Read ongoing");
-		return -ENOEXEC;
+	ctx = gatt_ctx_read_alloc();
+	if (ctx == NULL) {
+		bt_shell_error("No available operation slots");
+		return -EBUSY;
 	}
 
-	if ((argc - 1) > ARRAY_SIZE(h)) {
-		bt_shell_print("Enter max %zu handle items to read", ARRAY_SIZE(h));
+	if ((argc - 1) > ARRAY_SIZE(ctx->read_handles)) {
+		bt_shell_print("Enter max %zu handle items to read",
+			    ARRAY_SIZE(ctx->read_handles));
 		return -EINVAL;
 	}
 
 	for (i = 0; i < argc - 1; i++) {
-		h[i] = strtoul(argv[i + 1], NULL, 16);
+		ctx->read_handles[i] = strtoul(argv[i + 1], NULL, 16);
 	}
 
-	read_params.func = read_func;
-	read_params.handle_count = i;
-	read_params.multiple.handles = h;
-	read_params.multiple.variable = true;
-	SET_CHAN_OPT_ANY(read_params);
+	ctx->read.func = read_func;
+	ctx->read.handle_count = i;
+	ctx->read.multiple.handles = ctx->read_handles;
+	ctx->read.multiple.variable = true;
+	SET_CHAN_OPT_ANY(ctx->read);
 
-	err = bt_gatt_read(default_conn, &read_params);
+	err = bt_gatt_read(default_conn, &ctx->read);
 	if (err) {
+		(void)memset(&ctx->read, 0, sizeof(ctx->read));
 		bt_shell_error("GATT multiple read request failed (err %d)", err);
+	} else {
+		bt_shell_print("Read pending");
 	}
 
 	return err;
@@ -370,6 +418,7 @@ static int cmd_mread(const struct bt_shell *sh, size_t argc, char *argv[])
 
 static int cmd_read_uuid(const struct bt_shell *sh, size_t argc, char *argv[])
 {
+	struct gatt_op_context *ctx;
 	int err;
 
 	if (!default_conn) {
@@ -377,33 +426,35 @@ static int cmd_read_uuid(const struct bt_shell *sh, size_t argc, char *argv[])
 		return -ENOEXEC;
 	}
 
-	if (read_params.func) {
-		bt_shell_print("Read ongoing");
-		return -ENOEXEC;
+	ctx = gatt_ctx_read_alloc();
+	if (ctx == NULL) {
+		bt_shell_error("No available operation slots");
+		return -EBUSY;
 	}
 
-	read_params.func = read_func;
-	read_params.handle_count = 0;
-	read_params.by_uuid.start_handle = BT_ATT_FIRST_ATTRIBUTE_HANDLE;
-	read_params.by_uuid.end_handle = BT_ATT_LAST_ATTRIBUTE_HANDLE;
-	SET_CHAN_OPT_ANY(read_params);
+	ctx->read.func = read_func;
+	ctx->read.handle_count = 0;
+	ctx->read.by_uuid.start_handle = BT_ATT_FIRST_ATTRIBUTE_HANDLE;
+	ctx->read.by_uuid.end_handle = BT_ATT_LAST_ATTRIBUTE_HANDLE;
+	SET_CHAN_OPT_ANY(ctx->read);
 
 	if (argc > 1) {
-		uuid.val = strtoul(argv[1], NULL, 16);
-		if (uuid.val) {
-			read_params.by_uuid.uuid = &uuid.uuid;
+		ctx->uuid.val = strtoul(argv[1], NULL, 16);
+		if (ctx->uuid.val) {
+			ctx->read.by_uuid.uuid = &ctx->uuid.uuid;
 		}
 	}
 
 	if (argc > 2) {
-		read_params.by_uuid.start_handle = strtoul(argv[2], NULL, 16);
+		ctx->read.by_uuid.start_handle = strtoul(argv[2], NULL, 16);
 		if (argc > 3) {
-			read_params.by_uuid.end_handle = strtoul(argv[3], NULL, 16);
+			ctx->read.by_uuid.end_handle = strtoul(argv[3], NULL, 16);
 		}
 	}
 
-	err = bt_gatt_read(default_conn, &read_params);
+	err = bt_gatt_read(default_conn, &ctx->read);
 	if (err) {
+		(void)memset(&ctx->read, 0, sizeof(ctx->read));
 		bt_shell_error("Read failed (err %d)", err);
 	} else {
 		bt_shell_print("Read pending");
@@ -412,19 +463,17 @@ static int cmd_read_uuid(const struct bt_shell *sh, size_t argc, char *argv[])
 	return err;
 }
 
-static struct bt_gatt_write_params write_params;
-static uint8_t gatt_write_buf[BT_ATT_MAX_ATTRIBUTE_LEN];
-
 static void write_func(struct bt_conn *conn, uint8_t err,
 		       struct bt_gatt_write_params *params)
 {
 	bt_shell_print("Write complete: err 0x%02x", err);
 
-	(void)memset(&write_params, 0, sizeof(write_params));
+	(void)memset(params, 0, sizeof(*params));
 }
 
 static int cmd_write(const struct bt_shell *sh, size_t argc, char *argv[])
 {
+	struct gatt_op_context *ctx;
 	int err;
 	uint16_t handle, offset;
 
@@ -433,30 +482,31 @@ static int cmd_write(const struct bt_shell *sh, size_t argc, char *argv[])
 		return -ENOEXEC;
 	}
 
-	if (write_params.func) {
-		bt_shell_error("Write ongoing");
-		return -ENOEXEC;
+	ctx = gatt_ctx_write_alloc();
+	if (ctx == NULL) {
+		bt_shell_error("No available operation slots");
+		return -EBUSY;
 	}
 
 	handle = strtoul(argv[1], NULL, 16);
 	offset = strtoul(argv[2], NULL, 16);
 
-	write_params.length = hex2bin(argv[3], strlen(argv[3]),
-				      gatt_write_buf, sizeof(gatt_write_buf));
-	if (write_params.length == 0) {
+	ctx->write.length = hex2bin(argv[3], strlen(argv[3]),
+				    ctx->write_buf, sizeof(ctx->write_buf));
+	if (ctx->write.length == 0) {
 		bt_shell_error("No data set");
 		return -ENOEXEC;
 	}
 
-	write_params.data = gatt_write_buf;
-	write_params.handle = handle;
-	write_params.offset = offset;
-	write_params.func = write_func;
-	SET_CHAN_OPT_ANY(write_params);
+	ctx->write.data = ctx->write_buf;
+	ctx->write.handle = handle;
+	ctx->write.offset = offset;
+	ctx->write.func = write_func;
+	SET_CHAN_OPT_ANY(ctx->write);
 
-	err = bt_gatt_write(default_conn, &write_params);
+	err = bt_gatt_write(default_conn, &ctx->write);
 	if (err) {
-		write_params.func = NULL;
+		(void)memset(&ctx->write, 0, sizeof(ctx->write));
 		bt_shell_error("Write failed (err %d)", err);
 	} else {
 		bt_shell_print("Write pending");
@@ -473,6 +523,9 @@ static void write_without_rsp_cb(struct bt_conn *conn, void *user_data)
 
 	print_write_stats();
 }
+
+/* Separate buffer for write-without-response (doesn't use async params) */
+static uint8_t gatt_write_without_rsp_buf[BT_ATT_MAX_ATTRIBUTE_LEN];
 
 static int cmd_write_without_rsp(const struct bt_shell *sh,
 				 size_t argc, char *argv[])
@@ -498,16 +551,16 @@ static int cmd_write_without_rsp(const struct bt_shell *sh,
 	}
 
 	handle = strtoul(argv[1], NULL, 16);
-	gatt_write_buf[0] = strtoul(argv[2], NULL, 16);
+	gatt_write_without_rsp_buf[0] = strtoul(argv[2], NULL, 16);
 	len = 1U;
 
 	if (argc > 3) {
 		int i;
 
-		len = MIN(strtoul(argv[3], NULL, 16), sizeof(gatt_write_buf));
+		len = MIN(strtoul(argv[3], NULL, 16), sizeof(gatt_write_without_rsp_buf));
 
 		for (i = 1; i < len; i++) {
-			gatt_write_buf[i] = gatt_write_buf[0];
+			gatt_write_without_rsp_buf[i] = gatt_write_without_rsp_buf[0];
 		}
 	}
 
@@ -524,14 +577,14 @@ static int cmd_write_without_rsp(const struct bt_shell *sh,
 
 	while (repeat--) {
 		err = bt_gatt_write_without_response_cb(default_conn, handle,
-							gatt_write_buf, len,
+							gatt_write_without_rsp_buf, len,
 							sign, func,
 							UINT_TO_POINTER(len));
 		if (err) {
 			break;
 		}
 
-		os_thread_yield();
+		(void)os_thread_yield();
 	}
 
 	bt_shell_print("Write Complete (err %d)", err);
@@ -677,6 +730,7 @@ static struct db_stats {
 static uint8_t print_attr(const struct bt_gatt_attr *attr, uint16_t handle,
 			  void *user_data)
 {
+	const struct bt_shell *sh = user_data;
 	char str[BT_UUID_STR_LEN];
 
 	stats.attr_count++;
@@ -759,7 +813,7 @@ static const struct bt_uuid_128 vnd_long_uuid1 = BT_UUID_INIT_128(
 static const struct bt_uuid_128 vnd_long_uuid2 = BT_UUID_INIT_128(
 	BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x12340, 0x5678cefaadde));
 
-static uint8_t vnd_value[] = { 'V', 'e', 'n', 'd', 'o', 'r' };
+static uint8_t vnd_value[6] = { 'V', 'e', 'n', 'd', 'o', 'r' };
 
 static const struct bt_uuid_128 vnd1_uuid = BT_UUID_INIT_128(
 	BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x12340, 0x56789abcdef4));
@@ -789,10 +843,9 @@ static ssize_t write_vnd1(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 static ssize_t read_vnd(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 			void *buf, uint16_t len, uint16_t offset)
 {
-	const char *value = attr->user_data;
+	uint8_t *value = attr->user_data;
 
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, value,
-				 strlen(value));
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value, sizeof(vnd_value));
 }
 
 static ssize_t write_vnd(struct bt_conn *conn, const struct bt_gatt_attr *attr,
@@ -852,7 +905,7 @@ static struct bt_gatt_attr vnd_attrs[] = {
 			       BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE,
 			       BT_GATT_PERM_READ_AUTHEN |
 			       BT_GATT_PERM_WRITE_AUTHEN,
-			       read_vnd, write_vnd, vnd_value),
+			       read_vnd, write_vnd, &vnd_value),
 
 	BT_GATT_CHARACTERISTIC(&vnd_long_uuid1.uuid, BT_GATT_CHRC_READ |
 			       BT_GATT_CHRC_WRITE | BT_GATT_CHRC_EXT_PROP,
@@ -1144,7 +1197,7 @@ static int cmd_metrics(const struct bt_shell *sh, size_t argc, char *argv[])
 		err = bt_gatt_service_unregister(&met_svc);
 	} else {
 		bt_shell_error("Incorrect value: %s", argv[1]);
-		bt_shell_help(sh);
+		shell_help(sh);
 		return -ENOEXEC;
 	}
 
@@ -1159,6 +1212,7 @@ static int cmd_metrics(const struct bt_shell *sh, size_t argc, char *argv[])
 static uint8_t get_cb(const struct bt_gatt_attr *attr, uint16_t handle,
 		      void *user_data)
 {
+	struct bt_shell *sh = user_data;
 	uint8_t buf[256];
 	ssize_t ret;
 	char str[BT_UUID_STR_LEN];
@@ -1214,7 +1268,7 @@ static uint8_t set_cb(const struct bt_gatt_attr *attr, uint16_t handle,
 	ssize_t ret;
 
 	if (!attr->write) {
-		bt_shell_error("Write not supported");
+		shell_error(data->sh, "Write not supported");
 		data->err = -ENOENT;
 		return BT_GATT_ITER_CONTINUE;
 	}
@@ -1226,7 +1280,7 @@ static uint8_t set_cb(const struct bt_gatt_attr *attr, uint16_t handle,
 	ret = attr->write(NULL, attr, (void *)buf, i, 0, 0);
 	if (ret < 0) {
 		data->err = ret;
-		bt_shell_error("Failed to write: %zd", ret);
+		shell_error(data->sh, "Failed to write: %zd", ret);
 		return BT_GATT_ITER_STOP;
 	}
 
@@ -1273,7 +1327,7 @@ int cmd_att_mtu(const struct bt_shell *sh, size_t argc, char *argv[])
 #define HELP_NONE "[none]"
 #define HELP_ADDR_LE "<address: XX:XX:XX:XX:XX:XX> <type: (public|random)>"
 
-BT_SHELL_SUBCMD_SET_CREATE(gatt_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(gatt_cmds,
 #if defined(CONFIG_BT_GATT_CLIENT)
 	BT_SHELL_CMD_ARG(discover, NULL,
 		      "[UUID] [start handle] [end handle]", cmd_discover, 1, 3),
@@ -1331,7 +1385,7 @@ BT_SHELL_SUBCMD_SET_CREATE(gatt_cmds,
 static int cmd_gatt(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		/* shell returns 1 when help is printed */
 		return 1;
 	}
@@ -1341,10 +1395,5 @@ static int cmd_gatt(const struct bt_shell *sh, size_t argc, char **argv)
 	return -EINVAL;
 }
 
-BT_SHELL_CMD_ARG_DEFINE(gatt, &gatt_cmds, "Bluetooth GATT shell commands",
+BT_SHELL_CMD_ARG_REGISTER(gatt, &gatt_cmds, "Bluetooth GATT shell commands",
 		       cmd_gatt, 1, 1);
-
-int bt_shell_cmd_gatt_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &gatt);
-}

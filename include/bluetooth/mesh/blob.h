@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_BLOB_H___
-#define __INCLUDE_BLUETOOTH_MESH_BLOB_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_BLOB_H___H__
+#define __INCLUDE_BLUETOOTH_MESH_BLOB_H___H__
 
 #include <sys/types.h>
 
+#include <utils/bt_utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -258,4 +259,4 @@ struct bt_mesh_blob_io {
 }
 #endif
 
-#endif /* __INCLUDE_BLUETOOTH_MESH_BLOB_H__ */
+#endif /* __INCLUDE_BLUETOOTH_MESH_BLOB_H___H__ */

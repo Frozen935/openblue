@@ -20,6 +20,9 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
+#include "osdep/os.h"
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
 #include "aics_internal.h"
 #include "common/bt_str.h"
@@ -384,7 +387,7 @@ static uint8_t internal_read_state_cb(struct bt_conn *conn, uint8_t err,
 		}
 	} else {
 		/* Since we return BT_GATT_ITER_STOP this should never happen */
-		__ASSERT_MSG(false, "Unexpected NULL data without error");
+		__ASSERT(false, "Unexpected NULL data without error");
 	}
 
 	if (cb_err) {
@@ -449,17 +452,17 @@ static int aics_client_common_control(uint8_t opcode, struct bt_aics *inst)
 {
 	int err;
 
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("NULL instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(!inst->client_instance) {
+	if (!inst->client_instance) {
 		LOG_DBG("Not a client instance instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(inst->cli.conn == NULL) {
+	if (inst->cli.conn == NULL) {
 		LOG_DBG("NULL conn");
 		return -EINVAL;
 	}
@@ -581,7 +584,7 @@ static int store_attr_handle_and_subscribe(struct bt_aics_client *client_inst, s
 			bt_atomic_set_bit(client_inst->flags, BT_AICS_CLIENT_FLAG_DESC_WRITABLE);
 		}
 	} else {
-		__ASSERT_MSG(false, "Unexpected UUID %s discovered", bt_uuid_str(chrc->uuid));
+		__ASSERT(false, "Unexpected UUID %s discovered", bt_uuid_str(chrc->uuid));
 	}
 
 	if (sub_params != NULL) {
@@ -697,20 +700,20 @@ int bt_aics_discover(struct bt_conn *conn, struct bt_aics *inst,
 {
 	int err = 0;
 
-	CHECKIF(!inst || !conn || !param) {
+	if (!inst || !conn || !param) {
 		LOG_DBG("%s cannot be NULL", inst == NULL   ? "inst"
 					     : conn == NULL ? "conn"
 							    : "param");
 		return -EINVAL;
 	}
 
-	CHECKIF(param->end_handle <= param->start_handle) {
+	if (param->end_handle <= param->start_handle) {
 		LOG_DBG("start_handle (%u) shall be less than end_handle (%u)", param->start_handle,
 			param->end_handle);
 		return -EINVAL;
 	}
 
-	CHECKIF(!bt_atomic_test_bit(inst->cli.flags, BT_AICS_CLIENT_FLAG_ACTIVE)) {
+	if (!bt_atomic_test_bit(inst->cli.flags, BT_AICS_CLIENT_FLAG_ACTIVE)) {
 		LOG_DBG("Inactive instance");
 		return -EINVAL;
 	}
@@ -754,7 +757,7 @@ struct bt_aics *bt_aics_client_free_instance_get(void)
 
 int bt_aics_client_conn_get(const struct bt_aics *aics, struct bt_conn **conn)
 {
-	CHECKIF(aics == NULL) {
+	if (aics == NULL) {
 		LOG_DBG("NULL aics pointer");
 		return -EINVAL;
 	}
@@ -778,17 +781,17 @@ int bt_aics_client_state_get(struct bt_aics *inst)
 {
 	int err;
 
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("NULL instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(!inst->client_instance) {
+	if (!inst->client_instance) {
 		LOG_DBG("Not a client instance instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(inst->cli.conn == NULL) {
+	if (inst->cli.conn == NULL) {
 		LOG_DBG("NULL conn");
 		return -EINVAL;
 	}
@@ -816,17 +819,17 @@ int bt_aics_client_gain_setting_get(struct bt_aics *inst)
 {
 	int err;
 
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("NULL instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(!inst->client_instance) {
+	if (!inst->client_instance) {
 		LOG_DBG("Not a client instance instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(inst->cli.conn == NULL) {
+	if (inst->cli.conn == NULL) {
 		LOG_DBG("NULL conn");
 		return -EINVAL;
 	}
@@ -854,17 +857,17 @@ int bt_aics_client_type_get(struct bt_aics *inst)
 {
 	int err;
 
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("NULL instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(!inst->client_instance) {
+	if (!inst->client_instance) {
 		LOG_DBG("Not a client instance instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(inst->cli.conn == NULL) {
+	if (inst->cli.conn == NULL) {
 		LOG_DBG("NULL conn");
 		return -EINVAL;
 	}
@@ -892,17 +895,17 @@ int bt_aics_client_status_get(struct bt_aics *inst)
 {
 	int err;
 
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("NULL instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(!inst->client_instance) {
+	if (!inst->client_instance) {
 		LOG_DBG("Not a client instance instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(inst->cli.conn == NULL) {
+	if (inst->cli.conn == NULL) {
 		LOG_DBG("NULL conn");
 		return -EINVAL;
 	}
@@ -950,17 +953,17 @@ int bt_aics_client_gain_set(struct bt_aics *inst, int8_t gain)
 {
 	int err;
 
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("NULL instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(!inst->client_instance) {
+	if (!inst->client_instance) {
 		LOG_DBG("Not a client instance instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(inst->cli.conn == NULL) {
+	if (inst->cli.conn == NULL) {
 		LOG_DBG("NULL conn");
 		return -EINVAL;
 	}
@@ -993,17 +996,17 @@ int bt_aics_client_description_get(struct bt_aics *inst)
 {
 	int err;
 
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("NULL instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(!inst->client_instance) {
+	if (!inst->client_instance) {
 		LOG_DBG("Not a client instance instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(inst->cli.conn == NULL) {
+	if (inst->cli.conn == NULL) {
 		LOG_DBG("NULL conn");
 		return -EINVAL;
 	}
@@ -1032,17 +1035,17 @@ int bt_aics_client_description_set(struct bt_aics *inst,
 {
 	int err;
 
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("NULL instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(!inst->client_instance) {
+	if (!inst->client_instance) {
 		LOG_DBG("Not a client instance instance");
 		return -EINVAL;
 	}
 
-	CHECKIF(inst->cli.conn == NULL) {
+	if (inst->cli.conn == NULL) {
 		LOG_DBG("NULL conn");
 		return -EINVAL;
 	}
@@ -1068,7 +1071,7 @@ int bt_aics_client_description_set(struct bt_aics *inst,
 
 void bt_aics_client_cb_register(struct bt_aics *inst, struct bt_aics_cb *cb)
 {
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("inst cannot be NULL");
 		return;
 	}

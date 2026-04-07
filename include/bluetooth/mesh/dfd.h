@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_DFD_H___
-#define __INCLUDE_BLUETOOTH_MESH_DFD_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_DFD_H___H__
+#define __INCLUDE_BLUETOOTH_MESH_DFD_H___H__
 
 #include <bluetooth/mesh.h>
 
@@ -120,4 +120,4 @@ enum bt_mesh_dfd_upload_phase {
 }
 #endif
 
-#endif /* __INCLUDE_BLUETOOTH_MESH_DFD_H__ */
+#endif /* __INCLUDE_BLUETOOTH_MESH_DFD_H___H__ */

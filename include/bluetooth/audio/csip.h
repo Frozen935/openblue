@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __BLUETOOTH_AUDIO_CSIP_H__
-#define __BLUETOOTH_AUDIO_CSIP_H__
+#ifndef __INCLUDE_BLUETOOTH_AUDIO_CSIP_H__
+#define __INCLUDE_BLUETOOTH_AUDIO_CSIP_H__
 
 /**
  * @brief Coordinated Set Identification Profile (CSIP)
@@ -31,17 +31,24 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#if defined(__has_include)
+#if __has_include(<autoconf.h>)
+#include <autoconf.h>
+#endif
+#endif
 #include <bluetooth/addr.h>
+#include <bluetooth/assigned_numbers.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gap.h>
+#include <utils/bt_slist.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /** Recommended timer for member discovery */
-#define BT_CSIP_SET_COORDINATOR_DISCOVER_TIMER_VALUE        OS_SECONDS(10)
+#define BT_CSIP_SET_COORDINATOR_DISCOVER_TIMER_VALUE        (10 * 1000)
 
 /**
  * Defines the maximum number of Coordinated Set Identification service instances for the
@@ -90,7 +97,10 @@ extern "C" {
  */
 #define BT_CSIP_DATA_RSI(_rsi) BT_DATA(BT_DATA_CSIS_RSI, _rsi, BT_CSIP_RSI_SIZE)
 
-/** @brief Opaque Coordinated Set Identification Service instance. */
+/**
+ * @struct bt_csip_set_member_svc_inst
+ * @brief Opaque Coordinated Set Identification Service instance.
+ */
 struct bt_csip_set_member_svc_inst;
 
 /** Callback structure for the Coordinated Set Identification Service */
@@ -233,6 +243,8 @@ int bt_csip_set_member_sirk(struct bt_csip_set_member_svc_inst *svc_inst,
  * It is important to note that a set cannot have multiple devices with the same rank in a set,
  * and it is up to the caller of this function to ensure that.
  * Similarly, it is important that the size is updated on all devices in the set at the same time.
+ * The rank of a device cannot be modified on its own, and a new rank can only be set if the @p size
+ * is different from the current set size.
  *
  * If @kconfig{CONFIG_BT_CSIP_SET_MEMBER_SIZE_NOTIFIABLE} is enabled, this will also send a
  * notification to all connected or bonded clients.
@@ -243,7 +255,7 @@ int bt_csip_set_member_sirk(struct bt_csip_set_member_svc_inst *svc_inst,
  *
  * @retval -EINVAL @p svc_inst is NULL, @p size is less than 1, @p rank is less than 1 or higher
  *                 than @p size for a lockable @p svc_inst.
- * @retval -EALREADY @p size and @p rank are already the provided values.
+ * @retval -EALREADY @p size is already set.
  * @retval 0 Success.
  */
 int bt_csip_set_member_set_size_and_rank(struct bt_csip_set_member_svc_inst *svc_inst, uint8_t size,
@@ -610,4 +622,4 @@ int bt_csip_set_coordinator_release(const struct bt_csip_set_coordinator_set_mem
  * @}
  */
 
-#endif /* __BLUETOOTH_AUDIO_CSIP_H__ */
+#endif /* __INCLUDE_BLUETOOTH_AUDIO_CSIP_H__ */

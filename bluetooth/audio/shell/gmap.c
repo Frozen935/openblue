@@ -15,12 +15,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <bluetooth/audio/audio.h>
-#include <bluetooth/audio/gmap_lc3_preset.h>
-#include <bluetooth/audio/gmap.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/gap.h>
-#include <bluetooth/uuid.h>
+#include <bluetooth/byteorder.h>
+#include <utils/bt_utils.h>
 
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
@@ -48,7 +44,7 @@ size_t gmap_ad_data_add(struct bt_data data[], size_t data_size)
 
 	ad_gmap[2] = (uint8_t)gmap_role;
 
-	__ASSERT_MSG(data > 0, "No space for ad_gmap");
+	__ASSERT(data > 0, "No space for ad_gmap");
 	data[0].type = BT_DATA_SVC_DATA16;
 	data[0].data_len = ARRAY_SIZE(ad_gmap);
 	data[0].data = &ad_gmap[0];
@@ -129,14 +125,14 @@ static int cmd_gmap_init(const struct bt_shell *sh, size_t argc, char **argv)
 
 	err = bt_gmap_register(gmap_role, features);
 	if (err != 0) {
-		bt_shell_error("Failed to register GMAS (err %d)", err);
+		bt_shell_error(sh, "Failed to register GMAS (err %d)", err);
 
 		return -ENOEXEC;
 	}
 
 	err = bt_gmap_cb_register(&gmap_cb);
 	if (err != 0) {
-		bt_shell_error("Failed to register callbacks (err %d)", err);
+		bt_shell_error(sh, "Failed to register callbacks (err %d)", err);
 
 		return -ENOEXEC;
 	}
@@ -162,7 +158,7 @@ static int cmd_gmap_set_role(const struct bt_shell *sh, size_t argc, char **argv
 		} else if (strcmp(arg, "bgr") == 0) {
 			role |= BT_GMAP_ROLE_BGR;
 		} else {
-			bt_shell_error("Invalid arg: %s", arg);
+			bt_shell_error(sh, "Invalid arg: %s", arg);
 			bt_shell_help(sh);
 
 			return BT_SHELL_CMD_HELP_PRINTED;
@@ -173,7 +169,7 @@ static int cmd_gmap_set_role(const struct bt_shell *sh, size_t argc, char **argv
 
 	err = bt_gmap_set_role(role, features);
 	if (err != 0) {
-		bt_shell_error("Failed to set new role (err %d)", err);
+		bt_shell_error(sh, "Failed to set new role (err %d)", err);
 
 		return -ENOEXEC;
 	}
@@ -188,13 +184,13 @@ static int cmd_gmap_discover(const struct bt_shell *sh, size_t argc, char **argv
 	int err;
 
 	if (default_conn == NULL) {
-		bt_shell_error("Not connected");
+		bt_shell_error(sh, "Not connected");
 		return -ENOEXEC;
 	}
 
 	err = bt_gmap_discover(default_conn);
 	if (err != 0) {
-		bt_shell_error("bt_gmap_discover (err %d)", err);
+		bt_shell_error(sh, "bt_gmap_discover (err %d)", err);
 	}
 
 	return err;
@@ -493,9 +489,9 @@ static int cmd_gmap_ac_14(const struct bt_shell *sh, size_t argc, char **argv)
 static int cmd_gmap(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
+		bt_shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
 	} else {
-		bt_shell_error("%s missing subcomand", argv[0]);
+		bt_shell_error(sh, "%s missing subcomand", argv[0]);
 	}
 
 	return -ENOEXEC;
@@ -503,7 +499,7 @@ static int cmd_gmap(const struct bt_shell *sh, size_t argc, char **argv)
 
 #define HELP_NONE "[none]"
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	gmap_cmds, BT_SHELL_CMD_ARG(init, NULL, HELP_NONE, cmd_gmap_init, 1, 0),
 	BT_SHELL_CMD_ARG(set_role, NULL, "[ugt | ugg | bgr | bgs]", cmd_gmap_set_role, 2, 3),
 	BT_SHELL_CMD_ARG(discover, NULL, HELP_NONE, cmd_gmap_discover, 1, 0),
@@ -562,9 +558,4 @@ BT_SHELL_SUBCMD_SET_CREATE(
 #endif /* CONFIG_BT_GMAP_BGS_SUPPORTED*/
 	BT_SHELL_SUBCMD_SET_END);
 
-BT_SHELL_CMD_ARG_DEFINE(gmap, &gmap_cmds, "Bluetooth GMAP shell commands", cmd_gmap, 1, 1);
-
-int bt_shell_cmd_gmap_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &gmap);
-}
+BT_SHELL_CMD_ARG_REGISTER(gmap, &gmap_cmds, "Bluetooth GMAP shell commands", cmd_gmap, 1, 1);

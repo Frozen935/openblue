@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_PRIV_BEACON_CLI_H___
-#define __INCLUDE_BLUETOOTH_MESH_PRIV_BEACON_CLI_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_PRIV_BEACON_CLI_H___H__
+#define __INCLUDE_BLUETOOTH_MESH_PRIV_BEACON_CLI_H___H__
 
 #include <bluetooth/mesh.h>
 
@@ -195,4 +195,4 @@ extern const struct bt_mesh_model_cb bt_mesh_priv_beacon_cli_cb;
 }
 #endif
 
-#endif /* __INCLUDE_BLUETOOTH_MESH_PRIV_BEACON_CLI_H__ */
+#endif /* __INCLUDE_BLUETOOTH_MESH_PRIV_BEACON_CLI_H___H__ */

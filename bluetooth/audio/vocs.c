@@ -12,6 +12,7 @@
 #include <string.h>
 #include <sys/types.h>
 
+#include <bluetooth/assigned_numbers.h>
 #include <bluetooth/att.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/vocs.h>
@@ -19,6 +20,10 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
+#include "osdep/os.h"
+#include <base/bt_atomic.h>
+#include <bluetooth/byteorder.h>
+#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 #include "vocs_internal.h"
@@ -344,12 +349,12 @@ void *bt_vocs_svc_decl_get(struct bt_vocs *vocs)
 {
 	struct bt_vocs_server *inst;
 
-	CHECKIF(!vocs) {
+	if (!vocs) {
 		LOG_DBG("Null VOCS pointer");
 		return NULL;
 	}
 
-	CHECKIF(vocs->client_instance) {
+	if (vocs->client_instance) {
 		LOG_DBG("vocs pointer shall be server instance");
 		return NULL;
 	}
@@ -375,19 +380,19 @@ int bt_vocs_register(struct bt_vocs *vocs,
 	struct bt_gatt_chrc *chrc;
 	static bool instances_prepared;
 
-	CHECKIF(!vocs) {
+	if (!vocs) {
 		LOG_DBG("Null VOCS pointer");
 		return -EINVAL;
 	}
 
-	CHECKIF(vocs->client_instance) {
+	if (vocs->client_instance) {
 		LOG_DBG("vocs pointer shall be server instance");
 		return -EINVAL;
 	}
 
 	inst = CONTAINER_OF(vocs, struct bt_vocs_server, vocs);
 
-	CHECKIF(!param) {
+	if (!param) {
 		LOG_DBG("NULL params pointer");
 		return -EINVAL;
 	}
@@ -397,12 +402,12 @@ int bt_vocs_register(struct bt_vocs *vocs,
 		instances_prepared = true;
 	}
 
-	CHECKIF(inst->initialized) {
+	if (inst->initialized) {
 		LOG_DBG("Already initialized VOCS instance");
 		return -EALREADY;
 	}
 
-	CHECKIF(param->offset > BT_VOCS_MAX_OFFSET || param->offset < BT_VOCS_MIN_OFFSET) {
+	if (param->offset > BT_VOCS_MAX_OFFSET || param->offset < BT_VOCS_MIN_OFFSET) {
 		LOG_DBG("Invalid offset %d", param->offset);
 		return -EINVAL;
 	}
@@ -459,7 +464,7 @@ int bt_vocs_register(struct bt_vocs *vocs,
 
 int bt_vocs_state_get(struct bt_vocs *inst)
 {
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("Null VOCS pointer");
 		return -EINVAL;
 	}
@@ -482,7 +487,7 @@ int bt_vocs_state_get(struct bt_vocs *inst)
 
 int bt_vocs_location_get(struct bt_vocs *inst)
 {
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("Null VOCS pointer");
 		return -EINVAL;
 	}
@@ -505,7 +510,7 @@ int bt_vocs_location_get(struct bt_vocs *inst)
 
 int bt_vocs_location_set(struct bt_vocs *inst, uint32_t location)
 {
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("Null VOCS pointer");
 		return -EINVAL;
 	}
@@ -525,7 +530,7 @@ int bt_vocs_location_set(struct bt_vocs *inst, uint32_t location)
 
 int bt_vocs_state_set(struct bt_vocs *inst, int16_t offset)
 {
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("Null VOCS pointer");
 		return -EINVAL;
 	}
@@ -550,7 +555,7 @@ int bt_vocs_state_set(struct bt_vocs *inst, int16_t offset)
 
 int bt_vocs_description_get(struct bt_vocs *inst)
 {
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("Null VOCS pointer");
 		return -EINVAL;
 	}
@@ -573,12 +578,12 @@ int bt_vocs_description_get(struct bt_vocs *inst)
 
 int bt_vocs_description_set(struct bt_vocs *inst, const char *description)
 {
-	CHECKIF(!inst) {
+	if (!inst) {
 		LOG_DBG("Null VOCS pointer");
 		return -EINVAL;
 	}
 
-	CHECKIF(!description) {
+	if (!description) {
 		LOG_DBG("Null description pointer");
 		return -EINVAL;
 	}

@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <bluetooth/assigned_numbers.h>
 #include <bluetooth/att.h>
 #include <bluetooth/audio/csip.h>
 #include <bluetooth/bluetooth.h>
@@ -33,6 +34,11 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/buf.h>
 #include <bluetooth/uuid.h>
+#include "osdep/os.h"
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+#include <bluetooth/byteorder.h>
 
 #include "csip_crypto.h"
 #include "csip_internal.h"
@@ -110,8 +116,8 @@ static struct bt_csip_set_coordinator_svc_inst *lookup_instance_by_handle(struct
 	uint8_t conn_index;
 	struct bt_csip_set_coordinator_inst *client;
 
-	__ASSERT_MSG(conn, "NULL conn");
-	__ASSERT_MSG(handle > 0, "Handle cannot be 0");
+	__ASSERT(conn, "NULL conn");
+	__ASSERT(handle > 0, "Handle cannot be 0");
 
 	conn_index = bt_conn_index(conn);
 	client = &client_insts[conn_index];
@@ -132,8 +138,8 @@ struct bt_csip_set_coordinator_svc_inst *bt_csip_set_coordinator_lookup_instance
 	uint8_t conn_index;
 	struct bt_csip_set_coordinator_inst *client;
 
-	__ASSERT_MSG(conn, "NULL conn");
-	__ASSERT_MSG(idx < CONFIG_BT_CSIP_SET_COORDINATOR_MAX_CSIS_INSTANCES,
+	__ASSERT(conn, "NULL conn");
+	__ASSERT(idx < CONFIG_BT_CSIP_SET_COORDINATOR_MAX_CSIS_INSTANCES,
 		 "Index shall be less than maximum number of instances %u (was %u)",
 		 CONFIG_BT_CSIP_SET_COORDINATOR_MAX_CSIS_INSTANCES, idx);
 
@@ -233,11 +239,11 @@ static void active_members_store_ordered(const struct bt_csip_set_coordinator_se
 			const uint8_t rank_2 = svc_inst_2->set_info->rank;
 
 			if (ascending) {
-				__ASSERT_MSG(rank_1 <= rank_2,
+				__ASSERT(rank_1 <= rank_2,
 					 "Members not sorted by ascending rank %u - %u", rank_1,
 					 rank_2);
 			} else {
-				__ASSERT_MSG(rank_1 >= rank_2,
+				__ASSERT(rank_1 >= rank_2,
 					 "Members not sorted by descending rank %u - %u", rank_1,
 					 rank_2);
 			}
@@ -867,7 +873,7 @@ static uint8_t csip_set_coordinator_discover_insts_read_rank_cb(struct bt_conn *
 {
 	struct bt_csip_set_coordinator_inst *client = &client_insts[bt_conn_index(conn)];
 
-	__ASSERT_MSG(client->cur_inst != NULL, "client->cur_inst must not be NULL");
+	__ASSERT(client->cur_inst != NULL, "client->cur_inst must not be NULL");
 
 	if (err != 0) {
 		LOG_DBG("err: 0x%02X", err);
@@ -899,7 +905,7 @@ static uint8_t csip_set_coordinator_discover_insts_read_set_size_cb(
 {
 	struct bt_csip_set_coordinator_inst *client = &client_insts[bt_conn_index(conn)];
 
-	__ASSERT_MSG(client->cur_inst != NULL, "client->cur_inst must not be NULL");
+	__ASSERT(client->cur_inst != NULL, "client->cur_inst must not be NULL");
 
 	if (err != 0) {
 		LOG_DBG("err: 0x%02X", err);
@@ -977,7 +983,7 @@ static uint8_t csip_set_coordinator_discover_insts_read_sirk_cb(struct bt_conn *
 {
 	struct bt_csip_set_coordinator_inst *client = &client_insts[bt_conn_index(conn)];
 	int cb_err = err;
-	__ASSERT_MSG(client->cur_inst != NULL, "client->cur_inst must not be NULL");
+	__ASSERT(client->cur_inst != NULL, "client->cur_inst must not be NULL");
 
 	if (err != 0) {
 		LOG_DBG("err: 0x%02X", err);
@@ -1373,13 +1379,13 @@ struct bt_csip_set_coordinator_csis_inst *bt_csip_set_coordinator_csis_inst_by_h
 {
 	const struct bt_csip_set_coordinator_svc_inst *svc_inst;
 
-	CHECKIF(conn == NULL) {
+	if (conn == NULL) {
 		LOG_DBG("conn is NULL");
 
 		return NULL;
 	}
 
-	CHECKIF(start_handle == 0) {
+	if (start_handle == 0) {
 		LOG_DBG("start_handle is 0");
 
 		return NULL;
@@ -1403,7 +1409,7 @@ bt_csip_set_coordinator_set_member_by_conn(const struct bt_conn *conn)
 {
 	struct bt_csip_set_coordinator_inst *client;
 
-	CHECKIF(conn == NULL) {
+	if (conn == NULL) {
 		LOG_DBG("conn is NULL");
 
 		return NULL;
@@ -1420,7 +1426,7 @@ bt_csip_set_coordinator_set_member_by_conn(const struct bt_conn *conn)
 /*************************** PUBLIC FUNCTIONS ***************************/
 int bt_csip_set_coordinator_register_cb(struct bt_csip_set_coordinator_cb *cb)
 {
-	CHECKIF(cb == NULL) {
+	if (cb == NULL) {
 		LOG_DBG("cb is NULL");
 
 		return -EINVAL;
@@ -1436,7 +1442,7 @@ int bt_csip_set_coordinator_discover(struct bt_conn *conn)
 	int err;
 	struct bt_csip_set_coordinator_inst *client;
 
-	CHECKIF(conn == NULL) {
+	if (conn == NULL) {
 		LOG_DBG("NULL conn");
 		return -EINVAL;
 	}
@@ -1491,14 +1497,14 @@ static int verify_members(const struct bt_csip_set_coordinator_set_member **memb
 		struct bt_csip_set_coordinator_svc_inst *svc_inst;
 		struct bt_conn *conn;
 
-		CHECKIF(member == NULL) {
+		if (member == NULL) {
 			LOG_DBG("Invalid member[%d] was NULL", i);
 			return -EINVAL;
 		}
 
 		conn = client_inst->conn;
 
-		CHECKIF(conn == NULL) {
+		if (conn == NULL) {
 			LOG_DBG("Member[%d] conn was NULL", i);
 			return -EINVAL;
 		}
@@ -1690,7 +1696,7 @@ int bt_csip_set_coordinator_lock(
 	struct bt_csip_set_coordinator_svc_inst *svc_inst;
 	int err;
 
-	CHECKIF(active.in_progress) {
+	if (active.in_progress) {
 		LOG_DBG("Procedure in progress");
 		return -EBUSY;
 	}
@@ -1736,7 +1742,7 @@ int bt_csip_set_coordinator_release(const struct bt_csip_set_coordinator_set_mem
 	struct bt_csip_set_coordinator_svc_inst *svc_inst;
 	int err;
 
-	CHECKIF(active.in_progress) {
+	if (active.in_progress) {
 		LOG_DBG("Procedure in progress");
 		return -EBUSY;
 	}

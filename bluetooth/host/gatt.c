@@ -88,99 +88,6 @@ enum gatt_global_flags {
 
 static ATOMIC_DEFINE(gatt_flags, GATT_NUM_FLAGS);
 
-static ssize_t read_name(struct bt_conn *conn, const struct bt_gatt_attr *attr,
-			 void *buf, uint16_t len, uint16_t offset)
-{
-	const char *name = bt_get_name();
-
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, name,
-				 strlen(name));
-}
-
-#if defined(CONFIG_BT_DEVICE_NAME_GATT_WRITABLE)
-
-static ssize_t write_name(struct bt_conn *conn, const struct bt_gatt_attr *attr, const void *buf,
-			  uint16_t len, uint16_t offset, uint8_t flags)
-{
-	/* adding one to fit the terminating null character */
-	char value[CONFIG_BT_DEVICE_NAME_MAX + 1] = {};
-
-	if (offset >= CONFIG_BT_DEVICE_NAME_MAX) {
-		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
-	}
-
-	if (offset + len > CONFIG_BT_DEVICE_NAME_MAX) {
-		return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
-	}
-
-	memcpy(value, buf, len);
-
-	value[len] = '\0';
-
-	bt_set_name(value);
-
-	return len;
-}
-
-#endif /* CONFIG_BT_DEVICE_NAME_GATT_WRITABLE */
-
-static ssize_t read_appearance(struct bt_conn *conn,
-			       const struct bt_gatt_attr *attr, void *buf,
-			       uint16_t len, uint16_t offset)
-{
-	uint16_t appearance = sys_cpu_to_le16(bt_get_appearance());
-
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, &appearance,
-				 sizeof(appearance));
-}
-
-#if defined(CONFIG_BT_DEVICE_APPEARANCE_GATT_WRITABLE)
-static ssize_t write_appearance(struct bt_conn *conn, const struct bt_gatt_attr *attr,
-			 const void *buf, uint16_t len, uint16_t offset,
-			 uint8_t flags)
-{
-	uint16_t appearance_le = sys_cpu_to_le16(bt_get_appearance());
-	char * const appearance_le_bytes = (char *)&appearance_le;
-	uint16_t appearance;
-	int err;
-
-	if (offset >= sizeof(appearance_le)) {
-		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
-	}
-
-	if ((offset + len) > sizeof(appearance_le)) {
-		return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
-	}
-
-	memcpy(&appearance_le_bytes[offset], buf, len);
-	appearance = sys_le16_to_cpu(appearance_le);
-
-	err = bt_set_appearance(appearance);
-
-	if (err) {
-		return BT_GATT_ERR(BT_ATT_ERR_UNLIKELY);
-	}
-
-	return len;
-}
-#endif /* CONFIG_BT_DEVICE_APPEARANCE_GATT_WRITABLE */
-
-#if defined(CONFIG_BT_DEVICE_APPEARANCE_GATT_WRITABLE)
-	#define GAP_APPEARANCE_PROPS (BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE)
-#if defined(CONFIG_DEVICE_APPEARANCE_GATT_WRITABLE_AUTHEN)
-	#define GAP_APPEARANCE_PERMS (BT_GATT_PERM_READ | BT_GATT_PERM_WRITE_AUTHEN)
-#elif defined(CONFIG_BT_DEVICE_APPEARANCE_GATT_WRITABLE_ENCRYPT)
-	#define GAP_APPEARANCE_PERMS (BT_GATT_PERM_READ | BT_GATT_PERM_WRITE_ENCRYPT)
-#else
-	#define GAP_APPEARANCE_PERMS (BT_GATT_PERM_READ | BT_GATT_PERM_WRITE)
-#endif
-	#define GAP_APPEARANCE_WRITE_HANDLER write_appearance
-#else
-	#define GAP_APPEARANCE_PROPS BT_GATT_CHRC_READ
-	#define GAP_APPEARANCE_PERMS BT_GATT_PERM_READ
-	#define GAP_APPEARANCE_WRITE_HANDLER NULL
-#endif
-
 #if defined (CONFIG_BT_GAP_PERIPHERAL_PREF_PARAMS)
 /* This checks if the range entered is valid */
 BUILD_ASSERT(!(CONFIG_BT_PERIPHERAL_PREF_MIN_INT > 3200 &&
@@ -195,72 +102,7 @@ BUILD_ASSERT((CONFIG_BT_PERIPHERAL_PREF_MIN_INT == 0xffff) ||
 BUILD_ASSERT((CONFIG_BT_PERIPHERAL_PREF_TIMEOUT * 4U) >
 	     ((1U + CONFIG_BT_PERIPHERAL_PREF_LATENCY) *
 	      CONFIG_BT_PERIPHERAL_PREF_MAX_INT));
-
-static ssize_t read_ppcp(struct bt_conn *conn, const struct bt_gatt_attr *attr,
-			 void *buf, uint16_t len, uint16_t offset)
-{
-	struct __packed {
-		uint16_t min_int;
-		uint16_t max_int;
-		uint16_t latency;
-		uint16_t timeout;
-	} ppcp;
-
-	ppcp.min_int = sys_cpu_to_le16(CONFIG_BT_PERIPHERAL_PREF_MIN_INT);
-	ppcp.max_int = sys_cpu_to_le16(CONFIG_BT_PERIPHERAL_PREF_MAX_INT);
-	ppcp.latency = sys_cpu_to_le16(CONFIG_BT_PERIPHERAL_PREF_LATENCY);
-	ppcp.timeout = sys_cpu_to_le16(CONFIG_BT_PERIPHERAL_PREF_TIMEOUT);
-
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, &ppcp,
-				 sizeof(ppcp));
-}
 #endif
-
-#if defined(CONFIG_BT_CENTRAL) && defined(CONFIG_BT_PRIVACY)
-static ssize_t read_central_addr_res(struct bt_conn *conn,
-				     const struct bt_gatt_attr *attr, void *buf,
-				     uint16_t len, uint16_t offset)
-{
-	uint8_t central_addr_res = BT_GATT_CENTRAL_ADDR_RES_SUPP;
-
-	return bt_gatt_attr_read(conn, attr, buf, len, offset,
-				 &central_addr_res, sizeof(central_addr_res));
-}
-#endif /* CONFIG_BT_CENTRAL && CONFIG_BT_PRIVACY */
-
-BT_GATT_SERVICE_DEFINE(_2_gap_svc,
-	BT_GATT_PRIMARY_SERVICE(BT_UUID_GAP),
-#if defined(CONFIG_BT_DEVICE_NAME_GATT_WRITABLE)
-	/* Require pairing for writes to device name */
-	BT_GATT_CHARACTERISTIC(BT_UUID_GAP_DEVICE_NAME,
-			       BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE,
-			       BT_GATT_PERM_READ |
-#if defined(CONFIG_DEVICE_NAME_GATT_WRITABLE_AUTHEN)
-			       BT_GATT_PERM_WRITE_AUTHEN,
-#elif defined(CONFIG_DEVICE_NAME_GATT_WRITABLE_ENCRYPT)
-			       BT_GATT_PERM_WRITE_ENCRYPT,
-#else
-			       BT_GATT_PERM_WRITE,
-#endif
-			       read_name, write_name, bt_dev.name),
-#else
-	BT_GATT_CHARACTERISTIC(BT_UUID_GAP_DEVICE_NAME, BT_GATT_CHRC_READ,
-			       BT_GATT_PERM_READ, read_name, NULL, NULL),
-#endif /* CONFIG_BT_DEVICE_NAME_GATT_WRITABLE */
-	BT_GATT_CHARACTERISTIC(BT_UUID_GAP_APPEARANCE, GAP_APPEARANCE_PROPS,
-			       GAP_APPEARANCE_PERMS, read_appearance,
-			       GAP_APPEARANCE_WRITE_HANDLER, NULL),
-#if defined(CONFIG_BT_CENTRAL) && defined(CONFIG_BT_PRIVACY)
-	BT_GATT_CHARACTERISTIC(BT_UUID_CENTRAL_ADDR_RES,
-			       BT_GATT_CHRC_READ, BT_GATT_PERM_READ,
-			       read_central_addr_res, NULL, NULL),
-#endif /* CONFIG_BT_CENTRAL && CONFIG_BT_PRIVACY */
-#if defined(CONFIG_BT_GAP_PERIPHERAL_PREF_PARAMS)
-	BT_GATT_CHARACTERISTIC(BT_UUID_GAP_PPCP, BT_GATT_CHRC_READ,
-			       BT_GATT_PERM_READ, read_ppcp, NULL, NULL),
-#endif
-);
-
 struct sc_data {
 	uint16_t start;
 	uint16_t end;
@@ -1350,7 +1192,7 @@ static void sc_process(struct bt_work *work)
 	struct gatt_sc *sc = CONTAINER_OF(dwork, struct gatt_sc, work);
 	uint16_t sc_range[2];
 
-	__ASSERT_MSG(!bt_atomic_test_bit(sc->flags, SC_INDICATE_PENDING),
+	__ASSERT(!bt_atomic_test_bit(sc->flags, SC_INDICATE_PENDING),
 		 "Indicate already pending");
 
 	LOG_DBG("start 0x%04x end 0x%04x", sc->start, sc->end);
@@ -1462,7 +1304,7 @@ static void gatt_delayed_store_enqueue(uint8_t id, const bt_addr_le_t *peer_addr
 	if (bonded) {
 		if (el == NULL) {
 			el = gatt_delayed_store_alloc(id, peer_addr);
-			__ASSERT_MSG(el != NULL, "Can't save CF / CCC to flash");
+			__ASSERT(el != NULL, "Can't save CF / CCC to flash");
 		}
 
 		bt_atomic_set_bit(el->flags, flag);
@@ -1612,6 +1454,19 @@ void bt_gatt_cb_register(struct bt_gatt_cb *cb)
 	bt_slist_append(&callback_list, &cb->node);
 }
 
+int bt_gatt_cb_unregister(struct bt_gatt_cb *cb)
+{
+	if (cb == NULL) {
+		return -EINVAL;
+	}
+
+	if (!bt_slist_find_and_remove(&callback_list, &cb->node)) {
+		return -ENOENT;
+	}
+
+	return 0;
+}
+
 #if defined(CONFIG_BT_GATT_DYNAMIC_DB)
 static void db_changed(void)
 {
@@ -1715,9 +1570,9 @@ int bt_gatt_service_register(struct bt_gatt_service *svc)
 {
 	int err;
 
-	__ASSERT_MSG(svc, "invalid parameters\n");
-	__ASSERT_MSG(svc->attrs, "invalid parameters\n");
-	__ASSERT_MSG(svc->attr_count, "invalid parameters\n");
+	__ASSERT(svc, "invalid parameters\n");
+	__ASSERT(svc->attrs, "invalid parameters\n");
+	__ASSERT(svc->attr_count, "invalid parameters\n");
 
 	if (IS_ENABLED(CONFIG_BT_SETTINGS) &&
 	    bt_atomic_test_bit(gatt_flags, GATT_INITIALIZED) &&
@@ -1765,7 +1620,7 @@ int bt_gatt_service_unregister(struct bt_gatt_service *svc)
 	uint16_t sc_end_handle;
 	int err;
 
-	__ASSERT_MSG(svc, "invalid parameters\n");
+	__ASSERT(svc, "invalid parameters\n");
 
 	/* gatt_unregister() clears handles when those were auto-assigned
 	 * by host
@@ -1917,7 +1772,7 @@ ssize_t bt_gatt_attr_read_included(struct bt_conn *conn,
 				   void *buf, uint16_t len, uint16_t offset)
 {
 	if ((attr == NULL) || (attr->user_data == NULL)) {
-		return -EINVAL;
+		return BT_GATT_ERR(BT_ATT_ERR_UNLIKELY);
 	}
 
 	struct bt_gatt_attr *incl = attr->user_data;
@@ -1964,6 +1819,7 @@ uint16_t bt_gatt_attr_value_handle(const struct bt_gatt_attr *attr)
 
 		handle = chrc->value_handle;
 		if (handle == 0) {
+			/* Fall back to Zephyr value handle policy */
 			handle = bt_gatt_attr_get_handle(attr) + 1U;
 		}
 	}
@@ -2896,8 +2752,8 @@ int bt_gatt_notify_cb(struct bt_conn *conn,
 {
 	struct notify_data data;
 
-	__ASSERT_MSG(params, "invalid parameters\n");
-	__ASSERT_MSG(params->attr || params->uuid, "invalid parameters\n");
+	__ASSERT(params, "invalid parameters\n");
+	__ASSERT(params->attr || params->uuid, "invalid parameters\n");
 
 	if (!bt_atomic_test_bit(bt_dev.flags, BT_DEV_READY)) {
 		return -EAGAIN;
@@ -2953,17 +2809,17 @@ static int gatt_notify_multiple_verify_args(struct bt_conn *conn,
 					    struct bt_gatt_notify_params params[],
 					    uint16_t num_params)
 {
-	__ASSERT_MSG(params, "invalid parameters\n");
-	__ASSERT_MSG(params->attr, "invalid parameters\n");
+	__ASSERT(params, "invalid parameters\n");
+	__ASSERT(params->attr, "invalid parameters\n");
 
-	CHECKIF(num_params < 2) {
+	if (num_params < 2) {
 		/* Use the standard notification API when sending only one
 		 * notification.
 		 */
 		return -EINVAL;
 	}
 
-	CHECKIF(conn == NULL) {
+	if (conn == NULL) {
 		/* Use the standard notification API to send to all connected
 		 * peers.
 		 */
@@ -3121,8 +2977,8 @@ int bt_gatt_indicate(struct bt_conn *conn,
 {
 	struct notify_data data;
 
-	__ASSERT_MSG(params, "invalid parameters\n");
-	__ASSERT_MSG(params->attr || params->uuid, "invalid parameters\n");
+	__ASSERT(params, "invalid parameters\n");
+	__ASSERT(params->attr || params->uuid, "invalid parameters\n");
 
 	if (!bt_atomic_test_bit(bt_dev.flags, BT_DEV_READY)) {
 		return -EAGAIN;
@@ -3468,8 +3324,8 @@ bool bt_gatt_is_subscribed(struct bt_conn *conn,
 	uint8_t ccc_bits_encoded[sizeof(ccc_bits)];
 	ssize_t len;
 
-	__ASSERT_MSG(conn, "invalid parameter\n");
-	__ASSERT_MSG(attr, "invalid parameter\n");
+	__ASSERT(conn, "invalid parameter\n");
+	__ASSERT(attr, "invalid parameter\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return false;
@@ -3483,7 +3339,7 @@ bool bt_gatt_is_subscribed(struct bt_conn *conn,
 			LOG_ERR("Read method not set");
 			return false;
 		}
-		/* The characterstic properties is the first byte of the attribute value */
+		/* The characteristic properties is the first byte of the attribute value */
 		len = attr->read(NULL, attr, &properties, sizeof(properties), 0);
 		if (len < 0) {
 			LOG_ERR("Failed to read attribute %p (err %zd)", attr, len);
@@ -3499,13 +3355,13 @@ bool bt_gatt_is_subscribed(struct bt_conn *conn,
 		}
 
 		attr = bt_gatt_attr_next(attr);
-		__ASSERT_MSG(attr, "No more attributes\n");
+		__ASSERT(attr, "No more attributes\n");
 	}
 
 	/* Check if attribute is a characteristic value */
 	if (bt_uuid_cmp(attr->uuid, BT_UUID_GATT_CCC) != 0) {
 		attr = bt_gatt_attr_next(attr);
-		__ASSERT_MSG(attr, "No more attributes\n");
+		__ASSERT(attr, "No more attributes\n");
 	}
 
 	/* Find the CCC Descriptor */
@@ -3792,8 +3648,8 @@ int bt_gatt_exchange_mtu(struct bt_conn *conn,
 {
 	int err;
 
-	__ASSERT_MSG(conn, "invalid parameter\n");
-	__ASSERT_MSG(params && params->func, "invalid parameters\n");
+	__ASSERT(conn, "invalid parameter\n");
+	__ASSERT(params && params->func, "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -4693,11 +4549,11 @@ static int gatt_find_info(struct bt_conn *conn,
 int bt_gatt_discover(struct bt_conn *conn,
 		     struct bt_gatt_discover_params *params)
 {
-	__ASSERT_MSG(conn, "invalid parameters\n");
-	__ASSERT_MSG(params && params->func, "invalid parameters\n");
-	__ASSERT_MSG((params->start_handle && params->end_handle),
+	__ASSERT(conn, "invalid parameters\n");
+	__ASSERT(params && params->func, "invalid parameters\n");
+	__ASSERT((params->start_handle && params->end_handle),
 		 "invalid parameters\n");
-	__ASSERT_MSG((params->start_handle <= params->end_handle),
+	__ASSERT((params->start_handle <= params->end_handle),
 		 "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
@@ -5051,8 +4907,8 @@ static int gatt_read_encode(struct bt_buf *buf, size_t len, void *user_data)
 
 int bt_gatt_read(struct bt_conn *conn, struct bt_gatt_read_params *params)
 {
-	__ASSERT_MSG(conn, "invalid parameters\n");
-	__ASSERT_MSG(params && params->func, "invalid parameters\n");
+	__ASSERT(conn, "invalid parameters\n");
+	__ASSERT(params && params->func, "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -5100,8 +4956,8 @@ int bt_gatt_write_without_response_cb(struct bt_conn *conn, uint16_t handle,
 	struct bt_att_write_cmd *cmd;
 	__maybe_unused size_t write;
 
-	__ASSERT_MSG(conn, "invalid parameters\n");
-	__ASSERT_MSG(handle, "invalid parameters\n");
+	__ASSERT(conn, "invalid parameters\n");
+	__ASSERT(handle, "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -5129,7 +4985,7 @@ int bt_gatt_write_without_response_cb(struct bt_conn *conn, uint16_t handle,
 	cmd->handle = sys_cpu_to_le16(handle);
 
 	write = bt_buf_append_bytes(buf, length, data, OS_TIMEOUT_NO_WAIT, NULL, NULL);
-	__ASSERT_MSG(write == length, "Unable to allocate length %u: only %zu written", length, write);
+	__ASSERT(write == length, "Unable to allocate length %u: only %zu written", length, write);
 
 	LOG_DBG("handle 0x%04x length %u", handle, length);
 
@@ -5317,9 +5173,9 @@ int bt_gatt_write(struct bt_conn *conn, struct bt_gatt_write_params *params)
 {
 	size_t len;
 
-	__ASSERT_MSG(conn, "invalid parameters\n");
-	__ASSERT_MSG(params && params->func, "invalid parameters\n");
-	__ASSERT_MSG(params->handle, "invalid parameters\n");
+	__ASSERT(conn, "invalid parameters\n");
+	__ASSERT(params && params->func, "invalid parameters\n");
+	__ASSERT(params->handle, "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -5479,15 +5335,15 @@ int bt_gatt_subscribe(struct bt_conn *conn,
 	struct bt_gatt_subscribe_params *tmp;
 	bool has_subscription = false;
 
-	__ASSERT_MSG(conn, "invalid parameters\n");
-	__ASSERT_MSG(params && params->notify,  "invalid parameters\n");
-	__ASSERT_MSG(params->value, "invalid parameters\n");
+	__ASSERT(conn, "invalid parameters\n");
+	__ASSERT(params && params->notify,  "invalid parameters\n");
+	__ASSERT(params->value, "invalid parameters\n");
 #if defined(CONFIG_BT_GATT_AUTO_DISCOVER_CCC)
-	__ASSERT_MSG(params->ccc_handle ||
+	__ASSERT(params->ccc_handle ||
 		 (params->end_handle && params->disc_params),
 		 "invalid parameters\n");
 #else
-	__ASSERT_MSG(params->ccc_handle, "invalid parameters\n");
+	__ASSERT(params->ccc_handle, "invalid parameters\n");
 #endif
 
 	if (conn->state != BT_CONN_CONNECTED) {
@@ -5552,9 +5408,9 @@ int bt_gatt_resubscribe(uint8_t id, const bt_addr_le_t *peer,
 	struct gatt_sub *sub;
 	struct bt_gatt_subscribe_params *tmp;
 
-	__ASSERT_MSG(params && params->notify,  "invalid parameters\n");
-	__ASSERT_MSG(params->value, "invalid parameters\n");
-	__ASSERT_MSG(params->ccc_handle, "invalid parameters\n");
+	__ASSERT(params && params->notify,  "invalid parameters\n");
+	__ASSERT(params->value, "invalid parameters\n");
+	__ASSERT(params->ccc_handle, "invalid parameters\n");
 
 	sub = gatt_sub_add_by_addr(id, peer);
 	if (!sub) {
@@ -5581,8 +5437,8 @@ int bt_gatt_unsubscribe(struct bt_conn *conn,
 	struct bt_gatt_subscribe_params *tmp;
 	bool has_subscription = false, found = false;
 
-	__ASSERT_MSG(conn, "invalid parameters\n");
-	__ASSERT_MSG(params, "invalid parameters\n");
+	__ASSERT(conn, "invalid parameters\n");
+	__ASSERT(params, "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -5927,7 +5783,7 @@ static int ccc_set_direct(const char *key, size_t len, bt_storage_read_cb read_c
 		LOG_DBG("key: %s", (const char *)param);
 
 		/* Only "bt/ccc" settings should ever come here */
-		if (!bt_storage_name_steq((const char *)param, "bt/ccc", &name)) {
+		if (!settings_name_steq((const char *)param, "bt/ccc", &name)) {
 			LOG_ERR("Invalid key");
 			return -EINVAL;
 		}
@@ -6006,9 +5862,9 @@ void bt_gatt_connected(struct bt_conn *conn)
 
 void bt_gatt_att_max_mtu_changed(struct bt_conn *conn, uint16_t tx, uint16_t rx)
 {
-	struct bt_gatt_cb *cb;
+	struct bt_gatt_cb *cb, *tmp;
 
-	BT_SLIST_FOR_EACH_CONTAINER(&callback_list, cb, node) {
+	BT_SLIST_FOR_EACH_CONTAINER_SAFE(&callback_list, cb, tmp, node) {
 		if (cb->att_mtu_updated) {
 			cb->att_mtu_updated(conn, tx, rx);
 		}
@@ -6139,7 +5995,7 @@ static uint8_t ccc_save(const struct bt_gatt_attr *attr, uint16_t handle,
 
 	LOG_DBG("Storing CCCs handle 0x%04x value 0x%04x", handle, cfg->value);
 
-	CHECKIF(save->count >= CCC_STORE_MAX) {
+	if (save->count >= CCC_STORE_MAX) {
 		LOG_ERR("Too many Client Characteristic Configuration. "
 				"See CONFIG_BT_SETTINGS_CCC_STORE_MAX\n");
 		return BT_GATT_ITER_STOP;

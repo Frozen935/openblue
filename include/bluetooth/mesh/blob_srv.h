@@ -6,7 +6,6 @@
 
 #ifndef __INCLUDE_BLUETOOTH_MESH_BLOB_SRV_H__
 #define __INCLUDE_BLUETOOTH_MESH_BLOB_SRV_H__
-
 #include <bluetooth/mesh/access.h>
 #include <bluetooth/mesh/blob.h>
 
@@ -134,7 +133,7 @@ struct bt_mesh_blob_srv {
 
 	/* Runtime state: */
 	const struct bt_mesh_blob_io *io;
-	struct bt_work_delayable rx_timeout;
+	struct k_work_delayable rx_timeout;
 	struct bt_mesh_blob_block block;
 	const struct bt_mesh_model *mod;
 	enum bt_mesh_blob_xfer_phase phase;
@@ -154,7 +153,7 @@ struct bt_mesh_blob_srv {
 	/* Pull mode (Pull BLOB Transfer Mode) behavior. */
 	struct {
 		uint16_t chunk_idx;
-		struct bt_work_delayable report;
+		struct k_work_delayable report;
 	} pull;
 };
 

@@ -14,6 +14,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
+#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 
@@ -340,13 +341,13 @@ int bt_gmap_register(enum bt_gmap_role role, struct bt_gmap_feat features)
 {
 	int err;
 
-	CHECKIF(!valid_gmap_role(role)) {
+	if (!valid_gmap_role(role)) {
 		LOG_DBG("Invalid role: %d", role);
 
 		return -EINVAL;
 	}
 
-	CHECKIF(!valid_gmap_features(role, features)) {
+	if (!valid_gmap_features(role, features)) {
 		LOG_DBG("Invalid features");
 
 		return -EINVAL;
@@ -377,13 +378,13 @@ int bt_gmap_set_role(enum bt_gmap_role role, struct bt_gmap_feat features)
 		return -ENOEXEC;
 	}
 
-	CHECKIF(!valid_gmap_role(role)) {
+	if (!valid_gmap_role(role)) {
 		LOG_DBG("Invalid role: %d", role);
 
 		return -EINVAL;
 	}
 
-	CHECKIF(!valid_gmap_features(role, features)) {
+	if (!valid_gmap_features(role, features)) {
 		LOG_DBG("Invalid features");
 
 		return -EINVAL;

@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_AUDIO_MCC_
-#define __INCLUDE_BLUETOOTH_AUDIO_MCC_
+#ifndef __INCLUDE_BLUETOOTH_AUDIO_MCC_H__
+#define __INCLUDE_BLUETOOTH_AUDIO_MCC_H__
 
 /**
  * @brief Bluetooth Media Control Client (MCC) interface
@@ -30,6 +30,7 @@
 #include <stdbool.h>
 
 #include <bluetooth/conn.h>
+#include <bluetooth/buf.h>
 #include <bluetooth/audio/media_proxy.h>
 
 #ifdef __cplusplus
@@ -998,4 +999,4 @@ struct bt_ots_client *bt_mcc_otc_inst(struct bt_conn *conn);
  * @}
  */
 
-#endif /* __INCLUDE_BLUETOOTH_AUDIO_MCC__ */
+#endif /* __INCLUDE_BLUETOOTH_AUDIO_MCC_H__ */

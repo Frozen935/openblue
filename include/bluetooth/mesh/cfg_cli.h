@@ -9,7 +9,6 @@
  */
 #ifndef __INCLUDE_BLUETOOTH_MESH_CFG_CLI_H__
 #define __INCLUDE_BLUETOOTH_MESH_CFG_CLI_H__
-
 /**
  * @brief Configuration Client Model
  * @defgroup bt_mesh_cfg_cli Configuration Client Model
@@ -28,6 +27,7 @@ struct bt_mesh_cfg_cli;
 struct bt_mesh_cfg_cli_hb_pub;
 struct bt_mesh_cfg_cli_hb_sub;
 struct bt_mesh_cfg_cli_mod_pub;
+struct bt_buf_simple;
 
 /** Mesh Configuration Client Status messages callback */
 struct bt_mesh_cfg_cli_cb {

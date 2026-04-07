@@ -12,7 +12,6 @@
 
 #include <stddef.h>
 
-
 #include <bluetooth/mesh/keys.h>
 #include <bluetooth/mesh/msg.h>
 #include <bluetooth/mesh/access.h>

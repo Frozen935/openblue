@@ -732,9 +732,9 @@ static int handle_status(const struct bt_mesh_model *mod, struct bt_mesh_msg_ctx
 			rsp->blob_id = 0U;
 			rsp->img_idx = 0U;
 		}
-			os_sem_give(&cli->req.sem);
-		}
-
+		os_sem_give(&cli->req.sem);
+	}
+	if (cli->op != BT_MESH_DFU_OP_UPDATE_STATUS) {
 		return 0;
 	}
 

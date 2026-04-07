@@ -748,7 +748,7 @@ static int32_t next_period(const struct bt_mesh_model *mod)
 	uint32_t period = 0;
 	uint32_t elapsed;
 
-	elapsed = k_uptime_get_32() - pub->period_start;
+	elapsed = os_time_get_32() - pub->period_start;
 	LOG_DBG("Publishing took %ums", elapsed);
 
 	if (mod->pub->count) {
@@ -799,7 +799,7 @@ static void publish_sent(int err, void *user_data)
 	const struct bt_mesh_model *mod = user_data;
 	int32_t delay;
 
-	LOG_DBG("err %d, time %u", err, k_uptime_get_32());
+	LOG_DBG("err %d, time %u", err, os_time_get_32());
 
 	delay = next_period(mod);
 
@@ -854,7 +854,7 @@ static int pub_period_start(struct bt_mesh_model_pub *pub)
 
 	err = pub->update(pub->mod);
 
-	pub->period_start = k_uptime_get_32();
+	pub->period_start = os_time_get_32();
 
 	if (err) {
 		/* Skip this publish attempt. */
@@ -916,7 +916,7 @@ static void mod_publish(struct bt_work *work)
 		return;
 	}
 
-	LOG_DBG("timestamp: %u", k_uptime_get_32());
+	LOG_DBG("timestamp: %u", os_time_get_32());
 
 	if (pub->count) {
 		pub->count--;
@@ -984,7 +984,6 @@ const struct bt_mesh_model *bt_mesh_model_get(bool vnd, uint8_t elem_idx, uint8_
 	}
 }
 
-#if defined(CONFIG_BT_MESH_MODEL_VND_MSG_CID_FORCE)
 static int bt_mesh_vnd_mod_msg_cid_check(const struct bt_mesh_model *mod)
 {
 	uint16_t cid;
@@ -993,7 +992,7 @@ static int bt_mesh_vnd_mod_msg_cid_check(const struct bt_mesh_model *mod)
 	for (op = mod->op; op->func; op++) {
 		cid = (uint16_t)(op->opcode & 0xffff);
 
-		if (cid == mod->vnd.company) {
+		if (BT_MESH_MODEL_OP_LEN(op->opcode) == 3 && cid == mod->vnd.company) {
 			continue;
 		}
 
@@ -1006,7 +1005,6 @@ static int bt_mesh_vnd_mod_msg_cid_check(const struct bt_mesh_model *mod)
 
 	return 0;
 }
-#endif
 
 static void mod_init(const struct bt_mesh_model *mod, const struct bt_mesh_elem *elem,
 		     bool vnd, bool primary, void *user_data)
@@ -1382,38 +1380,12 @@ static bool model_has_dst(const struct bt_mesh_model *mod, uint16_t dst, const u
 	return mod->rt->elem_idx == 0;
 }
 
-static const struct bt_mesh_model_op *find_op(const struct bt_mesh_elem *elem,
-					      uint32_t opcode, const struct bt_mesh_model **model)
+static const struct bt_mesh_model_op *find_op_in_list(const struct bt_mesh_model *models,
+						      uint8_t model_count, uint32_t opcode,
+						      const struct bt_mesh_model **model)
 {
-	uint8_t i;
-	uint8_t count;
-	/* This value shall not be used in shipping end products. */
-	uint32_t cid = UINT32_MAX;
-	const struct bt_mesh_model *models;
-
-	/* SIG models cannot contain 3-byte (vendor) OpCodes, and
-	 * vendor models cannot contain SIG (1- or 2-byte) OpCodes, so
-	 * we only need to do the lookup in one of the model lists.
-	 */
-	if (BT_MESH_MODEL_OP_LEN(opcode) < 3) {
-		models = elem->models;
-		count = elem->model_count;
-	} else {
-		models = elem->vnd_models;
-		count = elem->vnd_model_count;
-
-		cid = (uint16_t)(opcode & 0xffff);
-	}
-
-	for (i = 0U; i < count; i++) {
-
+	for (uint8_t i = 0U; i < model_count; i++) {
 		const struct bt_mesh_model_op *op;
-
-		if (IS_ENABLED(CONFIG_BT_MESH_MODEL_VND_MSG_CID_FORCE) &&
-		     cid != UINT32_MAX &&
-		     cid != models[i].vnd.company) {
-			continue;
-		}
 
 		*model = &models[i];
 
@@ -1426,6 +1398,20 @@ static const struct bt_mesh_model_op *find_op(const struct bt_mesh_elem *elem,
 
 	*model = NULL;
 	return NULL;
+}
+
+static const struct bt_mesh_model_op *find_op(const struct bt_mesh_elem *elem,
+					      uint32_t opcode, const struct bt_mesh_model **model)
+{
+	const struct bt_mesh_model_op *op;
+
+	op = find_op_in_list(elem->vnd_models, elem->vnd_model_count, opcode, model);
+
+	if (op != NULL || BT_MESH_MODEL_OP_LEN(opcode) == 3) {
+		return op;
+	}
+
+	return find_op_in_list(elem->models, elem->model_count, opcode, model);
 }
 
 static int get_opcode(struct bt_buf_simple *buf, uint32_t *opcode)
@@ -1637,7 +1623,7 @@ int bt_mesh_model_publish(const struct bt_mesh_model *model)
 
 	/* Account for initial transmission */
 	pub->count = BT_MESH_PUB_MSG_TOTAL(pub);
-	pub->period_start = k_uptime_get_32();
+	pub->period_start = os_time_get_32();
 
 	LOG_DBG("Publish Retransmit Count %u Interval %ums", pub->count,
 		BT_MESH_PUB_TRANSMIT_INT(pub->retransmit));
@@ -2477,8 +2463,13 @@ int bt_mesh_model_data_store(const struct bt_mesh_model *mod, bool vnd,
 
 	encode_mod_path(mod, vnd, "data", path, sizeof(path));
 	if (name) {
+		size_t path_len;
+		size_t rem;
+
 		strcat(path, "/");
-		strncat(path, name, SETTINGS_MAX_DIR_DEPTH);
+		path_len = strlen(path);
+		rem = (sizeof(path) > (path_len + 1U)) ? (sizeof(path) - path_len - 1U) : 0U;
+		strncat(path, name, rem);
 	}
 
 	if (data_len) {

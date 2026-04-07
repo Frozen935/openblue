@@ -93,6 +93,10 @@
 #define __UTIL_DO_CONCAT(x, y) x##y
 #define UTIL_CONCAT(x, y)      __UTIL_DO_CONCAT(x, y)
 
+#ifndef _CONCAT
+#define _CONCAT(x, y) UTIL_CONCAT(x, y)
+#endif
+
 #define __UTILS_STRINGIFY(x) #x
 #define UTILS_STRINGIFY(s) __UTILS_STRINGIFY(s)
 

@@ -1,0 +1,297 @@
+# Bluetooth logging configuration options
+
+# Copyright (c) 2023 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+config BT_LOG
+	# convenience symbol, _no touchy_
+	bool
+	default y if LOG && BT
+
+if BT_LOG
+
+menu "Bluetooth logging"
+
+# (subsys/bluetooth/Kconfig)
+
+
+# Set BT as the parent module for all the symbols that will use
+# `Kconfig.template.log_config_inherit`. This is more convenient to do it here
+# instead of setting it for every modules.
+#
+# The downside of doing that is that people need to be careful when adding a new
+# parent module because  all the following symbol will use it.
+
+# COMMON (subsys/bluetooth/common/Kconfig)
+
+menu "Common"
+
+endmenu # Common
+
+menu "Libraries"
+
+if BT_EAD
+endif # BT_EAD
+
+if BT_CRYPTO
+endif # BT_CRYPTO
+
+endmenu # Libraries
+
+if BT_HCI_HOST
+menu "Host"
+
+
+
+if BT_DF
+endif # BT_DF
+
+if BT_SETTINGS
+endif # BT_SETTINGS
+
+
+if BT_CONN
+endif # BT_CONN
+
+if BT_ISO
+endif # BT_ISO
+
+
+if BT_SMP
+endif # BT_SMP
+
+endmenu # LE Host
+endif # BT_HCI_HOST
+
+if BT_AUDIO
+menu "Audio"
+
+if BT_AICS
+endif # BT_AICS
+
+if BT_AICS_CLIENT
+endif # BT_AICS_CLIENT
+
+if BT_BAP_STREAM
+endif # BT_BAP_STREAM
+
+if BT_BAP_BASE
+endif # BT_BAP_BASE
+
+if BT_BAP_STREAM
+endif # BT_BAP_STREAM
+
+if BT_ASCS
+endif # BT_ASCS
+
+if BT_BAP_UNICAST_SERVER
+endif # BT_BAP_UNICAST_SERVER
+
+if BT_BAP_UNICAST_CLIENT
+endif # BT_BAP_UNICAST_CLIENT
+
+if BT_BAP_BROADCAST_SOURCE
+endif # BT_BAP_BROADCAST_SOURCE
+
+if BT_BAP_BROADCAST_SINK
+endif # BT_BAP_BROADCAST_SINK
+
+if BT_BAP_SCAN_DELEGATOR
+endif # BT_BAP_SCAN_DELEGATOR
+
+if BT_BAP_BROADCAST_ASSISTANT
+endif # BT_BAP_BROADCAST_ASSISTANT
+
+if BT_BAP_STREAM
+endif # BT_BAP_STREAM
+
+# CAP
+
+if BT_CAP_ACCEPTOR
+endif # BT_CAP_ACCEPTOR
+
+if BT_CAP_INITIATOR
+endif # BT_CAP_INITIATOR
+
+if BT_CAP_COMMANDER
+endif # BT_CAP_COMMANDER
+
+if BT_CAP_HANDOVER
+endif # BT_CAP_HANDOVER
+
+if BT_AUDIO
+endif # BT_AUDIO
+
+if BT_CAP
+endif # BT_CAP
+
+# CSIP
+
+if BT_CSIP_SET_MEMBER
+endif # BT_CSIP_SET_MEMBER
+
+if BT_CSIP_SET_COORDINATOR
+endif # BT_CSIP_SET_COORDINATOR
+
+if BT_AUDIO
+endif # BT_AUDIO
+
+# HAS
+
+if BT_HAS
+endif # BT_HAS
+
+if BT_HAS_CLIENT
+endif # BT_HAS_CLIENT
+
+# MCS
+
+if BT_MCS
+endif # BT_MCS
+
+if BT_MCC
+endif # BT_MCC
+
+# MCTL
+
+if MCTL
+endif # MCTL
+
+# MICP
+
+if BT_MICP_MIC_DEV
+endif # BT_MICP_MIC_DEV
+
+if BT_MICP_MIC_CTLR
+endif # BT_MICP_MIC_CTLR
+
+# MPL
+
+if BT_MPL
+endif # BT_MPL
+
+# PACS
+
+if BT_PACS
+endif # BT_PACS
+
+# TBS
+
+if BT_TBS
+endif # BT_TBS
+
+if BT_TBS_CLIENT
+endif # BT_TBS_CLIENT
+
+# VCP
+
+if BT_VCP_VOL_REND
+endif # BT_VCP_VOL_REND
+
+if BT_VCP_VOL_CTLR
+endif # BT_VCP_VOL_CTLR
+
+# VOCS
+
+if BT_VOCS
+endif # BT_VOCS
+
+if BT_VOCS_CLIENT
+endif # BT_VOCS_CLIENT
+
+# PBP
+
+if BT_PBP
+endif # BT_PBP
+
+endmenu # Audio
+endif # BT_AUDIO
+
+if BT_CLASSIC
+menu "Bluetooth Classic"
+
+
+
+
+
+
+
+
+
+
+
+endmenu # Bluetooth Classic
+endif # BT_CLASSIC
+
+# MESH (subsys/bluetooth/mesh/Kconfig)
+
+if BT_MESH
+menu "Mesh"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+endmenu # Mesh
+endif # BT_MESH
+
+menu "Services"
+
+# BAS
+
+if BT_BAS
+endif # BT_BAS
+
+# CTS
+
+if BT_CTS
+endif # BT_CTS
+
+# HRS
+
+if BT_HRS
+endif # BT_HRS
+
+# TPS
+
+if BT_TPS
+endif # BT_TPS
+
+# IAS
+
+if BT_IAS_CLIENT
+endif # BT_IAS_CLIENT
+
+if BT_IAS
+endif # BT_IAS
+
+# OTS (subsys/bluetooth/services/ots/Kconfig)
+
+if BT_OTS_CLIENT
+endif # BT_OTS_CLIENT
+
+if BT_OTS
+endif # BT_OTS
+
+endmenu # Services
+
+endmenu # Bluetooth logging
+
+endif # BT_LOG

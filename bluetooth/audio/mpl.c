@@ -20,6 +20,10 @@
 #include <bluetooth/services/ots.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
+#include "osdep/os.h"
+#include <bluetooth/buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
 #include "media_proxy_internal.h"
 #include "mcs_internal.h"
@@ -305,7 +309,6 @@ static struct obj_t obj = {
 	.selected_id = 0,
 	.add_type = MPL_OBJ_NONE,
 	.add_track = NULL,
-	.add_group = NULL,
 	.content = BT_BUF_SIMPLE(CONFIG_BT_MPL_MAX_OBJ_SIZE),
 };
 
@@ -712,7 +715,8 @@ static void on_obj_selected(struct bt_ots *ots, struct bt_conn *conn,
 		/* Next track, if the next track has been explicitly set */
 		LOG_DBG("Next Track Object ID");
 		(void)setup_track_object(media_player.next.track);
-	} else if (id == media_player.group->track->next->id) {
+	} else if (media_player.group->track->next != NULL &&
+		   id == media_player.group->track->next->id) {
 		/* Next track, if next track has not been explicitly set */
 		LOG_DBG("Next Track Object ID");
 		(void)setup_track_object(media_player.group->track->next);
@@ -1329,7 +1333,7 @@ static void mpl_set_state(uint8_t state)
 		(void)bt_work_schedule(&media_player.pos_work, TRACK_POS_WORK_DELAY);
 		break;
 	default:
-		__ASSERT_MSG(false, "Invalid state: %u", state);
+		__ASSERT(false, "Invalid state: %u", state);
 	}
 
 	media_player.state = state;

@@ -32,6 +32,7 @@
 #include <bluetooth/audio/aics.h>
 #include <bluetooth/audio/vocs.h>
 #include <bluetooth/conn.h>
+#include <utils/bt_slist.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,7 +81,10 @@ extern "C" {
 #define BT_VCP_STATE_MUTED                     0x01
 /** @} */
 
-/** @brief Opaque Volume Control Service instance. */
+/**
+ * @struct bt_vcp_vol_ctlr
+ * @brief Opaque Volume Control Service instance.
+ */
 struct bt_vcp_vol_ctlr;
 
 /** Register structure for Volume Control Service */

@@ -6,7 +6,6 @@
 
 #ifndef __INCLUDE_BLUETOOTH_SERVICES_IAS_H__
 #define __INCLUDE_BLUETOOTH_SERVICES_IAS_H__
-
 /**
  * @brief Immediate Alert Service (IAS)
  * @defgroup bt_ias Immediate Alert Service (IAS)
@@ -70,7 +69,7 @@ int bt_ias_local_alert_stop(void);
  *  @param _name Name of callback structure.
  */
 #define BT_IAS_CB_DEFINE(_name)                                                                    \
-	static const STRUCT_SECTION_ITERABLE(bt_ias_cb, UTIL_CONCAT(bt_ias_cb_, _name))
+	static const STRUCT_SECTION_ITERABLE(bt_ias_cb, _CONCAT(bt_ias_cb_, _name))
 
 struct bt_ias_client_cb {
 	/** @brief Callback function for bt_ias_discover.

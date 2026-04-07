@@ -181,7 +181,7 @@ static int adv_start(struct bt_mesh_ext_adv *ext_adv,
 		return err;
 	}
 
-	ext_adv->timestamp = k_uptime_get_32();
+	ext_adv->timestamp = os_time_get_32();
 
 	err = bt_le_ext_adv_start(ext_adv->instance, start);
 	if (err) {
@@ -347,7 +347,7 @@ static void send_pending_adv(struct bt_work *work)
 
 	if (bt_atomic_test_and_clear_bit(ext_adv->flags, ADV_FLAG_SENT)) {
 		LOG_DBG("Advertising stopped after %u ms for %s adv",
-			k_uptime_get_32() - ext_adv->timestamp,
+			os_time_get_32() - ext_adv->timestamp,
 			ext_adv->adv ? adv_tag_to_str[ext_adv->adv->ctx.tag]
 				     : adv_tag_to_str[BT_MESH_ADV_TAG_PROXY]);
 
@@ -386,6 +386,9 @@ static bool schedule_send(struct bt_mesh_ext_adv *ext_adv)
 		if (!bt_atomic_test_bit(ext_adv->flags, ADV_FLAG_PROXY)) {
 			return false;
 		}
+	} else if ((bt_work_busy_get(&ext_adv->work) & BT_WORK_QUEUED) &&
+		   !bt_atomic_test_bit(ext_adv->flags, ADV_FLAG_PROXY)) {
+		return false;
 	}
 
 	bt_mesh_wq_submit(&ext_adv->work);

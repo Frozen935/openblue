@@ -6,6 +6,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <base/bt_work.h>
+#include <bt_stack_init.h>
+#include <osdep/os.h>
 
 static struct bt_work_q bt_long_wq;
 
@@ -32,9 +35,9 @@ static int long_wq_init(void)
 	bt_work_queue_init(&bt_long_wq);
 
 	bt_work_queue_start(&bt_long_wq, CONFIG_BT_LONG_WQ_STACK_SIZE,
-			   OS_PRIORITY(CONFIG_BT_LONG_WQ_PRIO), &cfg);
+			    OS_PRIORITY(CONFIG_BT_LONG_WQ_PRIO), &cfg);
 
 	return 0;
 }
 
-STACK_INIT(long_wq_init, STACK_RUN_INIT, CONFIG_BT_LONG_WQ_INIT_PRIO);
+STACK_INIT(long_wq_init, STACK_BASE_INIT, CONFIG_BT_LONG_WQ_INIT_PRIO);

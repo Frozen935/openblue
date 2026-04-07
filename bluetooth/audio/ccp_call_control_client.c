@@ -15,15 +15,16 @@
 #include <bluetooth/audio/ccp.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/hci_types.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 
 
 static bt_slist_t ccp_call_control_client_cbs =
 	BT_SLIST_STATIC_INIT(&ccp_call_control_client_cbs);
 static struct bt_tbs_client_cb tbs_client_cbs;
 
-static struct bt_tbs_client_cb tbs_client_cbs;
-
-/* A service instance can either be a GTBS or a TBS insttance */
+/* A service instance can either be a GTBS or a TBS instance */
 struct bt_ccp_call_control_client_bearer {
 	uint8_t tbs_index;
 	bool discovered;
@@ -73,7 +74,7 @@ get_client_by_bearer(const struct bt_ccp_call_control_client_bearer *bearer)
 
 static struct bt_ccp_call_control_client *get_client_by_conn(const struct bt_conn *conn)
 {
-	__ASSERT_MSG(bt_conn_is_type(conn, BT_CONN_TYPE_LE), "Invalid connection type for %p", conn);
+	__ASSERT(bt_conn_is_type(conn, BT_CONN_TYPE_LE), "Invalid connection type for %p", conn);
 
 	return &clients[bt_conn_index(conn)];
 }
@@ -90,7 +91,7 @@ static void connected_cb(struct bt_conn *conn, uint8_t err)
 		int cb_err;
 
 		cb_err = bt_tbs_client_register_cb(&tbs_client_cbs);
-		__ASSERT_MSG(cb_err == 0, "Failed to register TBS callbacks: %d", cb_err);
+		__ASSERT(cb_err == 0, "Failed to register TBS callbacks: %d", cb_err);
 
 		cbs_registered = true;
 	}
@@ -158,7 +159,7 @@ static void tbs_client_discover_cb(struct bt_conn *conn, int err, uint8_t tbs_co
 			const uint8_t idx = i + (gtbs_found ? 1 : 0);
 
 			if (idx >= ARRAY_SIZE(client->bearers)) {
-				LOG_WRN("Discoverd more TBS instances (%u) than the CCP Call "
+				LOG_WRN("Discovered more TBS instances (%u) than the CCP Call "
 					"Control Client supports %zu",
 					tbs_count, ARRAY_SIZE(client->bearers));
 				break;
@@ -175,7 +176,11 @@ static void tbs_client_discover_cb(struct bt_conn *conn, int err, uint8_t tbs_co
 
 	BT_SLIST_FOR_EACH_CONTAINER_SAFE(&ccp_call_control_client_cbs, listener, next, _node) {
 		if (listener->discover != NULL) {
-			listener->discover(client, err, &bearers);
+			void *user_data =
+				UTIL_COND_CODE(CONFIG_BT_CCP_CALL_CONTROL_CLIENT_CB_USER_DATA,
+					    (listener->user_data), (NULL));
+
+			listener->discover(client, err, &bearers, user_data);
 		}
 	}
 }
@@ -186,13 +191,13 @@ int bt_ccp_call_control_client_discover(struct bt_conn *conn,
 	struct bt_ccp_call_control_client *client;
 	int err;
 
-	CHECKIF(conn == NULL) {
+	if (conn == NULL) {
 		LOG_DBG("conn is NULL");
 
 		return -EINVAL;
 	}
 
-	CHECKIF(out_client == NULL) {
+	if (out_client == NULL) {
 		LOG_DBG("client is NULL");
 
 		return -EINVAL;
@@ -232,7 +237,7 @@ int bt_ccp_call_control_client_discover(struct bt_conn *conn,
 
 int bt_ccp_call_control_client_register_cb(struct bt_ccp_call_control_client_cb *cb)
 {
-	CHECKIF(cb == NULL) {
+	if (cb == NULL) {
 		LOG_DBG("cb is NULL");
 
 		return -EINVAL;
@@ -249,7 +254,7 @@ int bt_ccp_call_control_client_register_cb(struct bt_ccp_call_control_client_cb 
 
 int bt_ccp_call_control_client_unregister_cb(struct bt_ccp_call_control_client_cb *cb)
 {
-	CHECKIF(cb == NULL) {
+	if (cb == NULL) {
 		LOG_DBG("cb is NULL");
 		return -EINVAL;
 	}
@@ -264,12 +269,12 @@ int bt_ccp_call_control_client_unregister_cb(struct bt_ccp_call_control_client_c
 int bt_ccp_call_control_client_get_bearers(struct bt_ccp_call_control_client *client,
 					   struct bt_ccp_call_control_client_bearers *bearers)
 {
-	CHECKIF(client == NULL) {
+	if (client == NULL) {
 		LOG_DBG("client is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(bearers == NULL) {
+	if (bearers == NULL) {
 		LOG_DBG("bearers is NULL");
 		return -EINVAL;
 	}
@@ -300,7 +305,11 @@ static void tbs_client_read_bearer_provider_name_cb(struct bt_conn *conn, int er
 
 	BT_SLIST_FOR_EACH_CONTAINER_SAFE(&ccp_call_control_client_cbs, listener, next, _node) {
 		if (listener->bearer_provider_name != NULL) {
-			listener->bearer_provider_name(bearer, err, name);
+			void *user_data =
+				UTIL_COND_CODE(CONFIG_BT_CCP_CALL_CONTROL_CLIENT_CB_USER_DATA,
+					    (listener->user_data), (NULL));
+
+			listener->bearer_provider_name(bearer, err, name, user_data);
 		}
 	}
 }
@@ -317,7 +326,7 @@ static void tbs_client_read_bearer_provider_name_cb(struct bt_conn *conn, int er
 static int validate_bearer_and_get_client(const struct bt_ccp_call_control_client_bearer *bearer,
 					  struct bt_ccp_call_control_client **client)
 {
-	CHECKIF(bearer == NULL) {
+	if (bearer == NULL) {
 		LOG_DBG("bearer is NULL");
 
 		return -EINVAL;
@@ -370,7 +379,7 @@ int bt_ccp_call_control_client_read_bearer_provider_name(
 		}
 
 		/* Assert if the return value is -EINVAL as that means we are missing a check */
-		__ASSERT_MSG(err != -EINVAL, "err shall not be -EINVAL");
+		__ASSERT(err != -EINVAL, "err shall not be -EINVAL");
 
 		LOG_DBG("Unexpected error from bt_tbs_client_read_bearer_provider_name: %d", err);
 

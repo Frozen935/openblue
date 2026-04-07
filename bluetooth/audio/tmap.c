@@ -17,6 +17,9 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
+#include "osdep/os.h"
+#include <bluetooth/byteorder.h>
+#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 
@@ -206,7 +209,7 @@ int bt_tmap_register(enum bt_tmap_role role)
 {
 	int err;
 
-	CHECKIF(!valid_tmap_role(role)) {
+	if (!valid_tmap_role(role)) {
 		LOG_DBG("Invalid role: %d", role);
 
 		return -EINVAL;

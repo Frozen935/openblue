@@ -72,35 +72,35 @@ static int cmd_set_default_settings(const struct bt_shell *sh, size_t argc, char
 
 	params.enable_initiator_role = bt_shell_strtobool(argv[1], 10, &err);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse input 1, Enable initiator role");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
 	params.enable_reflector_role = bt_shell_strtobool(argv[2], 10, &err);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse input 2, Enable reflector role");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
 	antenna_input = bt_shell_strtoul(argv[3], 16, &err);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse input 3, CS_SYNC antenna selection");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
 	err = check_cs_sync_antenna_selection_input(antenna_input);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("CS_SYNC antenna selection input invalid");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
 	tx_power_input = bt_shell_strtol(argv[4], 10, &err);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse input 4, Max TX power");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
@@ -194,14 +194,14 @@ static int cmd_cs_test_simple(const struct bt_shell *sh, size_t argc, char *argv
 	params.role = bt_shell_strtoul(argv[1], 16, &err);
 
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse input 1, Role selection");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
 	if (params.role != BT_CONN_LE_CS_ROLE_INITIATOR &&
 	    params.role != BT_CONN_LE_CS_ROLE_REFLECTOR) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Role selection input invalid");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
@@ -292,7 +292,7 @@ static int cmd_create_config(const struct bt_shell *sh, size_t argc, char *argv[
 		context = BT_LE_CS_CREATE_CONFIG_CONTEXT_LOCAL_AND_REMOTE;
 	} else {
 		bt_shell_error("Invalid context: %s", argv[2]);
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -302,7 +302,7 @@ static int cmd_create_config(const struct bt_shell *sh, size_t argc, char *argv[
 		params.role = BT_CONN_LE_CS_ROLE_REFLECTOR;
 	} else {
 		bt_shell_error("Invalid role: %s", argv[3]);
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -336,19 +336,19 @@ static int cmd_create_config(const struct bt_shell *sh, size_t argc, char *argv[
 			params.mode = BT_CONN_LE_CS_MAIN_MODE_3_SUB_MODE_2;
 		} else if (!strcmp(argv[j], "steps")) {
 			if (++j == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
 			params.min_main_mode_steps = strtoul(argv[j], NULL, 10);
 			if (++j == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
 			params.max_main_mode_steps = strtoul(argv[j], NULL, 10);
 			if (++j == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
@@ -375,7 +375,7 @@ static int cmd_create_config(const struct bt_shell *sh, size_t argc, char *argv[
 			params.cs_sync_phy = BT_CONN_LE_CS_SYNC_2M_2BT_PHY;
 		} else if (!strcmp(argv[j], "chmap-rep")) {
 			if (++j == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
@@ -390,14 +390,14 @@ static int cmd_create_config(const struct bt_shell *sh, size_t argc, char *argv[
 			params.channel_selection_type = BT_CONN_LE_CS_CHSEL_TYPE_3C;
 		} else if (!strcmp(argv[j], "ch3c-jump")) {
 			if (++j == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
 			params.ch3c_jump = strtoul(argv[j], NULL, 10);
 		} else if (!strcmp(argv[j], "chmap")) {
 			if (++j == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
@@ -408,7 +408,7 @@ static int cmd_create_config(const struct bt_shell *sh, size_t argc, char *argv[
 
 			sys_mem_swap(params.channel_map, 10);
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	}
@@ -452,7 +452,8 @@ static int cmd_read_local_supported_capabilities(const struct bt_shell *sh, size
 		return -ENOEXEC;
 	}
 
-	bt_shell_print(
+	shell_print(
+		sh,
 		"Local channel sounding supported capabilities:\n"
 		"- Num CS configurations: %d\n"
 		"- Max consecutive CS procedures: %d\n"
@@ -595,7 +596,7 @@ static int cmd_set_channel_classification(const struct bt_shell *sh, size_t argc
 		channel_classification[i] = bt_shell_strtoul(argv[1 + i], 16, &err);
 
 		if (err) {
-			bt_shell_help(sh);
+			shell_help(sh);
 			bt_shell_error("Could not parse input %d, Channel Classification[%d]", i,
 				    i);
 
@@ -662,7 +663,7 @@ static int cmd_procedure_enable(const struct bt_shell *sh, size_t argc, char *ar
 	params.config_id = bt_shell_strtoul(argv[1], 16, &err);
 
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse input 1, Config ID");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
@@ -670,7 +671,7 @@ static int cmd_procedure_enable(const struct bt_shell *sh, size_t argc, char *ar
 	params.enable = bt_shell_strtoul(argv[2], 16, &err);
 
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse input 2, Enable");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
@@ -685,7 +686,7 @@ static int cmd_procedure_enable(const struct bt_shell *sh, size_t argc, char *ar
 	return 0;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	cs_cmds,
 	BT_SHELL_CMD_ARG(read_remote_supported_capabilities, NULL, "<None>",
 		      cmd_read_remote_supported_capabilities, 1, 0),
@@ -726,7 +727,7 @@ BT_SHELL_SUBCMD_SET_CREATE(
 static int cmd_cs(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		bt_shell_help(sh);
+		shell_help(sh);
 
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
@@ -736,9 +737,4 @@ static int cmd_cs(const struct bt_shell *sh, size_t argc, char **argv)
 	return -EINVAL;
 }
 
-BT_SHELL_CMD_ARG_DEFINE(cs, &cs_cmds, "Bluetooth CS shell commands", cmd_cs, 1, 1);
-
-int bt_shell_cmd_cs_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &cs);
-}
+BT_SHELL_CMD_ARG_REGISTER(cs, &cs_cmds, "Bluetooth CS shell commands", cmd_cs, 1, 1);

@@ -18,6 +18,8 @@
 #include <bluetooth/l2cap.h>
 #include <bluetooth/iso.h>
 
+#include <base/queue/bt_fifo.h>
+
 #include "common/hci_common_internal.h"
 #include "hci_raw_internal.h"
 #include "monitor.h"
@@ -48,13 +50,8 @@ BT_BUF_POOL_FIXED_DEFINE(hci_iso_pool, CONFIG_BT_ISO_TX_BUF_COUNT,
 			  BT_ISO_SDU_BUF_SIZE(CONFIG_BT_ISO_TX_MTU), 0, NULL);
 #endif /* CONFIG_BT_ISO */
 
-#define BT_HCI_DEV    NULL
-#define BT_HCI_BUS    0
-#define BT_HCI_NAME   ""
-
-
 struct bt_dev_raw bt_dev = {
-	.hci = BT_HCI_DEV,
+	.hci = NULL,
 };
 
 struct bt_buf *bt_buf_get_rx(enum bt_buf_type type, os_timeout_t timeout)
@@ -151,6 +148,21 @@ int bt_hci_recv(const struct bt_hci_transport *transport, struct bt_buf *buf)
 	return 0;
 }
 
+int bt_hci_transport_register(const struct bt_hci_transport *transport)
+{
+	if (transport == NULL) {
+		return -EINVAL;
+	}
+
+	if (bt_hci_is_ready(transport)) {
+		return -EALREADY;
+	}
+
+	bt_dev.hci = transport;
+
+	return 0;
+}
+
 int bt_send(struct bt_buf *buf)
 {
 	if (buf->len == 0) {
@@ -173,12 +185,18 @@ int bt_enable_raw(struct bt_fifo *rx_queue)
 
 	raw_rx = rx_queue;
 
+	if (bt_dev.hci == NULL) {
+		LOG_ERR("No registered HCI transport");
+		return -ENODEV;
+	}
+
 	if (!bt_hci_is_ready(bt_dev.hci)) {
 		LOG_ERR("HCI driver is not ready");
 		return -ENODEV;
 	}
 
-	bt_monitor_new_index(BT_MONITOR_TYPE_PRIMARY, BT_HCI_BUS, BT_ADDR_ANY, BT_HCI_NAME);
+	bt_monitor_new_index(BT_MONITOR_TYPE_PRIMARY, bt_dev.hci->bus, BT_ADDR_ANY,
+			     bt_dev.hci->name);
 
 	err = bt_hci_open(bt_dev.hci, bt_hci_recv);
 	if (err) {
@@ -186,7 +204,7 @@ int bt_enable_raw(struct bt_fifo *rx_queue)
 		return err;
 	}
 
-	LOG_INF("Lower HCI transport: %s", BT_HCI_NAME);
+	LOG_INF("Lower HCI transport: %s", bt_dev.hci->name);
 	LOG_INF("Bluetooth enabled in RAW mode");
 
 	return 0;

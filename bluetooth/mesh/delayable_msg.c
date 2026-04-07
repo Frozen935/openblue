@@ -98,7 +98,7 @@ static void reschedule_delayable_msg(struct delayable_msg_ctx *msg)
 		return;
 	}
 
-	curr_time = k_uptime_get_32();
+	curr_time = os_time_get_32();
 	if (curr_time < pending_msg->fired_time) {
 		delay = OS_MSEC(pending_msg->fired_time - curr_time);
 	}
@@ -265,7 +265,7 @@ int bt_mesh_delayable_msg_manage(struct bt_mesh_msg_ctx *ctx, struct bt_buf_simp
 
 	bt_rand(&random_delay, sizeof(uint16_t));
 	random_delay = 20 + random_delay % (BT_MESH_ADDR_IS_UNICAST(ctx->recv_dst) ? 30 : 480);
-	msg->fired_time = k_uptime_get_32() + random_delay;
+	msg->fired_time = os_time_get_32() + random_delay;
 	msg->ctx = *ctx;
 	msg->src_addr = src_addr;
 	msg->cb = cb;

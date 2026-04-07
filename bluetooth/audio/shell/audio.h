@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2023 Nordic Semiconductor ASA
+ * Copyright (c) 2023-2025 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -21,11 +21,12 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/hci_types.h>
-#include <bluetooth/iso.h>
+#include <base/bt_atomic.h>
+#include <bluetooth/byteorder.h>
+#include <utils/bt_utils.h>
 
 #include "common/bt_shell_private.h"
+#include "host/shell/bt.h"
 
 #define SHELL_PRINT_INDENT_LEVEL_SIZE 2
 #define MAX_CODEC_FRAMES_PER_SDU      4U
@@ -46,17 +47,12 @@ size_t cap_initiator_pa_data_add(struct bt_data *data_array, const size_t data_a
 /* Must guard before including audio.h as audio.h uses Kconfigs guarded by
  * CONFIG_BT_AUDIO
  */
-#include <bluetooth/audio/audio.h>
-#include <bluetooth/audio/bap.h>
-#include <bluetooth/audio/bap_lc3_preset.h>
-#include <bluetooth/audio/cap.h>
 
 unsigned long bap_get_stats_interval(void);
 
 #if defined(CONFIG_LIBLC3)
 #include "lc3.h"
 
-#define USB_SAMPLE_RATE            48000U
 #define LC3_MAX_SAMPLE_RATE        48000U
 #define LC3_MAX_FRAME_DURATION_US  10000U
 #define LC3_MAX_NUM_SAMPLES_MONO   ((LC3_MAX_FRAME_DURATION_US * LC3_MAX_SAMPLE_RATE) /            \
@@ -107,13 +103,6 @@ struct shell_stream {
 			size_t lc3_sdu_cnt;
 			lc3_encoder_mem_48k_t lc3_encoder_mem;
 			lc3_encoder_t lc3_encoder;
-#if defined(CONFIG_USBD_AUDIO2_CLASS)
-			/* Indicates where to read left USB data in the ring buffer */
-			size_t left_read_idx;
-			/* Indicates where to read right USB data in the ring buffer */
-			size_t right_read_idx;
-			size_t right_ring_buf_fail_cnt;
-#endif /* CONFIG_USBD_AUDIO2_CLASS */
 #endif /* CONFIG_LIBLC3 */
 		} tx;
 #endif /* CONFIG_BT_AUDIO_TX */
@@ -144,20 +133,10 @@ const struct named_lc3_preset *bap_get_named_preset(bool is_unicast, enum bt_aud
 size_t bap_get_rx_streaming_cnt(void);
 size_t bap_get_tx_streaming_cnt(void);
 void bap_foreach_stream(void (*func)(struct shell_stream *sh_stream, void *data), void *data);
-
-int bap_usb_init(void);
-
-int bap_usb_add_frame_to_usb(enum bt_audio_location lc3_chan_allocation, const int16_t *frame,
-			     size_t frame_size, uint32_t ts);
-void bap_usb_clear_frames_to_usb(void);
 uint16_t get_next_seq_num(struct bt_bap_stream *bap_stream);
 struct shell_stream *shell_stream_from_bap_stream(struct bt_bap_stream *bap_stream);
 struct bt_bap_stream *bap_stream_from_shell_stream(struct shell_stream *sh_stream);
 struct bt_cap_stream *cap_stream_from_shell_stream(struct shell_stream *sh_stream);
-bool bap_usb_can_get_full_sdu(struct shell_stream *sh_stream);
-void bap_usb_get_frame(struct shell_stream *sh_stream, enum bt_audio_location chan_alloc,
-		       int16_t buffer[]);
-size_t bap_usb_get_frame_size(const struct shell_stream *sh_stream);
 
 struct broadcast_source {
 	bool is_cap;
@@ -167,7 +146,9 @@ struct broadcast_source {
 	};
 	struct bt_audio_codec_cfg codec_cfg;
 	struct bt_bap_qos_cfg qos;
-	uint32_t broadcast_id;
+	uint32_t broadcast_id; /* BT_BAP_INVALID_BROADCAST_ID when not in use */
+	uint8_t addr_type;
+	uint8_t adv_sid; /* BT_GAP_SID_INVALID when not in use */
 };
 
 struct broadcast_sink {
@@ -175,7 +156,6 @@ struct broadcast_sink {
 	struct bt_le_per_adv_sync *pa_sync;
 	uint8_t received_base[UINT8_MAX];
 	uint8_t base_size;
-	uint32_t broadcast_id;
 	size_t stream_cnt;
 	bool syncable;
 };
@@ -186,6 +166,32 @@ struct unicast_group {
 		struct bt_bap_unicast_group *bap_group;
 		struct bt_cap_unicast_group *cap_group;
 	};
+};
+
+struct broadcast_assistant_recv_state {
+	/* Number of receive state on the remote device */
+	uint8_t recv_state_count;
+
+#if defined(CONFIG_BT_BAP_BROADCAST_SOURCE)
+	/* Contains the src_id representing our local default_broadcast */
+	uint8_t default_source_src_id;
+	uint8_t default_source_subgroup_count;
+	bool default_source_big_synced;
+#endif /* CONFIG_BT_BAP_BROADCAST_SOURCE */
+};
+
+struct scan_delegator_sync_state {
+	uint8_t broadcast_code[BT_ISO_BROADCAST_CODE_SIZE];
+	const struct bt_bap_scan_delegator_recv_state *recv_state;
+	struct bt_le_per_adv_sync *pa_sync;
+	struct bt_conn *conn;
+	struct bt_work_delayable pa_timer;
+	uint32_t broadcast_id;
+	uint16_t pa_interval;
+	bool active;
+	bool pa_syncing;
+	bool past_avail;
+	uint8_t src_id;
 };
 
 #define BAP_UNICAST_AC_MAX_CONN   2U
@@ -229,6 +235,20 @@ extern struct named_lc3_preset default_source_preset;
 int cap_ac_unicast(const struct bt_shell *sh, const struct cap_unicast_ac_param *param);
 #endif /* CONFIG_BT_BAP_UNICAST_CLIENT */
 #endif /* CONFIG_BT_BAP_UNICAST */
+
+#if defined(CONFIG_BT_BAP_BROADCAST_ASSISTANT)
+extern struct broadcast_assistant_recv_state broadcast_assistant_recv_states[CONFIG_BT_MAX_CONN];
+#endif /* CONFIG_BT_BAP_BROADCAST_ASSISTANT */
+#if defined(CONFIG_BT_BAP_SCAN_DELEGATOR)
+extern struct scan_delegator_sync_state
+	scan_delegator_sync_states[CONFIG_BT_BAP_SCAN_DELEGATOR_RECV_STATE_COUNT];
+
+struct scan_delegator_sync_state *scan_delegator_sync_state_new(void);
+struct scan_delegator_sync_state *
+scan_delegator_sync_state_get_by_pa(struct bt_le_per_adv_sync *sync);
+struct scan_delegator_sync_state *
+scan_delegator_sync_state_get_by_values(uint32_t broadcast_id, uint8_t addr_type, uint8_t sid);
+#endif /* CONFIG_BT_BAP_SCAN_DELEGATOR */
 
 static inline void print_qos(const struct bt_bap_qos_cfg *qos)
 {

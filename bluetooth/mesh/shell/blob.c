@@ -181,7 +181,7 @@ static int blob_srv_start(struct bt_mesh_blob_srv *srv,
 			  struct bt_mesh_blob_xfer *xfer)
 {
 	bt_shell_print("BLOB start");
-	blob_time = k_uptime_get();
+	blob_time = os_time_get();
 	return 0;
 }
 
@@ -189,7 +189,7 @@ static void blob_srv_end(struct bt_mesh_blob_srv *srv, uint64_t id,
 			 bool success)
 {
 	if (success) {
-		int64_t duration = k_uptime_delta(&blob_time);
+		int64_t duration = os_time_delta(&blob_time);
 
 		bt_shell_print("BLOB completed in %u.%03u s",
 			       (uint32_t)(duration / MSEC_PER_SEC),
@@ -561,7 +561,7 @@ BT_MESH_SHELL_MDL_INSTANCE_CMDS(srv_instance_cmds, BT_MESH_MODEL_ID_BLOB_SRV, mo
 #endif
 
 #if defined(CONFIG_BT_MESH_SHELL_BLOB_CLI)
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	blob_cli_cmds,
 	/* BLOB Client Model Operations */
 	BT_SHELL_CMD_ARG(target, NULL, "<Addr>", cmd_target, 2, 0),
@@ -578,7 +578,7 @@ BT_SHELL_SUBCMD_SET_CREATE(
 #endif
 
 #if defined(CONFIG_BT_MESH_SHELL_BLOB_SRV)
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	blob_srv_cmds,
 	/* BLOB Server Model Operations */
 	BT_SHELL_CMD_ARG(rx, NULL, "<ID> [<TimeoutBase(10s steps)>]", cmd_rx, 2, 1),
@@ -587,7 +587,7 @@ BT_SHELL_SUBCMD_SET_CREATE(
 	BT_SHELL_SUBCMD_SET_END);
 #endif
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	blob_cmds,
 #if defined(CONFIG_BT_MESH_SHELL_BLOB_IO_FLASH)
 	BT_SHELL_CMD_ARG(flash-stream-set, NULL, "<AreaID> [<Offset>]",

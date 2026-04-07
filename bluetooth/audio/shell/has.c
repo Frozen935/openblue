@@ -13,10 +13,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <bluetooth/audio/has.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/conn.h>
-
 #include "common/bt_shell_private.h"
 
 static int preset_select(uint8_t index, bool sync)
@@ -45,13 +41,13 @@ static int cmd_preset_reg(const struct bt_shell *sh, size_t argc, char **argv)
 	};
 
 	if (err < 0) {
-		bt_shell_print("Invalid command parameter (err %d)", err);
+		bt_shell_print(sh, "Invalid command parameter (err %d)", err);
 		return err;
 	}
 
 	err = bt_has_preset_register(&param);
 	if (err < 0) {
-		bt_shell_error("Preset register failed (err %d)", err);
+		bt_shell_error(sh, "Preset register failed (err %d)", err);
 		return err;
 	}
 
@@ -64,13 +60,13 @@ static int cmd_preset_unreg(const struct bt_shell *sh, size_t argc, char **argv)
 	const uint8_t index = bt_shell_strtoul(argv[1], 16, &err);
 
 	if (err < 0) {
-		bt_shell_print("Invalid command parameter (err %d)", err);
+		bt_shell_print(sh, "Invalid command parameter (err %d)", err);
 		return err;
 	}
 
 	err = bt_has_preset_unregister(index);
 	if (err < 0) {
-		bt_shell_print("Preset unregister failed (err %d)", err);
+		bt_shell_print(sh, "Preset unregister failed (err %d)", err);
 		return err;
 	}
 
@@ -107,7 +103,7 @@ static int cmd_features_set(const struct bt_shell *sh, size_t argc, char **argv)
 
 	err = bt_has_features_set(&param);
 	if (err != 0) {
-		bt_shell_error("Could not set features: %d", err);
+		bt_shell_error(sh, "Could not set features: %d", err);
 		return err;
 	}
 
@@ -144,7 +140,7 @@ static int cmd_has_register(const struct bt_shell *sh, size_t argc, char **argv)
 
 	err = bt_has_register(&param);
 	if (err != 0) {
-		bt_shell_error("Could not register HAS: %d", err);
+		bt_shell_error(sh, "Could not register HAS: %d", err);
 		return err;
 	}
 
@@ -156,15 +152,15 @@ struct print_list_entry_data {
 	const struct bt_shell *sh;
 };
 
-static uint8_t print_list_entry(uint8_t index, enum bt_has_properties properties,
-				const char *name, void *user_data)
+static bool print_list_entry(uint8_t index, enum bt_has_properties properties, const char *name,
+			     void *user_data)
 {
 	struct print_list_entry_data *data = user_data;
 
-	bt_shell_print("%d: index 0x%02x prop 0x%02x name %s", ++data->num, index,
+	bt_shell_print(data->sh, "%d: index 0x%02x prop 0x%02x name %s", ++data->num, index,
 		    properties, name);
 
-	return BT_HAS_PRESET_ITER_CONTINUE;
+	return true;
 }
 
 static int cmd_preset_list(const struct bt_shell *sh, size_t argc, char **argv)
@@ -172,11 +168,13 @@ static int cmd_preset_list(const struct bt_shell *sh, size_t argc, char **argv)
 	struct print_list_entry_data data = {
 		.sh = sh,
 	};
+	__maybe_unused int err;
 
-	bt_has_preset_foreach(0, print_list_entry, &data);
+	err = bt_has_preset_foreach(0, print_list_entry, &data);
+	__ASSERT(err == 0, "bt_has_preset_foreach returned %d", err);
 
 	if (data.num == 0) {
-		bt_shell_print("No presets registered");
+		bt_shell_print(sh, "No presets registered");
 	}
 
 	return 0;
@@ -188,13 +186,13 @@ static int cmd_preset_avail(const struct bt_shell *sh, size_t argc, char **argv)
 	const uint8_t index = bt_shell_strtoul(argv[1], 16, &err);
 
 	if (err < 0) {
-		bt_shell_print("Invalid command parameter (err %d)", err);
+		bt_shell_print(sh, "Invalid command parameter (err %d)", err);
 		return err;
 	}
 
 	err = bt_has_preset_available(index);
 	if (err < 0) {
-		bt_shell_print("Preset availability set failed (err %d)", err);
+		bt_shell_print(sh, "Preset availability set failed (err %d)", err);
 		return err;
 	}
 
@@ -207,13 +205,13 @@ static int cmd_preset_unavail(const struct bt_shell *sh, size_t argc, char **arg
 	const uint8_t index = bt_shell_strtoul(argv[1], 16, &err);
 
 	if (err < 0) {
-		bt_shell_print("Invalid command parameter (err %d)", err);
+		bt_shell_print(sh, "Invalid command parameter (err %d)", err);
 		return err;
 	}
 
 	err = bt_has_preset_unavailable(index);
 	if (err < 0) {
-		bt_shell_print("Preset availability set failed (err %d)", err);
+		bt_shell_print(sh, "Preset availability set failed (err %d)", err);
 		return err;
 	}
 
@@ -226,13 +224,13 @@ static int cmd_preset_active_set(const struct bt_shell *sh, size_t argc, char **
 	const uint8_t index = bt_shell_strtoul(argv[1], 16, &err);
 
 	if (err < 0) {
-		bt_shell_print("Invalid command parameter (err %d)", err);
+		bt_shell_print(sh, "Invalid command parameter (err %d)", err);
 		return err;
 	}
 
 	err = bt_has_preset_active_set(index);
 	if (err < 0) {
-		bt_shell_print("Preset selection failed (err %d)", err);
+		bt_shell_print(sh, "Preset selection failed (err %d)", err);
 		return err;
 	}
 
@@ -243,7 +241,7 @@ static int cmd_preset_active_get(const struct bt_shell *sh, size_t argc, char **
 {
 	const uint8_t index = bt_has_preset_active_get();
 
-	bt_shell_print("Active index 0x%02x", index);
+	bt_shell_print(sh, "Active index 0x%02x", index);
 
 	return 0;
 }
@@ -254,7 +252,7 @@ static int cmd_preset_active_clear(const struct bt_shell *sh, size_t argc, char 
 
 	err = bt_has_preset_active_clear();
 	if (err < 0) {
-		bt_shell_print("Preset selection failed (err %d)", err);
+		bt_shell_print(sh, "Preset selection failed (err %d)", err);
 		return err;
 	}
 
@@ -267,13 +265,13 @@ static int cmd_preset_name_set(const struct bt_shell *sh, size_t argc, char **ar
 	const uint8_t index = bt_shell_strtoul(argv[1], 16, &err);
 
 	if (err < 0) {
-		bt_shell_print("Invalid command parameter (err %d)", err);
+		bt_shell_print(sh, "Invalid command parameter (err %d)", err);
 		return err;
 	}
 
 	err = bt_has_preset_name_change(index, argv[2]);
 	if (err < 0) {
-		bt_shell_print("Preset name change failed (err %d)", err);
+		bt_shell_print(sh, "Preset name change failed (err %d)", err);
 		return err;
 	}
 
@@ -283,15 +281,15 @@ static int cmd_preset_name_set(const struct bt_shell *sh, size_t argc, char **ar
 static int cmd_has(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
+		bt_shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
 	} else {
-		bt_shell_error("%s missing subcomand", argv[0]);
+		bt_shell_error(sh, "%s missing subcomand", argv[0]);
 	}
 
 	return -ENOEXEC;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(has_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(has_cmds,
 	BT_SHELL_CMD_ARG(register, NULL,
 		      "Initialize the service and register type "
 		      "[binaural | monaural(default) | banded] [sync] [independent]",
@@ -316,9 +314,4 @@ BT_SHELL_SUBCMD_SET_CREATE(has_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_ARG_DEFINE(has, &has_cmds, "Bluetooth HAS shell commands", cmd_has, 1, 1);
-
-int bt_shell_cmd_has_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &has);
-}
+BT_SHELL_CMD_ARG_REGISTER(has, &has_cmds, "Bluetooth HAS shell commands", cmd_has, 1, 1);

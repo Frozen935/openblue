@@ -7,8 +7,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_AUDIO_GMAP_
-#define __INCLUDE_BLUETOOTH_AUDIO_GMAP_
+#ifndef __INCLUDE_BLUETOOTH_AUDIO_GMAP__H__
+#define __INCLUDE_BLUETOOTH_AUDIO_GMAP__H__
 
 /**
  * @brief Bluetooth Gaming Audio Profile (GMAP)
@@ -23,6 +23,7 @@
  */
 
 #include <bluetooth/conn.h>
+#include <utils/bt_utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -243,4 +244,4 @@ int bt_gmap_set_role(enum bt_gmap_role role, struct bt_gmap_feat features);
 #endif
 /** @} */ /* end of bt_gmap */
 
-#endif /* __INCLUDE_BLUETOOTH_AUDIO_GMAP_ */
+#endif /* __INCLUDE_BLUETOOTH_AUDIO_GMAP__H__ */

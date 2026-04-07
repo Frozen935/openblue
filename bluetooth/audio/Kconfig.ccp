@@ -26,6 +26,12 @@ config BT_CCP_CALL_CONTROL_CLIENT_BEARER_COUNT
 	help
 	  The number of supported telephone bearers on the CCP Call Control Client
 
+config BT_CCP_CALL_CONTROL_CLIENT_CB_USER_DATA
+	bool "Call Control Profile Client support for user_data in callbacks"
+	help
+	  This option enables support for user_data in Call Control Profile Client callbacks.
+
+
 endif # BT_CCP_CALL_CONTROL_CLIENT
 
 config BT_CCP_CALL_CONTROL_SERVER
@@ -52,6 +58,7 @@ config BT_CCP_CALL_CONTROL_SERVER_PROVIDER_NAME_MAX_LENGTH
 	range 1 BT_TBS_MAX_PROVIDER_NAME_LENGTH
 	help
 	  Sets the maximum length of the bearer provider name.
+
 
 endif # BT_CCP_CALL_CONTROL_SERVER
 

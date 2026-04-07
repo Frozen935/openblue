@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -35,7 +36,9 @@
 
 #include "audio/shell/audio.h"
 #include "common/bt_shell_private.h"
-
+#if defined(CONFIG_BT_LL_SW_SPLIT)
+#include "controller/ll_sw/shell/ll.h"
+#endif /* CONFIG_BT_LL_SW_SPLIT */
 #include "host/shell/bt.h"
 #if defined(CONFIG_BT_CLASSIC)
 #include "host/classic/shell/bredr.h"
@@ -316,18 +319,18 @@ static bool data_cb(struct bt_data *data, void *user_data)
 	}
 }
 
-static void print_data_hex(const uint8_t *data, uint8_t len)
+static void print_data_hex(const uint8_t *data, uint8_t len, enum shell_vt100_color color)
 {
 	if (len == 0) {
 		return;
 	}
 
-	bt_shell_fprintf("0x");
+	bt_shell_fprintf(color, "0x");
 	/* Reverse the byte order when printing as advertising data is LE
 	 * and the MSB should be first in the printed output.
 	 */
 	for (int16_t i = len - 1; i >= 0; i--) {
-		bt_shell_fprintf("%02x", data[i]);
+		bt_shell_fprintf(color, "%02x", data[i]);
 	}
 }
 
@@ -345,13 +348,13 @@ static void print_data_set(uint8_t set_value_len,
 			bt_shell_fprintf_info(ADV_DATA_DELIMITER);
 		}
 
-		print_data_hex(&scan_data[idx], set_value_len);
+		print_data_hex(&scan_data[idx], set_value_len, SHELL_INFO);
 		idx += set_value_len;
 	} while (idx + set_value_len <= scan_data_len);
 
 	if (idx < scan_data_len) {
 		bt_shell_fprintf_warn(" Excess data: ");
-		print_data_hex(&scan_data[idx], scan_data_len - idx);
+		print_data_hex(&scan_data[idx], scan_data_len - idx, SHELL_WARNING);
 	}
 }
 
@@ -992,7 +995,30 @@ void subrate_changed(struct bt_conn *conn,
 		bt_shell_print("Subrate change failed (HCI status 0x%02x)", params->status);
 	}
 }
-#endif
+
+#if defined(CONFIG_BT_SHORTER_CONNECTION_INTERVALS)
+static void conn_rate_changed(struct bt_conn *conn, uint8_t status,
+		       const struct bt_conn_le_conn_rate_changed *params)
+{
+	if (status == BT_HCI_ERR_SUCCESS) {
+		bt_shell_print("Connection rate parameters changed: "
+			       "Connection Interval: %u us "
+			       "Subrate Factor: %d "
+			       "Peripheral latency: 0x%04x "
+			       "Continuation Number: %d "
+			       "Supervision timeout: 0x%04x (%d ms)",
+			       params->interval_us,
+			       params->subrate_factor,
+			       params->peripheral_latency,
+			       params->continuation_number,
+			       params->supervision_timeout_10ms,
+			       params->supervision_timeout_10ms * 10);
+	} else {
+		bt_shell_print("Connection rate change failed (HCI status 0x%02x)", status);
+	}
+}
+#endif /* CONFIG_BT_SHORTER_CONNECTION_INTERVALS */
+#endif /* CONFIG_BT_SUBRATING */
 
 #if defined(CONFIG_BT_LE_EXTENDED_FEAT_SET)
 void read_all_remote_feat_complete(struct bt_conn *conn,
@@ -1238,6 +1264,9 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 #if defined(CONFIG_BT_SUBRATING)
 	.subrate_changed = subrate_changed,
 #endif
+#if defined(CONFIG_BT_SHORTER_CONNECTION_INTERVALS)
+	.conn_rate_changed = conn_rate_changed,
+#endif
 #if defined(CONFIG_BT_LE_EXTENDED_FEAT_SET)
 	.read_all_remote_feat_complete = read_all_remote_feat_complete,
 #endif
@@ -1380,15 +1409,8 @@ static void bt_ready(int err)
 
 	bt_shell_print("Bluetooth initialized");
 
-#if defined(CONFIG_BT_CONN)
-	/* Register connection callbacks */
-	bt_conn_cb_register((struct bt_conn_cb *)&bt_conn_cb_conn_callbacks);
-#endif
-
-	bt_shell_l2cap_conn_cb_register();
-
 	if (IS_ENABLED(CONFIG_SETTINGS) && !no_settings_load) {
-		bt_storage_load();
+		settings_load();
 		bt_shell_print("Settings Loaded");
 	}
 
@@ -1426,7 +1448,7 @@ static int cmd_init(const struct bt_shell *sh, size_t argc, char *argv[])
 		} else if (!strcmp(arg, "sync")) {
 			sync = true;
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	}
@@ -1446,8 +1468,6 @@ static int cmd_init(const struct bt_shell *sh, size_t argc, char *argv[])
 
 static int cmd_disable(const struct bt_shell *sh, size_t argc, char *argv[])
 {
-	bt_conn_cb_unregister((struct bt_conn_cb *)&bt_conn_cb_conn_callbacks);
-
 	return bt_disable();
 }
 
@@ -1457,7 +1477,7 @@ static int cmd_settings_load(const struct bt_shell *sh, size_t argc,
 {
 	int err;
 
-	err = bt_storage_load();
+	err = settings_load();
 	if (err) {
 		bt_shell_error("Settings load failed (err %d)", err);
 		return err;
@@ -1720,7 +1740,7 @@ static int cmd_active_scan_on(const struct bt_shell *sh, uint32_t options,
 	}
 
 	if (timeout != 0) {
-		/* Schedule the bt_work to act as a timeout */
+		/* Schedule the work item to act as a timeout */
 		(void)bt_work_reschedule(&active_scan_timeout_work, OS_SECONDS(timeout));
 	}
 
@@ -1800,13 +1820,13 @@ static int cmd_scan(const struct bt_shell *sh, size_t argc, char *argv[])
 			options |= BT_LE_SCAN_OPT_NO_1M;
 		} else if (!strcmp(arg, "timeout")) {
 			if (++argn == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
 			timeout = strtoul(argv[argn], NULL, 16);
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	}
@@ -1819,7 +1839,7 @@ static int cmd_scan(const struct bt_shell *sh, size_t argc, char *argv[])
 	} else if (!strcmp(action, "passive")) {
 		return cmd_passive_scan_on(sh, options, timeout);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1836,7 +1856,7 @@ static int cmd_scan_verbose_output(const struct bt_shell *sh, size_t argc, char 
 	} else if (!strcmp(verbose_state, "off")) {
 		scan_verbose_output = false;
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1912,7 +1932,7 @@ static int cmd_scan_filter_set_rssi(const struct bt_shell *sh, size_t argc, char
 	}
 
 	bt_shell_print("error %d", err);
-	bt_shell_help(sh);
+	shell_help(sh);
 
 	return BT_SHELL_CMD_HELP_PRINTED;
 }
@@ -1945,7 +1965,7 @@ static int cmd_scan_filter_set_pa_interval(const struct bt_shell *sh, size_t arg
 	}
 
 	bt_shell_print("error %d", err);
-	bt_shell_help(sh);
+	shell_help(sh);
 
 	return BT_SHELL_CMD_HELP_PRINTED;
 }
@@ -2018,7 +2038,7 @@ static ssize_t ad_init(struct bt_data *data_array, const size_t data_array_size,
 	}
 
 	if (ad_flags != 0) {
-		__ASSERT_MSG(data_array_size > ad_len, "No space for AD_FLAGS");
+		__ASSERT(data_array_size > ad_len, "No space for AD_FLAGS");
 		data_array[ad_len].type = BT_DATA_FLAGS;
 		data_array[ad_len].data_len = sizeof(ad_flags);
 		data_array[ad_len].data = &ad_flags;
@@ -2029,7 +2049,7 @@ static ssize_t ad_init(struct bt_data *data_array, const size_t data_array_size,
 		const uint16_t appearance2 = bt_get_appearance();
 		static uint8_t appearance_data[sizeof(appearance2)];
 
-		__ASSERT_MSG(data_array_size > ad_len, "No space for appearance");
+		__ASSERT(data_array_size > ad_len, "No space for appearance");
 		sys_put_le16(appearance2, appearance_data);
 		data_array[ad_len].type = BT_DATA_GAP_APPEARANCE;
 		data_array[ad_len].data_len = sizeof(appearance_data);
@@ -2064,7 +2084,7 @@ void set_ad_name_complete(struct bt_data *ad, const char *name)
 {
 	ad->type = BT_DATA_NAME_COMPLETE;
 	ad->data_len = strlen(name);
-	ad->data = (const uint8_t *)name;
+	ad->data = name;
 }
 
 void set_ad_device_name_complete(struct bt_data *ad)
@@ -2179,7 +2199,7 @@ static int cmd_advertise(const struct bt_shell *sh, size_t argc, char *argv[])
 	return 0;
 
 fail:
-	bt_shell_help(sh);
+	shell_help(sh);
 	return -ENOEXEC;
 }
 
@@ -2216,7 +2236,7 @@ static int cmd_directed_adv(const struct bt_shell *sh,
 		} else if (!strcmp(arg, "disable-39")) {
 			param.options |= BT_LE_ADV_OPT_DISABLE_CHAN_39;
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return -ENOEXEC;
 		}
 	}
@@ -2331,7 +2351,7 @@ static int cmd_adv_create(const struct bt_shell *sh, size_t argc, char *argv[])
 	int err;
 
 	if (!parse_and_set_adv_param(argc, argv, &param)) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return -ENOEXEC;
 	}
 
@@ -2362,7 +2382,7 @@ static int cmd_adv_param(const struct bt_shell *sh, size_t argc, char *argv[])
 	int err;
 
 	if (!parse_and_set_adv_param(argc, argv, &param)) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return -ENOEXEC;
 	}
 
@@ -2416,7 +2436,7 @@ static int cmd_adv_data(const struct bt_shell *sh, size_t argc, char *argv[])
 
 			len = strlen(arg);
 			memcpy(&hex_data[hex_data_len], arg, len);
-			name_value = (const char *)&hex_data[hex_data_len];
+			name_value = &hex_data[hex_data_len];
 
 			set_ad_name_complete(&data[*data_len], name_value);
 
@@ -2563,7 +2583,7 @@ static int cmd_adv_start(const struct bt_shell *sh, size_t argc, char *argv[])
 	return 0;
 
 fail_show_help:
-	bt_shell_help(sh);
+	shell_help(sh);
 	return -ENOEXEC;
 }
 
@@ -2883,20 +2903,20 @@ static int cmd_per_adv_sync_create(const struct bt_shell *sh, size_t argc,
 			options |= BT_LE_PER_ADV_SYNC_OPT_SYNC_ONLY_CONST_TONE_EXT;
 		} else if (!strcmp(argv[j], "timeout")) {
 			if (++j == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
 			create_params.timeout = strtoul(argv[j], NULL, 16);
 		} else if (!strcmp(argv[j], "skip")) {
 			if (++j == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
 			create_params.skip = strtoul(argv[j], NULL, 16);
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 
@@ -3002,14 +3022,14 @@ static int cmd_past_subscribe(const struct bt_shell *sh, size_t argc,
 				BT_LE_PER_ADV_SYNC_TRANSFER_OPT_SYNC_ONLY_CTE;
 		} else if (!strcmp(argv[j], "timeout")) {
 			if (++j == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
 			param.timeout = strtoul(argv[j], NULL, 16);
 		} else if (!strcmp(argv[j], "skip")) {
 			if (++j == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
@@ -3021,7 +3041,7 @@ static int cmd_past_subscribe(const struct bt_shell *sh, size_t argc,
 			}
 			global = false;
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	}
@@ -3056,7 +3076,7 @@ static int cmd_past_unsubscribe(const struct bt_shell *sh, size_t argc,
 				return -EINVAL;
 			}
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	} else {
@@ -3114,7 +3134,7 @@ static int cmd_per_adv_set_info_transfer(const struct bt_shell *sh, size_t argc,
 
 	if (default_conn == NULL) {
 		bt_shell_error("%s: at least, one connection is required",
-			    sh->active_cmd.syntax);
+			    sh->ctx->active_cmd.syntax);
 		return -ENOEXEC;
 	}
 
@@ -3143,7 +3163,7 @@ static int cmd_read_remote_tx_power(const struct bt_shell *sh, size_t argc, char
 			bt_shell_print("error %d", err);
 		}
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 	return 0;
@@ -3181,7 +3201,7 @@ static int cmd_read_local_tx_power(const struct bt_shell *sh, size_t argc, char 
 			    tx_pwr_ctrl_phy2str((enum bt_conn_le_tx_power_phy)tx_power_level.phy),
 			    tx_power_level.max_level);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -3192,14 +3212,14 @@ static int cmd_set_power_report_enable(const struct bt_shell *sh, size_t argc, c
 {
 	if (argc < 4) {
 		int err = 0;
-		bool local_enable = 0;
-		bool remote_enable = 0;
+		bool local_enable = false;
+		bool remote_enable = false;
 
 		if (*argv[1] == '1') {
-			local_enable = 1;
+			local_enable = true;
 		}
 		if (*argv[2] == '1') {
-			remote_enable = 1;
+			remote_enable = true;
 		}
 		if (default_conn == NULL) {
 			bt_shell_error("Conn handle error, at least one connection is required.");
@@ -3214,7 +3234,7 @@ static int cmd_set_power_report_enable(const struct bt_shell *sh, size_t argc, c
 			bt_shell_print("error %d", err);
 		}
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 	return 0;
@@ -3236,7 +3256,7 @@ static int cmd_set_path_loss_reporting_parameters(const struct bt_shell *sh, siz
 		(void)bt_shell_strtoul(argv[argn], 10, &err);
 
 		if (err) {
-			bt_shell_help(sh);
+			shell_help(sh);
 			bt_shell_error("Could not parse input number %d", argn);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
@@ -3271,7 +3291,7 @@ static int cmd_set_path_loss_reporting_enable(const struct bt_shell *sh, size_t 
 
 	enable = bt_shell_strtobool(argv[1], 10, &err);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -3295,7 +3315,7 @@ static int cmd_subrate_set_defaults(const struct bt_shell *sh, size_t argc, char
 		(void)bt_shell_strtoul(argv[argn], 10, &err);
 
 		if (err) {
-			bt_shell_help(sh);
+			shell_help(sh);
 			bt_shell_error("Could not parse input number %d", argn);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
@@ -3331,7 +3351,7 @@ static int cmd_subrate_request(const struct bt_shell *sh, size_t argc, char *arg
 		(void)bt_shell_strtoul(argv[argn], 10, &err);
 
 		if (err) {
-			bt_shell_help(sh);
+			shell_help(sh);
 			bt_shell_error("Could not parse input number %d", argn);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
@@ -3353,7 +3373,130 @@ static int cmd_subrate_request(const struct bt_shell *sh, size_t argc, char *arg
 
 	return 0;
 }
-#endif
+
+#if defined(CONFIG_BT_SHORTER_CONNECTION_INTERVALS)
+static int cmd_read_min_conn_interval_groups(const struct bt_shell *sh, size_t argc, char *argv[])
+{
+	int err;
+	struct bt_conn_le_min_conn_interval_info info;
+
+	err = bt_conn_le_read_min_conn_interval_groups(&info);
+	if (err != 0) {
+		bt_shell_error("bt_conn_le_read_min_conn_interval_groups returned error %d", err);
+		return -ENOEXEC;
+	}
+
+	bt_shell_print("Minimum supported connection interval: %u us",
+		    info.min_supported_conn_interval_us);
+	bt_shell_print("Number of groups: %u", info.num_groups);
+
+	for (uint8_t i = 0; i < info.num_groups; i++) {
+		shell_print(
+			sh,
+			"  Group %u: min=0x%04x (%u us), max=0x%04x (%u us), stride=0x%04x (%u us)",
+			i,
+			info.groups[i].min_125us,
+			BT_CONN_SCI_INTERVAL_TO_US(info.groups[i].min_125us),
+			info.groups[i].max_125us,
+			BT_CONN_SCI_INTERVAL_TO_US(info.groups[i].max_125us),
+			info.groups[i].stride_125us,
+			BT_CONN_SCI_INTERVAL_TO_US(info.groups[i].stride_125us));
+	}
+
+	return 0;
+}
+
+static int cmd_read_min_conn_interval(const struct bt_shell *sh, size_t argc, char *argv[])
+{
+	int err;
+	uint16_t min_interval_us;
+
+	err = bt_conn_le_read_min_conn_interval(&min_interval_us);
+	if (err != 0) {
+		bt_shell_error("bt_conn_le_read_min_conn_interval returned error %d", err);
+		return -ENOEXEC;
+	}
+
+	bt_shell_print("Minimum supported connection interval: %u us", min_interval_us);
+	return 0;
+}
+
+static int cmd_conn_rate_set_defaults(const struct bt_shell *sh, size_t argc, char *argv[])
+{
+	int err = 0;
+
+	for (size_t argn = 1; argn < argc; argn++) {
+		(void)bt_shell_strtoul(argv[argn], 10, &err);
+
+		if (err != 0) {
+			shell_help(sh);
+			bt_shell_error("Could not parse input number %zu", argn);
+			return BT_SHELL_CMD_HELP_PRINTED;
+		}
+	}
+
+	const struct bt_conn_le_conn_rate_param params = {
+		.interval_min_125us = bt_shell_strtoul(argv[1], 10, &err),
+		.interval_max_125us = bt_shell_strtoul(argv[2], 10, &err),
+		.subrate_min = bt_shell_strtoul(argv[3], 10, &err),
+		.subrate_max = bt_shell_strtoul(argv[4], 10, &err),
+		.max_latency = bt_shell_strtoul(argv[5], 10, &err),
+		.continuation_number = bt_shell_strtoul(argv[6], 10, &err),
+		.supervision_timeout_10ms = bt_shell_strtoul(argv[7], 10, &err),
+		.min_ce_len_125us = bt_shell_strtoul(argv[8], 10, &err),
+		.max_ce_len_125us = bt_shell_strtoul(argv[9], 10, &err),
+	};
+
+	err = bt_conn_le_conn_rate_set_defaults(&params);
+	if (err != 0) {
+		bt_shell_error("bt_conn_le_conn_rate_set_defaults returned error %d", err);
+		return -ENOEXEC;
+	}
+
+	return 0;
+}
+
+static int cmd_conn_rate_request(const struct bt_shell *sh, size_t argc, char *argv[])
+{
+	int err = 0;
+
+	if (default_conn == NULL) {
+		bt_shell_error("Conn handle error, at least one connection is required.");
+		return -ENOEXEC;
+	}
+
+	for (size_t argn = 1; argn < argc; argn++) {
+		(void)bt_shell_strtoul(argv[argn], 10, &err);
+
+		if (err != 0) {
+			shell_help(sh);
+			bt_shell_error("Could not parse input number %zu", argn);
+			return BT_SHELL_CMD_HELP_PRINTED;
+		}
+	}
+
+	const struct bt_conn_le_conn_rate_param params = {
+		.interval_min_125us = bt_shell_strtoul(argv[1], 10, &err),
+		.interval_max_125us = bt_shell_strtoul(argv[2], 10, &err),
+		.subrate_min = bt_shell_strtoul(argv[3], 10, &err),
+		.subrate_max = bt_shell_strtoul(argv[4], 10, &err),
+		.max_latency = bt_shell_strtoul(argv[5], 10, &err),
+		.continuation_number = bt_shell_strtoul(argv[6], 10, &err),
+		.supervision_timeout_10ms = bt_shell_strtoul(argv[7], 10, &err),
+		.min_ce_len_125us = bt_shell_strtoul(argv[8], 10, &err),
+		.max_ce_len_125us = bt_shell_strtoul(argv[9], 10, &err),
+	};
+
+	err = bt_conn_le_conn_rate_request(default_conn, &params);
+	if (err != 0) {
+		bt_shell_error("bt_conn_le_conn_rate_request returned error %d", err);
+		return -ENOEXEC;
+	}
+
+	return 0;
+}
+#endif /* CONFIG_BT_SHORTER_CONNECTION_INTERVALS */
+#endif /* CONFIG_BT_SUBRATING */
 
 #if defined(CONFIG_BT_LE_EXTENDED_FEAT_SET)
 static int cmd_read_all_remote_features(const struct bt_shell *sh, size_t argc, char *argv[])
@@ -3368,7 +3511,7 @@ static int cmd_read_all_remote_features(const struct bt_shell *sh, size_t argc, 
 	uint8_t pages_requested = bt_shell_strtoul(argv[1], 10, &err);
 
 	if (err != 0) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse input for pages_requested");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
@@ -3396,28 +3539,28 @@ static int cmd_frame_space_update(const struct bt_shell *sh, size_t argc, char *
 
 	params.frame_space_min = bt_shell_strtoul(argv[1], 10, &err);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse frame_space_min input");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
 	params.frame_space_max = bt_shell_strtoul(argv[2], 10, &err);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse frame_space_max input");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
 	params.phys = bt_shell_strtoul(argv[3], 16, &err);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse phys input");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
 	params.spacing_types = bt_shell_strtoul(argv[4], 16, &err);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		bt_shell_error("Could not parse spacing_types input");
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
@@ -3505,13 +3648,13 @@ static int cmd_connect_le(const struct bt_shell *sh, size_t argc, char *argv[])
 	switch (err) {
 	case -ENOENT:
 		bt_shell_error("No connectable adv stored. Please trigger a scan first.");
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	case -EINVAL:
 		bt_shell_error("Invalid peer address (err %d)", ercd);
 		return ercd;
 	case BT_SHELL_CMD_HELP_PRINTED:
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	case -ENOEXEC:
 		bt_shell_error("Connection failed (%d)", ercd);
@@ -3554,7 +3697,7 @@ static int cmd_connect_le_name(const struct bt_shell *sh, size_t argc, char *arg
 	/* Set boolean to tell the scan callback to connect to this name */
 	auto_connect.connect_name = true;
 
-	/* Schedule the bt_work to act as a timeout */
+	/* Schedule the work item to act as a timeout */
 	(void)bt_work_reschedule(&active_scan_timeout_work, OS_SECONDS(DEFAULT_SCAN_TIMEOUT_SEC));
 
 	return 0;
@@ -3572,7 +3715,7 @@ static int cmd_disconnect(const struct bt_shell *sh, size_t argc, char *argv[])
 		bt_addr_le_t addr;
 
 		if (argc < 3) {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 
@@ -3706,9 +3849,7 @@ static int cmd_info(const struct bt_shell *sh, size_t argc, char *argv[])
 		print_le_addr("Remote on-air", info.le.remote);
 		print_le_addr("Local on-air", info.le.local);
 
-		bt_shell_print("Interval: 0x%04x (%u us)",
-			    info.le.interval,
-			    BT_CONN_INTERVAL_TO_US(info.le.interval));
+		bt_shell_print("Interval: %u us", info.le.interval_us);
 		bt_shell_print("Latency: 0x%04x",
 			    info.le.latency);
 		bt_shell_print("Supervision timeout: 0x%04x (%d ms)",
@@ -3751,7 +3892,7 @@ static int cmd_conn_update(const struct bt_shell *sh, size_t argc, char *argv[])
 
 	if (default_conn == NULL) {
 		bt_shell_error("%s: at least, one connection is required",
-			    sh->active_cmd.syntax);
+			    sh->ctx->active_cmd.syntax);
 		return -ENOEXEC;
 	}
 
@@ -3799,7 +3940,7 @@ static int cmd_conn_data_len_update(const struct bt_shell *sh, size_t argc,
 
 	if (default_conn == NULL) {
 		bt_shell_error("%s: at least, one connection is required",
-			    sh->active_cmd.syntax);
+			    sh->ctx->active_cmd.syntax);
 		return -ENOEXEC;
 	}
 
@@ -3843,7 +3984,7 @@ static int cmd_conn_phy_update(const struct bt_shell *sh, size_t argc,
 
 	if (default_conn == NULL) {
 		bt_shell_error("%s: at least, one connection is required",
-			    sh->active_cmd.syntax);
+			    sh->ctx->active_cmd.syntax);
 		return -ENOEXEC;
 	}
 
@@ -3934,7 +4075,7 @@ static int cmd_oob_remote(const struct bt_shell *sh, size_t argc,
 			sizeof(oob_remote.le_sc_data.c));
 		bt_le_oob_set_sc_flag(true);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return -ENOEXEC;
 	}
 
@@ -4025,7 +4166,7 @@ static int cmd_security(const struct bt_shell *sh, size_t argc, char *argv[])
 		if (!strcmp(argv[2], "force-pair")) {
 			sec |= BT_SECURITY_FORCE_PAIR;
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return -ENOEXEC;
 		}
 	}
@@ -4048,7 +4189,7 @@ static int cmd_bondable(const struct bt_shell *sh, size_t argc, char *argv[])
 	} else if (!strcmp(bondable, "off")) {
 		bt_set_bondable(false);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -4068,7 +4209,7 @@ static int cmd_conn_bondable(const struct bt_shell *sh, size_t argc, char *argv[
 
 	enable = bt_shell_strtobool(argv[1], 0, &err);
 	if (err) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -4130,9 +4271,9 @@ static void connection_info(struct bt_conn *conn, void *user_data)
 #endif
 	case BT_CONN_TYPE_LE:
 		bt_addr_le_to_str(info.le.dst, addr, sizeof(addr));
-		bt_shell_print("%s#%u [LE][%s] %s: Interval %u latency %u timeout %u", selected,
-			       info.id, role_str, addr, info.le.interval, info.le.latency,
-			       info.le.timeout);
+		bt_shell_print("%s#%u [LE][%s] %s: Interval %u us, latency %u, timeout %u ms",
+			       selected, info.id, role_str, addr, info.le.interval_us,
+			       info.le.latency, info.le.timeout * 10);
 		break;
 #if defined(CONFIG_BT_ISO)
 	case BT_CONN_TYPE_ISO:
@@ -4413,6 +4554,15 @@ static void br_bond_deleted(const bt_addr_t *peer)
 }
 #endif /* CONFIG_BT_CLASSIC */
 
+#if defined(CONFIG_BT_APP_PASSKEY)
+static uint32_t app_passkey = BT_PASSKEY_RAND;
+
+static uint32_t auth_app_passkey(struct bt_conn *conn)
+{
+	return app_passkey;
+}
+#endif /* CONFIG_BT_APP_PASSKEY */
+
 static struct bt_conn_auth_cb auth_cb_display = {
 	.passkey_display = auth_passkey_display,
 #if defined(CONFIG_BT_PASSKEY_KEYPRESS)
@@ -4429,6 +4579,9 @@ static struct bt_conn_auth_cb auth_cb_display = {
 #if defined(CONFIG_BT_SMP_APP_PAIRING_ACCEPT)
 	.pairing_accept = pairing_accept,
 #endif
+#if defined(CONFIG_BT_APP_PASSKEY)
+	.app_passkey = auth_app_passkey,
+#endif
 };
 
 static struct bt_conn_auth_cb auth_cb_display_yes_no = {
@@ -4437,6 +4590,9 @@ static struct bt_conn_auth_cb auth_cb_display_yes_no = {
 	.passkey_confirm = auth_passkey_confirm,
 #if defined(CONFIG_BT_CLASSIC)
 	.pincode_entry = auth_pincode_entry,
+#endif
+#if defined(CONFIG_BT_APP_PASSKEY)
+	.app_passkey = auth_app_passkey,
 #endif
 	.oob_data_request = NULL,
 	.cancel = auth_cancel,
@@ -4453,6 +4609,9 @@ static struct bt_conn_auth_cb auth_cb_input = {
 #if defined(CONFIG_BT_CLASSIC)
 	.pincode_entry = auth_pincode_entry,
 #endif
+#if defined(CONFIG_BT_APP_PASSKEY)
+	.app_passkey = auth_app_passkey,
+#endif
 	.oob_data_request = NULL,
 	.cancel = auth_cancel,
 	.pairing_confirm = auth_pairing_confirm,
@@ -4464,6 +4623,9 @@ static struct bt_conn_auth_cb auth_cb_input = {
 static struct bt_conn_auth_cb auth_cb_confirm = {
 #if defined(CONFIG_BT_CLASSIC)
 	.pincode_entry = auth_pincode_entry,
+#endif
+#if defined(CONFIG_BT_APP_PASSKEY)
+	.app_passkey = auth_app_passkey,
 #endif
 	.oob_data_request = NULL,
 	.cancel = auth_cancel,
@@ -4479,6 +4641,9 @@ static struct bt_conn_auth_cb auth_cb_all = {
 	.passkey_confirm = auth_passkey_confirm,
 #if defined(CONFIG_BT_CLASSIC)
 	.pincode_entry = auth_pincode_entry,
+#endif
+#if defined(CONFIG_BT_APP_PASSKEY)
+	.app_passkey = auth_app_passkey,
 #endif
 	.oob_data_request = auth_pairing_oob_data_request,
 	.cancel = auth_cancel,
@@ -4539,7 +4704,7 @@ static int cmd_auth(const struct bt_shell *sh, size_t argc, char *argv[])
 	} else if (!strcmp(argv[1], "none")) {
 		err = bt_conn_auth_cb_register(NULL);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -4666,7 +4831,7 @@ static int cmd_fal_connect(const struct bt_shell *sh, size_t argc, char *argv[])
 		} else if (!strcmp(arg, "no-1m")) {
 			options |= BT_CONN_LE_OPT_NO_1M;
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	}
@@ -4695,16 +4860,15 @@ static int cmd_fal_connect(const struct bt_shell *sh, size_t argc, char *argv[])
 #endif /* CONFIG_BT_CENTRAL */
 #endif /* defined(CONFIG_BT_FILTER_ACCEPT_LIST) */
 
-#if defined(CONFIG_BT_FIXED_PASSKEY)
-static int cmd_fixed_passkey(const struct bt_shell *sh,
-			     size_t argc, char *argv[])
+#if defined(CONFIG_BT_APP_PASSKEY)
+static int cmd_app_passkey(const struct bt_shell *sh,
+			    size_t argc, char *argv[])
 {
-	unsigned int passkey;
-	int err;
+	uint32_t passkey;
 
 	if (argc < 2) {
-		bt_passkey_set(BT_PASSKEY_INVALID);
-		bt_shell_print("Fixed passkey cleared");
+		app_passkey = BT_PASSKEY_RAND;
+		bt_shell_print("App passkey cleared");
 		return 0;
 	}
 
@@ -4714,14 +4878,12 @@ static int cmd_fixed_passkey(const struct bt_shell *sh,
 		return -ENOEXEC;
 	}
 
-	err = bt_passkey_set(passkey);
-	if (err) {
-		bt_shell_print("Setting fixed passkey failed (err %d)", err);
-	}
+	app_passkey = passkey;
+	bt_shell_print("App passkey set to %06u", passkey);
 
-	return err;
+	return 0;
 }
-#endif
+#endif /* CONFIG_BT_APP_PASSKEY */
 
 static int cmd_auth_passkey(const struct bt_shell *sh,
 			    size_t argc, char *argv[])
@@ -5000,11 +5162,14 @@ int ead_update_ad(void)
 	while (idx < bt_shell_ead_data_size && ad_structs_idx < BT_SHELL_EAD_MAX_AD) {
 		ad = &ad_structs[ad_structs_idx];
 
-		/* the data_len from bt_data struct doesn't include the size of the type */
-		ad->data_len = bt_shell_ead_data[idx] - 1;
-
-		if (ad->data_len < 0) {
-			/* if the len is less than 0 that mean there is not even a type field */
+		/* bt_shell_ead_data[idx] points to the start of an encrypted advertising
+		 * tuple, so bt_shell_ead_data[idx] is the length field, bt_shell_ead_data[idx + 1]
+		 * is the type field and bt_shell_ead_data[idx + 2] is the start of the value
+		 */
+		if (bt_shell_ead_data[idx] > 0) {
+			ad->data_len = bt_shell_ead_data[idx] - 1;
+		} else {
+			/* Zero length means the AD field does not even contain a type */
 			bt_shell_error("Failed to update AD due to malformed AD.");
 			return -ENOEXEC;
 		}
@@ -5070,7 +5235,7 @@ static int cmd_encrypted_ad_decrypt_scan(const struct bt_shell *sh, size_t argc,
 static int cmd_default_handler(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -5097,7 +5262,7 @@ static int cmd_default_handler(const struct bt_shell *sh, size_t argc, char **ar
 #endif /* defined(CONFIG_BT_EXT_ADV) */
 
 #if defined(CONFIG_BT_OBSERVER)
-BT_SHELL_SUBCMD_SET_CREATE(bt_scan_filter_set_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(bt_scan_filter_set_cmds,
 	BT_SHELL_CMD_ARG(name, NULL, "<name>", cmd_scan_filter_set_name, 2, 0),
 	BT_SHELL_CMD_ARG(addr, NULL, HELP_ADDR, cmd_scan_filter_set_addr, 2, 0),
 	BT_SHELL_CMD_ARG(rssi, NULL, "<rssi>", cmd_scan_filter_set_rssi, 2, 0),
@@ -5106,7 +5271,7 @@ BT_SHELL_SUBCMD_SET_CREATE(bt_scan_filter_set_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_SUBCMD_SET_CREATE(bt_scan_filter_clear_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(bt_scan_filter_clear_cmds,
 	BT_SHELL_CMD_ARG(all, NULL, "", cmd_scan_filter_clear_all, 1, 0),
 	BT_SHELL_CMD_ARG(name, NULL, "", cmd_scan_filter_clear_name, 1, 0),
 	BT_SHELL_CMD_ARG(addr, NULL, "", cmd_scan_filter_clear_addr, 1, 0),
@@ -5115,7 +5280,7 @@ BT_SHELL_SUBCMD_SET_CREATE(bt_scan_filter_clear_cmds,
 #endif /* CONFIG_BT_OBSERVER */
 
 #if defined(CONFIG_BT_EAD)
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	bt_encrypted_ad_cmds,
 	BT_SHELL_CMD_ARG(set-keys, NULL, "<session key> <init vector>", cmd_encrypted_ad_set_keys, 3,
 		      0),
@@ -5127,7 +5292,7 @@ BT_SHELL_SUBCMD_SET_CREATE(
 	BT_SHELL_SUBCMD_SET_END);
 #endif
 
-BT_SHELL_SUBCMD_SET_CREATE(bt_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(bt_cmds,
 	BT_SHELL_CMD_ARG(init, NULL, "[no-settings-load], [sync]",
 		      cmd_init, 1, 2),
 	BT_SHELL_CMD_ARG(disable, NULL, HELP_NONE, cmd_disable, 1, 0),
@@ -5182,7 +5347,25 @@ BT_SHELL_SUBCMD_SET_CREATE(bt_cmds,
 		"<min subrate factor> <max subrate factor> <max peripheral latency> "
 		"<min continuation number> <supervision timeout (seconds)>",
 		cmd_subrate_request, 6, 0),
-#endif
+#if defined(CONFIG_BT_SHORTER_CONNECTION_INTERVALS)
+	BT_SHELL_CMD_ARG(read-min-conn-interval-groups, NULL,
+		"Read minimum supported connection interval and groups",
+		cmd_read_min_conn_interval_groups, 1, 0),
+	BT_SHELL_CMD_ARG(read-min-conn-interval, NULL,
+		"Read minimum supported connection interval only",
+		cmd_read_min_conn_interval, 1, 0),
+	BT_SHELL_CMD_ARG(conn-rate-set-defaults, NULL,
+		"<min interval (125us)> <max interval (125us)> <min subrate> <max subrate> "
+		"<max latency> <continuation number> <supervision timeout (10ms)> "
+		"<min CE len (125us)> <max CE len (125us)>",
+		cmd_conn_rate_set_defaults, 10, 0),
+	BT_SHELL_CMD_ARG(conn-rate-request, NULL,
+		"<min interval (125us)> <max interval (125us)> <min subrate> <max subrate> "
+		"<max latency> <continuation number> <supervision timeout (10ms)> "
+		"<min CE len (125us)> <max CE len (125us)>",
+		cmd_conn_rate_request, 10, 0),
+#endif /* CONFIG_BT_SHORTER_CONNECTION_INTERVALS */
+#endif /* CONFIG_BT_SUBRATING */
 #if defined(CONFIG_BT_LE_EXTENDED_FEAT_SET)
 	BT_SHELL_CMD_ARG(read-all-remote-features, NULL, "<pages_requested>",
 		cmd_read_all_remote_features, 2, 0),
@@ -5332,10 +5515,10 @@ BT_SHELL_SUBCMD_SET_CREATE(bt_cmds,
 		      cmd_fal_connect, 2, 3),
 #endif /* CONFIG_BT_CENTRAL */
 #endif /* defined(CONFIG_BT_FILTER_ACCEPT_LIST) */
-#if defined(CONFIG_BT_FIXED_PASSKEY)
-	BT_SHELL_CMD_ARG(fixed-passkey, NULL, "[passkey]", cmd_fixed_passkey,
+#if defined(CONFIG_BT_APP_PASSKEY)
+	BT_SHELL_CMD_ARG(app-passkey, NULL, "[passkey]", cmd_app_passkey,
 		      1, 1),
-#endif
+#endif /* CONFIG_BT_APP_PASSKEY */
 #endif /* CONFIG_BT_SMP || CONFIG_BT_CLASSIC) */
 #endif /* CONFIG_BT_CONN */
 
@@ -5364,9 +5547,4 @@ BT_SHELL_SUBCMD_SET_CREATE(bt_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_DEFINE(bt, &bt_cmds, "Bluetooth shell commands", cmd_default_handler);
-
-int bt_shell_cmd_bt_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &bt);
-}
+SHELL_CMD_REGISTER(bt, &bt_cmds, "Bluetooth shell commands", cmd_default_handler);

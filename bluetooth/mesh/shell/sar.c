@@ -116,7 +116,7 @@ static int cmd_rx_set(const struct bt_shell *sh, size_t argc, char *argv[])
 	return 0;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	sar_cfg_cli_cmds, BT_SHELL_CMD_ARG(tx-get, NULL, NULL, cmd_tx_get, 1, 0),
 	BT_SHELL_CMD_ARG(tx-set, NULL,
 		      "<SegIntStep> <UniRetransCnt> <UniRetransWithoutProgCnt> "

@@ -29,10 +29,11 @@ struct bt_sco_server *sco_server;
 #define SCO_CHAN(_sco) ((_sco)->sco.chan);
 
 static bt_slist_t sco_conn_cbs = BT_SLIST_STATIC_INIT(&sco_conn_cbs);
+static bt_slist_t sco_hci_cbs = BT_SLIST_STATIC_INIT(&sco_hci_cbs);
 
 int bt_sco_server_register(struct bt_sco_server *server)
 {
-	CHECKIF(!server) {
+	if (!server) {
 		LOG_DBG("Invalid parameter: server %p", server);
 		return -EINVAL;
 	}
@@ -58,7 +59,7 @@ int bt_sco_server_register(struct bt_sco_server *server)
 
 int bt_sco_server_unregister(struct bt_sco_server *server)
 {
-	CHECKIF(!server) {
+	if (!server) {
 		LOG_DBG("Invalid parameter: server %p", server);
 		return -EINVAL;
 	}
@@ -102,6 +103,40 @@ static void notify_disconnected(struct bt_conn *conn)
 	STRUCT_SECTION_FOREACH(bt_sco_conn_cb, cb) {
 		if (cb->disconnected) {
 			cb->disconnected(conn, conn->err);
+		}
+	}
+}
+
+static void notify_setup_sco_cmd(struct bt_conn *conn, struct bt_hci_cp_setup_sync_conn *cp)
+{
+	struct bt_sco_hci_cb *callback;
+
+	BT_SLIST_FOR_EACH_CONTAINER(&sco_hci_cbs, callback, _node) {
+		if (callback->setup != NULL) {
+			callback->setup(conn, cp);
+		}
+	}
+
+	STRUCT_SECTION_FOREACH(bt_sco_hci_cb, cb) {
+		if (cb->setup != NULL) {
+			cb->setup(conn, cp);
+		}
+	}
+}
+
+static void notify_accept_sco_req_cmd(struct bt_hci_cp_accept_sync_conn_req *cp)
+{
+	struct bt_sco_hci_cb *callback;
+
+	BT_SLIST_FOR_EACH_CONTAINER(&sco_hci_cbs, callback, _node) {
+		if (callback->accept != NULL) {
+			callback->accept(cp);
+		}
+	}
+
+	STRUCT_SECTION_FOREACH(bt_sco_hci_cb, cb) {
+		if (cb->accept != NULL) {
+			cb->accept(cp);
 		}
 	}
 }
@@ -253,7 +288,7 @@ static int sco_accept(struct bt_conn *acl, struct bt_conn *sco)
 	struct bt_sco_chan *chan;
 	int err;
 
-	CHECKIF(!sco || sco->type != BT_CONN_TYPE_SCO) {
+	if (!sco || sco->type != BT_CONN_TYPE_SCO) {
 		LOG_ERR("Invalid parameters: sco %p sco->type %u", sco, sco ? sco->type : 0);
 		return -EINVAL;
 	}
@@ -299,12 +334,14 @@ static int accept_sco_conn(const bt_addr_t *bdaddr, struct bt_conn *sco_conn)
 
 	cp = bt_buf_add(buf, sizeof(*cp));
 	bt_addr_copy(&cp->bdaddr, bdaddr);
-	cp->pkt_type = sco_conn->sco.pkt_type;
-	cp->tx_bandwidth = 0x00001f40;
-	cp->rx_bandwidth = 0x00001f40;
-	cp->max_latency = 0x0007;
-	cp->retrans_effort = 0x01;
-	cp->content_format = BT_VOICE_CVSD_16BIT;
+	cp->pkt_type = sys_cpu_to_le16(sco_conn->sco.pkt_type);
+	cp->tx_bandwidth = sys_cpu_to_le32(0x00001f40);
+	cp->rx_bandwidth = sys_cpu_to_le32(0x00001f40);
+	cp->max_latency = sys_cpu_to_le16(BT_HCI_SCO_MAX_LATENCY_DEFAULT);
+	cp->retrans_effort = BT_HCI_SCO_RETRANS_EFFORT_DEFAULT;
+	cp->content_format = sys_cpu_to_le16(sco_conn->sco.chan->voice_setting);
+
+	notify_accept_sco_req_cmd(cp);
 
 	err = bt_hci_cmd_send_sync(BT_HCI_OP_ACCEPT_SYNC_CONN_REQ, buf, NULL);
 	if (err) {
@@ -379,13 +416,15 @@ static int sco_setup_sync_conn(struct bt_conn *sco_conn)
 
 	LOG_DBG("handle : %x", sco_conn->sco.acl->handle);
 
-	cp->handle = sco_conn->sco.acl->handle;
-	cp->pkt_type = sco_conn->sco.pkt_type;
-	cp->tx_bandwidth = 0x00001f40;
-	cp->rx_bandwidth = 0x00001f40;
-	cp->max_latency = 0x0007;
-	cp->retrans_effort = 0x01;
-	cp->content_format = BT_VOICE_CVSD_16BIT;
+	cp->handle = sys_cpu_to_le16(sco_conn->sco.acl->handle);
+	cp->pkt_type = sys_cpu_to_le16(sco_conn->sco.pkt_type);
+	cp->tx_bandwidth = sys_cpu_to_le32(0x00001f40);
+	cp->rx_bandwidth = sys_cpu_to_le32(0x00001f40);
+	cp->max_latency = sys_cpu_to_le16(BT_HCI_SCO_MAX_LATENCY_DEFAULT);
+	cp->retrans_effort = BT_HCI_SCO_RETRANS_EFFORT_DEFAULT;
+	cp->content_format = sys_cpu_to_le16(sco_conn->sco.chan->voice_setting);
+
+	notify_setup_sco_cmd(sco_conn->sco.acl, cp);
 
 	err = bt_hci_cmd_send_sync(BT_HCI_OP_SETUP_SYNC_CONN, buf, NULL);
 	if (err < 0) {
@@ -440,7 +479,7 @@ struct bt_conn *bt_conn_create_sco(const bt_addr_t *peer, struct bt_sco_chan *ch
 
 int bt_sco_conn_cb_register(struct bt_sco_conn_cb *cb)
 {
-	CHECKIF(cb == NULL) {
+	if (cb == NULL) {
 		return -EINVAL;
 	}
 
@@ -455,11 +494,39 @@ int bt_sco_conn_cb_register(struct bt_sco_conn_cb *cb)
 
 int bt_sco_conn_cb_unregister(struct bt_sco_conn_cb *cb)
 {
-	CHECKIF(cb == NULL) {
+	if (cb == NULL) {
 		return -EINVAL;
 	}
 
 	if (!bt_slist_find_and_remove(&sco_conn_cbs, &cb->_node)) {
+		return -ENOENT;
+	}
+
+	return 0;
+}
+
+int bt_sco_hci_cb_register(struct bt_sco_hci_cb *cb)
+{
+	if (cb == NULL) {
+		return -EINVAL;
+	}
+
+	if (bt_slist_find(&sco_hci_cbs, &cb->_node, NULL)) {
+		return -EEXIST;
+	}
+
+	bt_slist_append(&sco_hci_cbs, &cb->_node);
+
+	return 0;
+}
+
+int bt_sco_hci_cb_unregister(struct bt_sco_hci_cb *cb)
+{
+	if (cb == NULL) {
+		return -EINVAL;
+	}
+
+	if (!bt_slist_find_and_remove(&sco_hci_cbs, &cb->_node)) {
 		return -ENOENT;
 	}
 

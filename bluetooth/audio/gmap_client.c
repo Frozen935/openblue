@@ -15,6 +15,8 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
+#include <bluetooth/buf.h>
+#include <base/bt_atomic.h>
 
 #include "audio_internal.h"
 
@@ -117,7 +119,7 @@ static uint8_t bgr_feat_read_cb(struct bt_conn *conn, uint8_t att_err,
 	struct bt_buf_simple buf;
 	int err = att_err;
 
-	__ASSERT_MSG(gmap_cli, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p att_err 0x%02x params %p data %p len %u", (void *)conn, att_err, params,
 		data, len);
@@ -163,7 +165,7 @@ static uint8_t bgr_feat_discover_func(struct bt_conn *conn, const struct bt_gatt
 	const struct bt_gatt_chrc *chrc;
 	int err;
 
-	__ASSERT_MSG(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p attr %p params %p", (void *)conn, attr, params);
 
@@ -206,7 +208,7 @@ static uint8_t bgs_feat_read_cb(struct bt_conn *conn, uint8_t att_err,
 	struct bt_buf_simple buf;
 	int err = att_err;
 
-	__ASSERT_MSG(gmap_cli, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p att_err 0x%02x params %p data %p len %u", (void *)conn, att_err, params,
 		data, len);
@@ -262,7 +264,7 @@ static uint8_t bgs_feat_discover_func(struct bt_conn *conn, const struct bt_gatt
 	const struct bt_gatt_chrc *chrc;
 	int err;
 
-	__ASSERT_MSG(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p attr %p params %p", (void *)conn, attr, params);
 
@@ -305,7 +307,7 @@ static uint8_t ugt_feat_read_cb(struct bt_conn *conn, uint8_t att_err,
 	struct bt_buf_simple buf;
 	int err = att_err;
 
-	__ASSERT_MSG(gmap_cli, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p att_err 0x%02x params %p data %p len %u", (void *)conn, att_err, params,
 		data, len);
@@ -363,7 +365,7 @@ static uint8_t ugt_feat_discover_func(struct bt_conn *conn, const struct bt_gatt
 	const struct bt_gatt_chrc *chrc;
 	int err;
 
-	__ASSERT_MSG(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p attr %p params %p", (void *)conn, attr, params);
 
@@ -406,7 +408,7 @@ static uint8_t ugg_feat_read_cb(struct bt_conn *conn, uint8_t att_err,
 	struct bt_buf_simple buf;
 	int err = att_err;
 
-	__ASSERT_MSG(gmap_cli, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p att_err 0x%02x params %p data %p len %u", (void *)conn, att_err, params,
 		data, len);
@@ -466,7 +468,7 @@ static uint8_t ugg_feat_discover_func(struct bt_conn *conn, const struct bt_gatt
 	const struct bt_gatt_chrc *chrc;
 	int err;
 
-	__ASSERT_MSG(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p attr %p params %p", (void *)conn, attr, params);
 
@@ -509,7 +511,7 @@ static uint8_t role_read_cb(struct bt_conn *conn, uint8_t att_err,
 	struct bt_buf_simple buf;
 	int err = att_err;
 
-	__ASSERT_MSG(gmap_cli, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p att_err 0x%02x params %p data %p len %u", (void *)conn, att_err, params,
 		data, len);
@@ -570,7 +572,7 @@ static uint8_t role_discover_func(struct bt_conn *conn, const struct bt_gatt_att
 	const struct bt_gatt_chrc *chrc;
 	int err;
 
-	__ASSERT_MSG(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p attr %p params %p", (void *)conn, attr, params);
 
@@ -613,7 +615,7 @@ static uint8_t gmas_discover_func(struct bt_conn *conn, const struct bt_gatt_att
 	const struct bt_gatt_service_val *svc;
 	int err;
 
-	__ASSERT_MSG(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
+	__ASSERT(gmap_cli != NULL, "no instance for conn %p", (void *)conn);
 
 	LOG_DBG("conn %p attr %p params %p", (void *)conn, attr, params);
 
@@ -640,7 +642,7 @@ int bt_gmap_discover(struct bt_conn *conn)
 	struct bt_gmap_client *gmap_cli;
 	int err;
 
-	CHECKIF(conn == NULL) {
+	if (conn == NULL) {
 		LOG_DBG("NULL conn");
 
 		return -EINVAL;
@@ -678,7 +680,7 @@ int bt_gmap_discover(struct bt_conn *conn)
 
 int bt_gmap_cb_register(const struct bt_gmap_cb *cb)
 {
-	CHECKIF(cb == NULL) {
+	if (cb == NULL) {
 		LOG_DBG("cb is NULL");
 
 		return -EINVAL;

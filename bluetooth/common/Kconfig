@@ -50,11 +50,17 @@ config BT_BUF_ACL_TX_COUNT
 
 config BT_BUF_ACL_RX_SIZE
 	int "Maximum supported ACL size for incoming data"
-	# For GOEP over RFCOMM, including,
+	# For GOEP over RFCOMM, the minimum MTU of GOEP is 264, including,
 	# 255 bytes - the minimum MTU of GOEP,
 	# 4 bytes - L2CAP Header,
 	# 5 bytes - 4 bytes for RFCOMM header with extended length, 1 byte for FCS.
-	default 264 if BT_CLASSIC && BT_GOEP
+	# For GOEP over L2CAP, the minimum MTU of GOEP is 265, including,
+	# 255 bytes - the minimum MTU of GOEP,
+	# 4 bytes - L2CAP Header,
+	# 6 bytes - Field length of L2CAP I-frame, including,
+	#   4 bytes - extended control field,
+	#   2 bytes - FCS field.
+	default 265 if BT_CLASSIC && BT_GOEP
 	default 200 if BT_CLASSIC
 	default 70 if BT_EATT
 	default 69 if BT_SMP
@@ -175,7 +181,7 @@ config BT_BUF_CMD_TX_COUNT
 
 	  The Host Number of Completed Packets command does not follow normal flow control of HCI
 	  commands and the Controller side HCI drivers that allocates HCI command buffers with
-	  OS_TIMEOUT_NO_WAIT can end up running out of command buffers.
+	  K_NO_WAIT can end up running out of command buffers.
 
 	  When Controller to Host data flow control is enabled in the Host-only or combined
 	  Host plus Controller build, the internal BT_BUF_CMD_TX_COUNT is adjusted accordingly
@@ -209,9 +215,12 @@ config BT_HCI_VS
 	  Host and/or Controller. This enables Set Version Information,
 	  Supported Commands, Supported Features vendor commands.
 
+config BT_HCI_VS_FATAL_ERROR_SUPPORT
+	bool
+
 config BT_HCI_VS_FATAL_ERROR
 	bool "Allow vendor specific HCI event Fatal Error"
-	depends on BT_HCI_VS
+	depends on BT_HCI_VS && BT_HCI_VS_FATAL_ERROR_SUPPORT
 	help
 	  Enable emitting HCI Vendor-Specific events for system and Controller
 	  errors that are unrecoverable.
@@ -252,7 +261,7 @@ config BT_ASSERT
 	default y
 	help
 	  Use a custom Bluetooth assert implementation instead of the
-	  kernel-wide __ASSERT_MSG() when CONFIG_ASSERT is disabled.
+	  kernel-wide __ASSERT() when CONFIG_ASSERT is disabled.
 
 if BT_ASSERT
 
@@ -272,7 +281,8 @@ config BT_ASSERT_PANIC
 endif # BT_ASSERT
 
 config BT_HCI_ERR_TO_STR
-	bool "Print HCI error codes as strings"
+	bool "Print HCI error codes as strings [EXPERIMENTAL]"
+	select EXPERIMENTAL
 
 	help
 	  This configuration enables printing of HCI error
@@ -308,5 +318,44 @@ config BT_DEBUG_MONITOR_UART
 	  however if there is only a single external UART then
 	  UART_CONSOLE needs to be disabled (in which case printk/printf
 	  will get encoded into the monitor protocol).
+
+config BT_DEBUG_MONITOR_RTT
+	bool "Monitor protocol over RTT"
+	depends on USE_SEGGER_RTT
+	depends on SEGGER_RTT_MAX_NUM_UP_BUFFERS >= 2
+	select LOG
+	select CONSOLE_HAS_DRIVER
+	select BT_MONITOR
+	help
+	  Use a custom logging protocol over the RTT buffer instead of
+	  plain-text output. Requires a special application
+	  on the host side that can decode this protocol. Currently
+	  the 'btmon' tool from BlueZ is capable of doing this.
+
+if BT_DEBUG_MONITOR_RTT
+
+config BT_DEBUG_MONITOR_RTT_BUFFER
+	int "Buffer number used for custom logger output."
+	range 1 SEGGER_RTT_MAX_NUM_UP_BUFFERS
+	default 1
+	help
+	  Select index of up-buffer used for logger output.
+	  Make sure the buffer number is not used by other logger,
+	  e.g. in LOG_BACKEND_RTT_BUFFER, otherwise the buffer will be
+	  overwritten.
+
+config BT_DEBUG_MONITOR_RTT_BUFFER_NAME
+	string "Buffer name used for custom logger output."
+	default "btmonitor"
+	help
+	  Select index of up-buffer used for logger output.
+
+config BT_DEBUG_MONITOR_RTT_BUFFER_SIZE
+	int "Size of reserved up-buffer for custom logger output."
+	default 1024
+	help
+	  Specify reserved size of up-buffer used for custom logger output.
+
+endif # BT_DEBUG_MONITOR_RTT
 
 endchoice # Bluetooth debug type

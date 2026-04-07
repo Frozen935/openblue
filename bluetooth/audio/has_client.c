@@ -15,6 +15,10 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
+#include "osdep/os.h"
+#include <bluetooth/buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
 #include "has_internal.h"
 
@@ -805,11 +809,11 @@ static int features_discover(struct bt_has_client *inst)
 
 int bt_has_client_cb_register(const struct bt_has_client_cb *cb)
 {
-	CHECKIF(!cb) {
+	if (!cb) {
 		return -EINVAL;
 	}
 
-	CHECKIF(client_cb) {
+	if (client_cb) {
 		return -EALREADY;
 	}
 
@@ -833,7 +837,7 @@ int bt_has_client_discover(struct bt_conn *conn)
 
 	LOG_DBG("conn %p", (void *)conn);
 
-	CHECKIF(!conn || !client_cb || !client_cb->discover) {
+	if (!conn || !client_cb || !client_cb->discover) {
 		return -EINVAL;
 	}
 
@@ -883,11 +887,11 @@ int bt_has_client_presets_read(struct bt_has *has, uint8_t start_index, uint8_t 
 		return -EBUSY;
 	}
 
-	CHECKIF(start_index == BT_HAS_PRESET_INDEX_NONE) {
+	if (start_index == BT_HAS_PRESET_INDEX_NONE) {
 		return -EINVAL;
 	}
 
-	CHECKIF(count == 0u) {
+	if (count == 0u) {
 		return -EINVAL;
 	}
 
@@ -910,7 +914,7 @@ int bt_has_client_preset_set(struct bt_has *has, uint8_t index, bool sync)
 		return -ENOTCONN;
 	}
 
-	CHECKIF(index == BT_HAS_PRESET_INDEX_NONE) {
+	if (index == BT_HAS_PRESET_INDEX_NONE) {
 		return -EINVAL;
 	}
 

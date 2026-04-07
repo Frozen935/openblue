@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_BRG_CFG_H___
-#define __INCLUDE_BLUETOOTH_MESH_BRG_CFG_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_BRG_CFG_H__
+#define __INCLUDE_BLUETOOTH_MESH_BRG_CFG_H__
 
 #include <stdint.h>
 #include <stdbool.h>
+
+struct bt_buf_simple;
 
 #ifdef __cplusplus
 extern "C" {

@@ -143,7 +143,7 @@ void bt_mesh_settings_store_schedule(enum bt_mesh_settings_flag flag)
 		timeout_ms = CONFIG_BT_MESH_STORE_TIMEOUT * MSEC_PER_SEC;
 	}
 
-	remaining_ms = k_ticks_to_ms_floor32(bt_work_delayable_remaining_get(&pending_store));
+	remaining_ms = bt_work_delayable_remaining_get(&pending_store);
 	LOG_DBG("Waiting %u ms vs rem %u ms", timeout_ms, remaining_ms);
 
 	/* If the new deadline is sooner, override any existing
@@ -220,9 +220,11 @@ static void store_pending(struct bt_work *work)
 void bt_mesh_settings_init(void)
 {
 	if (IS_ENABLED(CONFIG_BT_MESH_SETTINGS_WORKQ)) {
+		const struct bt_work_queue_config cfg = {.name = "BT Mesh settings workq"};
+
+		bt_work_queue_init(&settings_work_q);
 		bt_work_queue_start(&settings_work_q, SETTINGS_WORKQ_STACK_SIZE,
-				   OS_PRIORITY(SETTINGS_WORKQ_PRIO), NULL);
-		os_thread_name_set(&settings_work_q.thread, "BT Mesh settings workq");
+				    OS_PRIORITY(SETTINGS_WORKQ_PRIO), &cfg);
 	}
 
 	bt_work_init_delayable(&pending_store, store_pending);

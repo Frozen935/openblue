@@ -21,6 +21,8 @@
 #include <stddef.h>
 
 #include <bluetooth/conn.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -120,7 +122,6 @@ extern "C" {
 #if defined(CONFIG_BT_ATT_ERR_TO_STR)
 const char *bt_att_err_to_str(uint8_t att_err);
 #else
-
 static inline const char *bt_att_err_to_str(uint8_t att_err)
 {
 	ARG_UNUSED(att_err);

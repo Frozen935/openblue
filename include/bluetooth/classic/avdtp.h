@@ -11,14 +11,13 @@
 #ifndef __INCLUDE_BLUETOOTH_AVDTP_H__
 #define __INCLUDE_BLUETOOTH_AVDTP_H__
 
-#include "osdep/os.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define AVDTP_VERSION_1_3 0x0103 /**< AVDTP version 1.3 value */
 
-#define AVDTP_VERSION AVDTP_VERSION_1_3 /**< AVDTP version */
+#define AVDTP_VERSION AVDTP_VERSION_1_3 /**< AVDTP version used by Zephyr */
 
 /**
  * @brief AVDTP error code
@@ -133,22 +132,54 @@ enum bt_avdtp_recovery_type {
 	BT_ADVTP_RECOVERY_TYPE_RFC2733 = 0x01,
 };
 
+struct bt_avdtp_sep;
+
+/** @brief avdtp sep operations structure */
+struct bt_avdtp_sep_ops {
+	/** @brief Stream End Point (SEP) l2cap connected callback
+	 *
+	 *  If this callback is provided it will be called whenever the
+	 *  stream l2cap connection completes.
+	 *
+	 *  @param sep The sep that has been connected
+	 */
+	void (*connected)(struct bt_avdtp_sep *sep);
+
+	/** @brief Stream End Point (SEP) l2cap disconnected callback
+	 *
+	 *  If this callback is provided it will be called whenever the
+	 *  stream l2cap channel is disconnected, including when a
+	 *  connection gets rejected.
+	 *
+	 *  @param sep The sep that has been disconnected
+	 */
+	void (*disconnected)(struct bt_avdtp_sep *sep);
+
+	/** @brief Stream End Point (SEP) received data
+	 *
+	 *  If this callback is provided it will be called whenever the
+	 *  stream l2cap channel receives data.
+	 *
+	 *  @param sep The sep that has received data.
+	 *  @param buf The data buf
+	 */
+	void (*media_data_cb)(struct bt_avdtp_sep *sep, struct bt_buf *buf);
+};
+
 /** @brief AVDTP Stream End Point */
 struct bt_avdtp_sep {
 	/** Stream End Point information */
 	struct bt_avdtp_sep_info sep_info;
 	/** Media Transport Channel*/
 	struct bt_l2cap_br_chan chan;
-	/** the endpoint media data */
-	void (*media_data_cb)(struct bt_avdtp_sep *sep, struct bt_buf *buf);
 	/* semaphore for lock/unlock */
 	os_sem_t sem_lock;
 	/** avdtp session */
 	struct bt_avdtp *session;
-	/** endpoint becomes idle */
-	int (*endpoint_released)(struct bt_avdtp_sep *sep);
+	/** sep ops */
+	const struct bt_avdtp_sep_ops *ops;
 	/** delay worker for disconnecting l2cap media channel */
-	struct bt_work_delayable _delay_work;
+	struct k_work_delayable _delay_work;
 	/** delay_work_state */
 	uint8_t _delay_work_state;
 	/** SEP state */

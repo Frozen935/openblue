@@ -22,6 +22,10 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
+#include "osdep/os.h"
+#include <base/bt_atomic.h>
+#include <bluetooth/byteorder.h>
+#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 #include "vcp_internal.h"
@@ -99,7 +103,7 @@ static void notify_work_reschedule(struct bt_vcp_vol_rend *inst, enum vol_rend_n
 	if (err < 0) {
 		LOG_ERR("Failed to reschedule %s notification err %d", vol_rend_notify_str(notify),
 			err);
-	} else if (!TIMEOUT_EQ(delay, OS_TIMEOUT_NO_WAIT)) {
+	} else if (!K_TIMEOUT_EQ(delay, OS_TIMEOUT_NO_WAIT)) {
 		LOG_DBG("%s notification scheduled in %dms", vol_rend_notify_str(notify),
 			k_ticks_to_ms_floor32(bt_work_delayable_remaining_get(&inst->notify_work)));
 	}
@@ -332,7 +336,7 @@ static int prepare_vocs_inst(struct bt_vcp_vol_rend_register_param *param)
 		return 0;
 	}
 
-	__ASSERT_MSG(param, "NULL param");
+	__ASSERT(param, "NULL param");
 
 	for (j = 0, i = 0; i < ARRAY_SIZE(vcs_attrs); i++) {
 		if (bt_uuid_cmp(vcs_attrs[i].uuid, BT_UUID_GATT_INCLUDE) == 0 &&
@@ -363,7 +367,7 @@ static int prepare_vocs_inst(struct bt_vcp_vol_rend_register_param *param)
 		}
 	}
 
-	__ASSERT_MSG(j == CONFIG_BT_VCP_VOL_REND_VOCS_INSTANCE_COUNT,
+	__ASSERT(j == CONFIG_BT_VCP_VOL_REND_VOCS_INSTANCE_COUNT,
 		 "Invalid VOCS instance count");
 
 	return 0;
@@ -379,7 +383,7 @@ static int prepare_aics_inst(struct bt_vcp_vol_rend_register_param *param)
 		return 0;
 	}
 
-	__ASSERT_MSG(param, "NULL param");
+	__ASSERT(param, "NULL param");
 
 	for (j = 0, i = 0; i < ARRAY_SIZE(vcs_attrs); i++) {
 		if (bt_uuid_cmp(vcs_attrs[i].uuid, BT_UUID_GATT_INCLUDE) == 0 &&
@@ -411,7 +415,7 @@ static int prepare_aics_inst(struct bt_vcp_vol_rend_register_param *param)
 		}
 	}
 
-	__ASSERT_MSG(j == CONFIG_BT_VCP_VOL_REND_AICS_INSTANCE_COUNT,
+	__ASSERT(j == CONFIG_BT_VCP_VOL_REND_AICS_INSTANCE_COUNT,
 		 "Invalid AICS instance count");
 
 	return 0;
@@ -423,17 +427,17 @@ int bt_vcp_vol_rend_register(struct bt_vcp_vol_rend_register_param *param)
 	static bool registered;
 	int err;
 
-	CHECKIF(param == NULL) {
+	if (param == NULL) {
 		LOG_DBG("param is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(param->mute > BT_VCP_STATE_MUTED) {
+	if (param->mute > BT_VCP_STATE_MUTED) {
 		LOG_DBG("Invalid mute value: %u", param->mute);
 		return -EINVAL;
 	}
 
-	CHECKIF(param->step == 0) {
+	if (param->step == 0) {
 		LOG_DBG("Invalid step value: %u", param->step);
 		return -EINVAL;
 	}

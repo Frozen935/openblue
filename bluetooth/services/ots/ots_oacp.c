@@ -14,6 +14,8 @@
 #include "ots_dir_list_internal.h"
 #include "ots_obj_manager_internal.h"
 
+
+
 #define OACP_PROC_TYPE_SIZE	1
 
 #if defined(CONFIG_BT_OTS_OACP_WRITE_SUPPORT)

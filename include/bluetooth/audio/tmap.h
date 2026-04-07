@@ -8,8 +8,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_AUDIO_TMAP_
-#define __INCLUDE_BLUETOOTH_AUDIO_TMAP_
+#ifndef __INCLUDE_BLUETOOTH_AUDIO_TMAP__H__
+#define __INCLUDE_BLUETOOTH_AUDIO_TMAP__H__
 
 /**
  * @brief Telephone and Media Audio Profile (TMAP)
@@ -27,6 +27,8 @@
  */
 
 #include <bluetooth/conn.h>
+#include <utils/bt_utils.h>
+#include <utils/bt_utils.h>
 
 /** @brief TMAP Role characteristic */
 enum bt_tmap_role {
@@ -123,4 +125,4 @@ void bt_tmap_set_role(enum bt_tmap_role role);
  * @}
  */
 
-#endif /* __INCLUDE_BLUETOOTH_AUDIO_TMAP_ */
+#endif /* __INCLUDE_BLUETOOTH_AUDIO_TMAP__H__ */

@@ -28,6 +28,7 @@
 
 #include <bluetooth/audio/aics.h>
 #include <bluetooth/conn.h>
+#include <utils/bt_slist.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,7 +64,10 @@ extern "C" {
 #define BT_MICP_MUTE_DISABLED                      0x02
 /** @} */
 
-/** @brief Opaque Microphone Controller instance. */
+/**
+ * @struct bt_micp_mic_ctlr
+ * @brief Opaque Microphone Controller instance.
+ */
 struct bt_micp_mic_ctlr;
 
 /** @brief Register parameters structure for Microphone Control Service */

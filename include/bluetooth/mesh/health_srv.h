@@ -9,7 +9,6 @@
  */
 #ifndef __INCLUDE_BLUETOOTH_MESH_HEALTH_SRV_H__
 #define __INCLUDE_BLUETOOTH_MESH_HEALTH_SRV_H__
-
 /**
  * @brief Health Server Model
  * @defgroup bt_mesh_health_srv Health Server Model
@@ -155,7 +154,7 @@ struct bt_mesh_health_srv {
 	const struct bt_mesh_health_srv_cb *cb;
 
 	/** Attention Timer state */
-	struct bt_work_delayable attn_timer;
+	struct k_work_delayable attn_timer;
 };
 
 /**

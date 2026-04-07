@@ -24,6 +24,8 @@
 #include <bluetooth/classic/rfcomm.h>
 #include <bluetooth/classic/sdp.h>
 
+#include <osdep/os.h>
+
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 
@@ -58,21 +60,21 @@ static bool metrics;
 static int l2cap_recv_metrics(struct bt_l2cap_chan *chan, struct bt_buf *buf)
 {
 	static uint32_t len;
-	static uint64_t stamp = 0;
-	uint32_t delta;
+	static uint64_t ms_stamp;
+	uint64_t delta;
 
-	delta = os_time_get_ms() - stamp;
+	delta = (os_time_get_ms() - ms_stamp) * 1000000ULL;
 
 	/* if last data rx-ed was greater than 1 second in the past,
 	 * reset the metrics.
 	 */
-	if (delta > MSEC_PER_SEC) {
+	if (delta > NSEC_PER_SEC) {
 		len = 0U;
 		l2cap_rate = 0U;
-		stamp = os_time_get_ms();
+		ms_stamp = os_time_get_ms();
 	} else {
 		len += buf->len;
-		l2cap_rate = ((uint64_t)len << 3) * MSEC_PER_SEC / delta;
+		l2cap_rate = ((uint64_t)len << 3) * NSEC_PER_SEC / delta;
 	}
 
 	return 0;
@@ -478,7 +480,7 @@ static int cmd_metrics(const struct bt_shell *sh, size_t argc, char *argv[])
 	} else if (!strcmp(action, "off")) {
 		metrics = false;
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return 0;
 	}
 
@@ -519,13 +521,13 @@ static int cmd_allowlist_remove(const struct bt_shell *sh, size_t argc, char *ar
 
 #define HELP_NONE "[none]"
 
-BT_SHELL_SUBCMD_SET_CREATE(allowlist_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(allowlist_cmds,
 	BT_SHELL_CMD_ARG(add, NULL, HELP_NONE, cmd_allowlist_add, 1, 0),
 	BT_SHELL_CMD_ARG(remove, NULL, HELP_NONE, cmd_allowlist_remove, 1, 0),
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_SUBCMD_SET_CREATE(l2cap_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(l2cap_cmds,
 	BT_SHELL_CMD_ARG(connect, NULL, "<psm> [sec_level]", cmd_connect, 2, 1),
 	BT_SHELL_CMD_ARG(disconnect, NULL, HELP_NONE, cmd_disconnect, 1, 0),
 	BT_SHELL_CMD_ARG(metrics, NULL, "<value on, off>", cmd_metrics, 2, 0),
@@ -547,7 +549,7 @@ BT_SHELL_SUBCMD_SET_CREATE(l2cap_cmds,
 static int cmd_l2cap(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		/* shell returns 1 when help is printed */
 		return 1;
 	}
@@ -557,15 +559,5 @@ static int cmd_l2cap(const struct bt_shell *sh, size_t argc, char **argv)
 	return -ENOEXEC;
 }
 
-BT_SHELL_CMD_ARG_DEFINE(l2cap, &l2cap_cmds, "Bluetooth L2CAP shell commands",
+BT_SHELL_CMD_ARG_REGISTER(l2cap, &l2cap_cmds, "Bluetooth L2CAP shell commands",
 		       cmd_l2cap, 1, 1);
-
-void bt_shell_l2cap_conn_cb_register(void)
-{
-	bt_conn_cb_register((struct bt_conn_cb *)&bt_conn_cb_l2cap_conn_callbacks);
-}
-
-int bt_shell_cmd_l2cap_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &l2cap);
-}

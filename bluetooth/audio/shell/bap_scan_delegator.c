@@ -13,34 +13,18 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <bluetooth/audio/audio.h>
-#include <bluetooth/audio/bap.h>
-#include <bluetooth/addr.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/conn.h>
-#include <bluetooth/gap.h>
-#include <bluetooth/gatt.h>
-#include <bluetooth/iso.h>
-#include <bluetooth/uuid.h>
+#include <utils/bt_utils.h>
 
 #include <audio/bap_internal.h>
+#include "audio.h"
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
 #define PA_SYNC_INTERVAL_TO_TIMEOUT_RATIO 20 /* Set the timeout relative to interval */
 #define PA_SYNC_SKIP              5
 
-static struct sync_state {
-	bool pa_syncing;
-	bool past_avail;
-	uint8_t src_id;
-	uint16_t pa_interval;
-	struct bt_work_delayable pa_timer;
-	struct bt_conn *conn;
-	struct bt_le_per_adv_sync *pa_sync;
-	const struct bt_bap_scan_delegator_recv_state *recv_state;
-	uint8_t broadcast_code[BT_ISO_BROADCAST_CODE_SIZE];
-} sync_states[CONFIG_BT_BAP_SCAN_DELEGATOR_RECV_STATE_COUNT];
+struct scan_delegator_sync_state
+	scan_delegator_sync_states[CONFIG_BT_BAP_SCAN_DELEGATOR_RECV_STATE_COUNT];
 
 static bool past_preference = true;
 
@@ -50,7 +34,7 @@ size_t bap_scan_delegator_ad_data_add(struct bt_data data[], size_t data_size)
 		BT_UUID_16_ENCODE(BT_UUID_BASS_VAL),
 	};
 
-	__ASSERT_MSG(data_size > 0, "No space for ad_bap_scan_delegator");
+	__ASSERT(data_size > 0, "No space for ad_bap_scan_delegator");
 	data[0].type = BT_DATA_SVC_DATA16;
 	data[0].data_len = ARRAY_SIZE(ad_bap_scan_delegator);
 	data[0].data = &ad_bap_scan_delegator[0];
@@ -58,78 +42,108 @@ size_t bap_scan_delegator_ad_data_add(struct bt_data data[], size_t data_size)
 	return 1U;
 }
 
-static struct sync_state *sync_state_get(const struct bt_bap_scan_delegator_recv_state *recv_state)
+static struct scan_delegator_sync_state *
+sync_state_get(const struct bt_bap_scan_delegator_recv_state *recv_state)
 {
-	for (size_t i = 0U; i < ARRAY_SIZE(sync_states); i++) {
-		if (sync_states[i].recv_state == recv_state) {
-			return &sync_states[i];
+	for (size_t i = 0U; i < ARRAY_SIZE(scan_delegator_sync_states); i++) {
+		if (scan_delegator_sync_states[i].recv_state == recv_state) {
+			return &scan_delegator_sync_states[i];
 		}
 	}
 
 	return NULL;
 }
 
-static struct sync_state *sync_state_get_or_new(
-	const struct bt_bap_scan_delegator_recv_state *recv_state)
+static struct scan_delegator_sync_state *
+sync_state_get_or_new(const struct bt_bap_scan_delegator_recv_state *recv_state)
 {
-	struct sync_state *free_state = NULL;
+	struct scan_delegator_sync_state *free_state = NULL;
 
-	for (size_t i = 0U; i < ARRAY_SIZE(sync_states); i++) {
-		if (sync_states[i].recv_state == NULL &&
-		    free_state == NULL) {
-			free_state = &sync_states[i];
+	for (size_t i = 0U; i < ARRAY_SIZE(scan_delegator_sync_states); i++) {
+		if (!scan_delegator_sync_states[i].active && free_state == NULL) {
+			free_state = &scan_delegator_sync_states[i];
 		}
 
-		if (sync_states[i].recv_state == recv_state) {
-			return &sync_states[i];
+		if (scan_delegator_sync_states[i].recv_state == recv_state) {
+			scan_delegator_sync_states[i].active = true;
+
+			return &scan_delegator_sync_states[i];
+		}
+
+		if (scan_delegator_sync_states[i].pa_sync != NULL &&
+		    recv_state->broadcast_id == scan_delegator_sync_states[i].broadcast_id) {
+			struct bt_le_per_adv_sync_info sync_info;
+			int err;
+
+			err = bt_le_per_adv_sync_get_info(scan_delegator_sync_states[i].pa_sync,
+							  &sync_info);
+			if (err != 0) {
+				bt_shell_error("Failed to get sync info: %d", err);
+				continue;
+			}
+
+			/* If the broadcast ID and the PA sync's address type and SID matches, it is
+			 * a match to an existing sync_state
+			 */
+			if (recv_state->addr.type == sync_info.addr.type &&
+			    recv_state->adv_sid == sync_info.sid) {
+				return &scan_delegator_sync_states[i];
+			}
 		}
 	}
 
 	return free_state;
 }
 
-static struct sync_state *sync_state_get_by_pa(struct bt_le_per_adv_sync *sync)
+struct scan_delegator_sync_state *
+scan_delegator_sync_state_get_by_pa(struct bt_le_per_adv_sync *sync)
 {
-	for (size_t i = 0U; i < ARRAY_SIZE(sync_states); i++) {
-		if (sync_states[i].pa_sync == sync) {
-			return &sync_states[i];
+	for (size_t i = 0U; i < ARRAY_SIZE(scan_delegator_sync_states); i++) {
+		if (scan_delegator_sync_states[i].pa_sync == sync) {
+			return &scan_delegator_sync_states[i];
 		}
 	}
 
 	return NULL;
 }
 
-static struct sync_state *
-sync_state_get_by_sync_info(const struct bt_le_per_adv_sync_synced_info *info)
+struct scan_delegator_sync_state *
+scan_delegator_sync_state_get_by_values(uint32_t broadcast_id, uint8_t addr_type, uint8_t sid)
 {
-	for (size_t i = 0U; i < ARRAY_SIZE(sync_states); i++) {
-		if (sync_states[i].recv_state != NULL &&
-		    bt_addr_le_eq(info->addr, &sync_states[i].recv_state->addr) &&
-		    info->sid == sync_states[i].recv_state->adv_sid) {
-
-			return &sync_states[i];
+	/* If the broadcast ID and the PA sync's address type and SID matches, it is
+	 * a match to an existing sync_state
+	 */
+	for (size_t i = 0U; i < ARRAY_SIZE(scan_delegator_sync_states); i++) {
+		if (scan_delegator_sync_states[i].active &&
+		    scan_delegator_sync_states[i].recv_state != NULL &&
+		    scan_delegator_sync_states[i].recv_state->broadcast_id == broadcast_id &&
+		    scan_delegator_sync_states[i].recv_state->addr.type == addr_type &&
+		    scan_delegator_sync_states[i].recv_state->adv_sid == sid) {
+			return &scan_delegator_sync_states[i];
 		}
 	}
 
 	return NULL;
 }
 
-static struct sync_state *sync_state_new(void)
+struct scan_delegator_sync_state *scan_delegator_sync_state_new(void)
 {
-	for (size_t i = 0U; i < ARRAY_SIZE(sync_states); i++) {
-		if (sync_states[i].recv_state == NULL) {
-			return &sync_states[i];
+	for (size_t i = 0U; i < ARRAY_SIZE(scan_delegator_sync_states); i++) {
+		if (!scan_delegator_sync_states[i].active) {
+			scan_delegator_sync_states[i].active = true;
+
+			return &scan_delegator_sync_states[i];
 		}
 	}
 
 	return NULL;
 }
 
-static struct sync_state *sync_state_get_by_src_id(uint8_t src_id)
+static struct scan_delegator_sync_state *sync_state_get_by_src_id(uint8_t src_id)
 {
-	for (size_t i = 0U; i < ARRAY_SIZE(sync_states); i++) {
-		if (sync_states[i].src_id == src_id) {
-			return &sync_states[i];
+	for (size_t i = 0U; i < ARRAY_SIZE(scan_delegator_sync_states); i++) {
+		if (scan_delegator_sync_states[i].src_id == src_id) {
+			return &scan_delegator_sync_states[i];
 		}
 	}
 
@@ -159,10 +173,11 @@ static uint16_t interval_to_sync_timeout(uint16_t pa_interval)
 	return pa_timeout;
 }
 
-static void pa_timer_handler(struct bt_work *work)
+static void pa_timer_handler(struct k_work *work)
 {
 	struct bt_work_delayable *dwork = bt_work_delayable_from_work(work);
-	struct sync_state *state = CONTAINER_OF(dwork, struct sync_state, pa_timer);
+	struct scan_delegator_sync_state *state =
+		CONTAINER_OF(dwork, struct scan_delegator_sync_state, pa_timer);
 
 	state->pa_syncing = false;
 
@@ -183,8 +198,7 @@ static void pa_timer_handler(struct bt_work *work)
 }
 
 #if defined(CONFIG_BT_PER_ADV_SYNC_TRANSFER_SENDER)
-static int pa_sync_past(struct bt_conn *conn,
-			struct sync_state *state,
+static int pa_sync_past(struct bt_conn *conn, struct scan_delegator_sync_state *state,
 			uint16_t pa_interval)
 {
 	struct bt_le_per_adv_sync_transfer_param param = { 0 };
@@ -208,8 +222,8 @@ static int pa_sync_past(struct bt_conn *conn,
 }
 #endif /* CONFIG_BT_PER_ADV_SYNC_TRANSFER_SENDER */
 
-static int pa_sync_no_past(struct sync_state *state,
-			    uint16_t pa_interval)
+static int pa_sync_no_past(struct scan_delegator_sync_state *state, uint16_t pa_interval,
+			   struct bt_le_per_adv_sync **out_sync)
 {
 	const struct bt_bap_scan_delegator_recv_state *recv_state;
 	struct bt_le_per_adv_sync_param param = { 0 };
@@ -226,7 +240,7 @@ static int pa_sync_no_past(struct sync_state *state,
 	/* TODO: Validate that the advertise is broadcasting the same
 	 * broadcast_id that the receive state has
 	 */
-	err = bt_le_per_adv_sync_create(&param, &state->pa_sync);
+	err = bt_le_per_adv_sync_create(&param, out_sync);
 	if (err != 0) {
 		bt_shell_info("Could not sync per adv: %d", err);
 	} else {
@@ -243,13 +257,14 @@ static int pa_sync_no_past(struct sync_state *state,
 	return err;
 }
 
-static int pa_sync_term(struct sync_state *state)
+static int pa_sync_term(struct scan_delegator_sync_state *state)
 {
 	int err;
 
 	(void)bt_work_cancel_delayable(&state->pa_timer);
 
 	if (state->pa_sync == NULL) {
+		bt_shell_warn("PA state %p not synced", state);
 		return -1;
 	}
 
@@ -260,7 +275,6 @@ static int pa_sync_term(struct sync_state *state)
 		bt_shell_error("Could not delete per adv sync: %d", err);
 	} else {
 		state->pa_syncing = false;
-		state->pa_sync = NULL;
 	}
 
 	return err;
@@ -269,14 +283,39 @@ static int pa_sync_term(struct sync_state *state)
 static void recv_state_updated_cb(struct bt_conn *conn,
 				  const struct bt_bap_scan_delegator_recv_state *recv_state)
 {
+	struct scan_delegator_sync_state *state;
+
 	bt_shell_info("Receive state with ID %u updated", recv_state->src_id);
+
+	state = sync_state_get_or_new(recv_state);
+	if (state == NULL) {
+		bt_shell_error("Could not get state from recv state %p", recv_state);
+		return;
+	}
+
+	state->recv_state = recv_state;
+	state->src_id = recv_state->src_id;
+	state->broadcast_id = recv_state->broadcast_id;
+
+	/* TODO: Temporary workaround to check if a recv_state is all zeroes, which indicate that it
+	 * has been removed. See https://github.com/zephyrproject-rtos/zephyr/issues/95422
+	 */
+	if (util_memeq(recv_state, &(struct bt_bap_scan_delegator_recv_state){0},
+		       sizeof(*recv_state))) {
+		if (state->conn != NULL) {
+			bt_conn_unref(state->conn);
+			state->conn = NULL;
+		}
+
+		(void)memset(state, 0, sizeof(*state)); /* mark as unused */
+	}
 }
 
 static int pa_sync_req_cb(struct bt_conn *conn,
 			  const struct bt_bap_scan_delegator_recv_state *recv_state,
 			  bool past_avail, uint16_t pa_interval)
 {
-	struct sync_state *state;
+	struct scan_delegator_sync_state *state;
 
 	bt_shell_info(
 		"PA Sync request: past_avail %u, broadcast_id 0x%06X, pa_interval 0x%04x: %p",
@@ -284,13 +323,14 @@ static int pa_sync_req_cb(struct bt_conn *conn,
 
 	state = sync_state_get_or_new(recv_state);
 	if (state == NULL) {
-		bt_shell_error("Could not get state");
+		bt_shell_error("Could not get state from recv state %p", recv_state);
 
 		return -1;
 	}
 
 	state->recv_state = recv_state;
 	state->src_id = recv_state->src_id;
+	state->broadcast_id = recv_state->broadcast_id;
 
 	if (recv_state->pa_sync_state == BT_BAP_PA_STATE_SYNCED ||
 	    recv_state->pa_sync_state == BT_BAP_PA_STATE_INFO_REQ) {
@@ -312,13 +352,13 @@ static int pa_sync_req_cb(struct bt_conn *conn,
 static int pa_sync_term_req_cb(struct bt_conn *conn,
 			       const struct bt_bap_scan_delegator_recv_state *recv_state)
 {
-	struct sync_state *state;
+	struct scan_delegator_sync_state *state;
 
 	bt_shell_info("PA Sync term request for %p", recv_state);
 
 	state = sync_state_get(recv_state);
 	if (state == NULL) {
-		bt_shell_error("Could not get state");
+		bt_shell_error("Could not get state from recv state %p", recv_state);
 
 		return -1;
 	}
@@ -330,14 +370,14 @@ static void broadcast_code_cb(struct bt_conn *conn,
 			      const struct bt_bap_scan_delegator_recv_state *recv_state,
 			      const uint8_t broadcast_code[BT_ISO_BROADCAST_CODE_SIZE])
 {
-	struct sync_state *state;
+	struct scan_delegator_sync_state *state;
 
 	bt_shell_info("Broadcast code received for %p", recv_state);
 	bt_shell_hexdump(broadcast_code, BT_ISO_BROADCAST_CODE_SIZE);
 
 	state = sync_state_get(recv_state);
 	if (state == NULL) {
-		bt_shell_error("Could not get state");
+		bt_shell_error("Could not get state from recv state %p", recv_state);
 
 		return;
 	}
@@ -369,20 +409,29 @@ static struct bt_bap_scan_delegator_cb scan_delegator_cb = {
 static void pa_synced_cb(struct bt_le_per_adv_sync *sync,
 			 struct bt_le_per_adv_sync_synced_info *info)
 {
-	struct sync_state *state;
+	struct scan_delegator_sync_state *state;
 
 	bt_shell_info("PA %p synced", sync);
 
 	if (info->conn == NULL) {
-		state = sync_state_get_by_pa(sync);
-	} else {
-		/* In case of PAST we need to use the addr instead */
-		state = sync_state_get_by_sync_info(info);
-	}
+		state = scan_delegator_sync_state_get_by_pa(sync);
 
-	if (state == NULL) {
-		bt_shell_info("Could not get sync state from PA sync %p", sync);
-		return;
+		if (state == NULL) {
+			bt_shell_info("Could not get sync state from PA sync %p", sync);
+			return;
+		}
+	} else {
+		/* In case of PAST we need to use the service data instead
+		 * 2nd byte contains the source ID
+		 */
+		const uint8_t src_id = (uint8_t)(info->service_data >> 8);
+
+		state = sync_state_get_by_src_id(src_id);
+		if (state == NULL) {
+			bt_shell_info("Could not get sync state from PAST source_id 0x%02X",
+				      src_id);
+			return;
+		}
 	}
 
 	if (state->conn != NULL) {
@@ -396,11 +445,11 @@ static void pa_synced_cb(struct bt_le_per_adv_sync *sync,
 static void pa_term_cb(struct bt_le_per_adv_sync *sync,
 		       const struct bt_le_per_adv_sync_term_info *info)
 {
-	struct sync_state *state;
+	struct scan_delegator_sync_state *state;
 
 	bt_shell_info("PA %p sync terminated", sync);
 
-	state = sync_state_get_by_pa(sync);
+	state = scan_delegator_sync_state_get_by_pa(sync);
 	if (state == NULL) {
 		bt_shell_error("Could not get sync state from PA sync %p", sync);
 		return;
@@ -410,6 +459,8 @@ static void pa_term_cb(struct bt_le_per_adv_sync *sync,
 		bt_conn_unref(state->conn);
 		state->conn = NULL;
 	}
+
+	state->pa_sync = NULL;
 
 	bt_work_cancel_delayable(&state->pa_timer);
 }
@@ -429,13 +480,13 @@ static int cmd_bap_scan_delegator_init(const struct bt_shell *sh, size_t argc,
 
 		err = bt_bap_scan_delegator_register(&scan_delegator_cb);
 		if (err) {
-			bt_shell_error("Failed to register scan delegator (err: %d)", err);
+			bt_shell_error(sh, "Failed to register scan delegator (err: %d)", err);
 			return -ENOEXEC;
 		}
 
 		err = bt_le_per_adv_sync_cb_register(&pa_sync_cb);
 		if (err) {
-			bt_shell_error("Failed to register PA sync callbacks (err: %d)", err);
+			bt_shell_error(sh, "Failed to register PA sync callbacks (err: %d)", err);
 			return -ENOEXEC;
 		}
 
@@ -454,7 +505,7 @@ static int cmd_bap_scan_delegator_set_past_pref(const struct bt_shell *sh,
 
 	past_pref = bt_shell_strtobool(argv[1], 10, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse past_pref from %s", argv[1]);
+		bt_shell_error(sh, "Failed to parse past_pref from %s", argv[1]);
 		return -ENOEXEC;
 	}
 
@@ -466,7 +517,8 @@ static int cmd_bap_scan_delegator_set_past_pref(const struct bt_shell *sh,
 static int cmd_bap_scan_delegator_sync_pa(const struct bt_shell *sh, size_t argc,
 					  char **argv)
 {
-	struct sync_state *state;
+	struct bt_le_per_adv_sync *pa_sync = per_adv_syncs[selected_per_adv_sync];
+	struct scan_delegator_sync_state *state;
 	unsigned long src_id;
 	int err;
 
@@ -474,20 +526,29 @@ static int cmd_bap_scan_delegator_sync_pa(const struct bt_shell *sh, size_t argc
 
 	src_id = bt_shell_strtoul(argv[1], 16, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse src_id from %s", argv[1]);
+		bt_shell_error(sh, "Failed to parse src_id from %s", argv[1]);
 
 		return -ENOEXEC;
 	}
 
 	if (src_id > UINT8_MAX) {
-		bt_shell_error("src_id shall be 0x00-0xff");
+		bt_shell_error(sh, "src_id shall be 0x00-0xff");
 
 		return -ENOEXEC;
 	}
 
 	state = sync_state_get_by_src_id((uint8_t)src_id);
 	if (state == NULL) {
-		bt_shell_error("Could not get state");
+		bt_shell_error(sh, "Could not get state from src_id %u", (uint8_t)src_id);
+
+		return -ENOEXEC;
+	}
+
+	if (pa_sync != NULL) {
+		bt_shell_error(sh,
+			    "Selected PA sync object (%u) is already synced, please delete or "
+			    "select a different PA sync object",
+			    selected_per_adv_sync);
 
 		return -ENOEXEC;
 	}
@@ -497,14 +558,14 @@ static int cmd_bap_scan_delegator_sync_pa(const struct bt_shell *sh, size_t argc
 	} else if (past_preference &&
 		   state->past_avail &&
 		   state->conn != NULL) {
-		bt_shell_info("Syncing with PAST");
+		bt_shell_info(sh, "Syncing with PAST");
 
 		err = pa_sync_past(state->conn, state, state->pa_interval);
 		if (err == 0) {
 			err = bt_bap_scan_delegator_set_pa_state(src_id,
 								 BT_BAP_PA_STATE_INFO_REQ);
 			if (err != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to set INFO_REQ state: %d",
 					    err);
 			}
@@ -513,12 +574,13 @@ static int cmd_bap_scan_delegator_sync_pa(const struct bt_shell *sh, size_t argc
 		}
 #endif /* CONFIG_BT_PER_ADV_SYNC_TRANSFER_SENDER */
 	} else {
-		bt_shell_info("Syncing without PAST");
-		err = pa_sync_no_past(state, state->pa_interval);
+		bt_shell_info(sh, "Syncing without PAST");
+		err = pa_sync_no_past(state, state->pa_interval,
+				      &per_adv_syncs[selected_per_adv_sync]);
 	}
 
 	if (err != 0) {
-		bt_shell_error("Failed PA sync: %d", err);
+		bt_shell_error(sh, "Failed PA sync: %d", err);
 
 		return -ENOEXEC;
 	}
@@ -529,7 +591,7 @@ static int cmd_bap_scan_delegator_sync_pa(const struct bt_shell *sh, size_t argc
 static int cmd_bap_scan_delegator_term_pa(const struct bt_shell *sh, size_t argc,
 					  char **argv)
 {
-	struct sync_state *state;
+	struct scan_delegator_sync_state *state;
 	unsigned long src_id;
 	int err;
 
@@ -537,27 +599,27 @@ static int cmd_bap_scan_delegator_term_pa(const struct bt_shell *sh, size_t argc
 
 	src_id = bt_shell_strtoul(argv[1], 16, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse src_id from %s", argv[1]);
+		bt_shell_error(sh, "Failed to parse src_id from %s", argv[1]);
 
 		return -ENOEXEC;
 	}
 
 	if (src_id > UINT8_MAX) {
-		bt_shell_error("src_id shall be 0x00-0xff");
+		bt_shell_error(sh, "src_id shall be 0x00-0xff");
 
 		return -ENOEXEC;
 	}
 
 	state = sync_state_get_by_src_id((uint8_t)src_id);
 	if (state == NULL) {
-		bt_shell_error("Could not get state");
+		bt_shell_error(sh, "Could not get state from src_id %u", (uint8_t)src_id);
 
 		return -ENOEXEC;
 	}
 
 	err = pa_sync_term(state);
 	if (err != 0) {
-		bt_shell_error("Failed to terminate PA sync: %d", err);
+		bt_shell_error(sh, "Failed to terminate PA sync: %d", err);
 
 		return -ENOEXEC;
 	}
@@ -569,28 +631,28 @@ static int cmd_bap_scan_delegator_add_src(const struct bt_shell *sh, size_t argc
 {
 	struct bt_bap_scan_delegator_add_src_param param = {0};
 	struct bt_bap_bass_subgroup *subgroup_param;
+	struct scan_delegator_sync_state *state;
 	unsigned long broadcast_id;
-	struct sync_state *state;
 	unsigned long enc_state;
 	unsigned long adv_sid;
 	int err;
 
 	err = bt_addr_le_from_str(argv[1], argv[2], &param.addr);
 	if (err != 0) {
-		bt_shell_error("Invalid peer address (err %d)", err);
+		bt_shell_error(sh, "Invalid peer address (err %d)", err);
 
 		return -ENOEXEC;
 	}
 
 	adv_sid = bt_shell_strtoul(argv[3], 0, &err);
 	if (err != 0) {
-		bt_shell_error("Could not parse adv_sid: %d", err);
+		bt_shell_error(sh, "Could not parse adv_sid: %d", err);
 
 		return -ENOEXEC;
 	}
 
 	if (adv_sid > BT_GAP_SID_MAX) {
-		bt_shell_error("Invalid adv_sid: %lu", adv_sid);
+		bt_shell_error(sh, "Invalid adv_sid: %lu", adv_sid);
 
 		return -ENOEXEC;
 	}
@@ -599,26 +661,26 @@ static int cmd_bap_scan_delegator_add_src(const struct bt_shell *sh, size_t argc
 
 	broadcast_id = bt_shell_strtoul(argv[4], 16, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse broadcast_id from %s", argv[1]);
+		bt_shell_error(sh, "Failed to parse broadcast_id from %s", argv[1]);
 
 		return -EINVAL;
 	}
 
 	if (broadcast_id > BT_AUDIO_BROADCAST_ID_MAX) {
-		bt_shell_error("Invalid broadcast_id %lu", broadcast_id);
+		bt_shell_error(sh, "Invalid broadcast_id %lu", broadcast_id);
 
 		return -EINVAL;
 	}
 
 	enc_state = bt_shell_strtoul(argv[5], 16, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse enc_state from %s", argv[2]);
+		bt_shell_error(sh, "Failed to parse enc_state from %s", argv[2]);
 
 		return -EINVAL;
 	}
 
 	if (enc_state > BT_BAP_BIG_ENC_STATE_BAD_CODE) {
-		bt_shell_error("Invalid enc_state %s", bt_bap_big_enc_state_str(enc_state));
+		bt_shell_error(sh, "Invalid enc_state %s", bt_bap_big_enc_state_str(enc_state));
 
 		return -EINVAL;
 	}
@@ -630,13 +692,13 @@ static int cmd_bap_scan_delegator_add_src(const struct bt_shell *sh, size_t argc
 
 		bis_sync = bt_shell_strtoul(argv[6], 16, &err);
 		if (err != 0) {
-			bt_shell_error("Failed to parse bis_sync from %s", argv[3]);
+			bt_shell_error(sh, "Failed to parse bis_sync from %s", argv[3]);
 
 			return -EINVAL;
 		}
 
 		if (bis_sync > BT_BAP_BIS_SYNC_NO_PREF) {
-			bt_shell_error("Invalid bis_sync %lu", bis_sync);
+			bt_shell_error(sh, "Invalid bis_sync %lu", bis_sync);
 
 			return -EINVAL;
 		}
@@ -650,7 +712,7 @@ static int cmd_bap_scan_delegator_add_src(const struct bt_shell *sh, size_t argc
 				sizeof(subgroup_param->metadata));
 
 		if (subgroup_param->metadata_len == 0U) {
-			bt_shell_error("Could not parse metadata");
+			bt_shell_error(sh, "Could not parse metadata");
 
 			return -EINVAL;
 		}
@@ -658,9 +720,9 @@ static int cmd_bap_scan_delegator_add_src(const struct bt_shell *sh, size_t argc
 		subgroup_param->metadata_len = 0U;
 	}
 
-	state = sync_state_new();
+	state = scan_delegator_sync_state_new();
 	if (state == NULL) {
-		bt_shell_error("Could not get new state");
+		bt_shell_error(sh, "Could not get new state");
 
 		return -ENOEXEC;
 	}
@@ -671,7 +733,7 @@ static int cmd_bap_scan_delegator_add_src(const struct bt_shell *sh, size_t argc
 
 	err = bt_bap_scan_delegator_add_src(&param);
 	if (err < 0) {
-		bt_shell_error("Failed to add source: %d", err);
+		bt_shell_error(sh, "Failed to add source: %d", err);
 
 		return -ENOEXEC;
 	}
@@ -688,14 +750,14 @@ static int cmd_bap_scan_delegator_add_src_by_pa_sync(const struct bt_shell *sh, 
 	struct bt_bap_scan_delegator_add_src_param param = {0};
 	struct bt_bap_bass_subgroup *subgroup_param;
 	struct bt_le_per_adv_sync_info sync_info;
+	struct scan_delegator_sync_state *state;
 	unsigned long broadcast_id;
-	struct sync_state *state;
 	unsigned long enc_state;
 	int err;
 
 	err = bt_le_per_adv_sync_get_info(pa_sync, &sync_info);
 	if (err != 0) {
-		bt_shell_error("Failed to get sync info: %d", err);
+		bt_shell_error(sh, "Failed to get sync info: %d", err);
 
 		return -ENOEXEC;
 	}
@@ -704,26 +766,26 @@ static int cmd_bap_scan_delegator_add_src_by_pa_sync(const struct bt_shell *sh, 
 
 	broadcast_id = bt_shell_strtoul(argv[1], 16, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse broadcast_id from %s", argv[1]);
+		bt_shell_error(sh, "Failed to parse broadcast_id from %s", argv[1]);
 
 		return -EINVAL;
 	}
 
 	if (broadcast_id > BT_AUDIO_BROADCAST_ID_MAX) {
-		bt_shell_error("Invalid broadcast_id %lu", broadcast_id);
+		bt_shell_error(sh, "Invalid broadcast_id %lu", broadcast_id);
 
 		return -EINVAL;
 	}
 
 	enc_state = bt_shell_strtoul(argv[2], 16, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse enc_state from %s", argv[2]);
+		bt_shell_error(sh, "Failed to parse enc_state from %s", argv[2]);
 
 		return -EINVAL;
 	}
 
 	if (enc_state > BT_BAP_BIG_ENC_STATE_BAD_CODE) {
-		bt_shell_error("Invalid enc_state %s", bt_bap_big_enc_state_str(enc_state));
+		bt_shell_error(sh, "Invalid enc_state %s", bt_bap_big_enc_state_str(enc_state));
 
 		return -EINVAL;
 	}
@@ -735,13 +797,13 @@ static int cmd_bap_scan_delegator_add_src_by_pa_sync(const struct bt_shell *sh, 
 
 		bis_sync = bt_shell_strtoul(argv[3], 16, &err);
 		if (err != 0) {
-			bt_shell_error("Failed to parse bis_sync from %s", argv[3]);
+			bt_shell_error(sh, "Failed to parse bis_sync from %s", argv[3]);
 
 			return -EINVAL;
 		}
 
 		if (bis_sync > BT_BAP_BIS_SYNC_NO_PREF) {
-			bt_shell_error("Invalid bis_sync %lu", bis_sync);
+			bt_shell_error(sh, "Invalid bis_sync %lu", bis_sync);
 
 			return -EINVAL;
 		}
@@ -755,7 +817,7 @@ static int cmd_bap_scan_delegator_add_src_by_pa_sync(const struct bt_shell *sh, 
 				sizeof(subgroup_param->metadata));
 
 		if (subgroup_param->metadata_len == 0U) {
-			bt_shell_error("Could not parse metadata");
+			bt_shell_error(sh, "Could not parse metadata");
 
 			return -EINVAL;
 		}
@@ -763,9 +825,9 @@ static int cmd_bap_scan_delegator_add_src_by_pa_sync(const struct bt_shell *sh, 
 		subgroup_param->metadata_len = 0U;
 	}
 
-	state = sync_state_new();
+	state = scan_delegator_sync_state_new();
 	if (state == NULL) {
-		bt_shell_error("Could not get new state");
+		bt_shell_error(sh, "Could not get new state");
 
 		return -ENOEXEC;
 	}
@@ -776,7 +838,7 @@ static int cmd_bap_scan_delegator_add_src_by_pa_sync(const struct bt_shell *sh, 
 
 	err = bt_bap_scan_delegator_add_src(&param);
 	if (err < 0) {
-		bt_shell_error("Failed to add source: %d", err);
+		bt_shell_error(sh, "Failed to add source: %d", err);
 
 		return -ENOEXEC;
 	}
@@ -800,39 +862,39 @@ static int cmd_bap_scan_delegator_mod_src(const struct bt_shell *sh, size_t argc
 
 	src_id = bt_shell_strtoul(argv[1], 16, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse src_id from %s", argv[1]);
+		bt_shell_error(sh, "Failed to parse src_id from %s", argv[1]);
 
 		return -EINVAL;
 	}
 
 	if (src_id > UINT8_MAX) {
-		bt_shell_error("Invalid src_id %lu", src_id);
+		bt_shell_error(sh, "Invalid src_id %lu", src_id);
 
 		return -EINVAL;
 	}
 
 	broadcast_id = bt_shell_strtoul(argv[2], 16, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse broadcast_id from %s", argv[2]);
+		bt_shell_error(sh, "Failed to parse broadcast_id from %s", argv[2]);
 
 		return -EINVAL;
 	}
 
 	if (broadcast_id > BT_AUDIO_BROADCAST_ID_MAX) {
-		bt_shell_error("Invalid broadcast_id %lu", broadcast_id);
+		bt_shell_error(sh, "Invalid broadcast_id %lu", broadcast_id);
 
 		return -EINVAL;
 	}
 
 	enc_state = bt_shell_strtoul(argv[3], 16, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse enc_state from %s", argv[3]);
+		bt_shell_error(sh, "Failed to parse enc_state from %s", argv[3]);
 
 		return -EINVAL;
 	}
 
 	if (enc_state > BT_BAP_BIG_ENC_STATE_BAD_CODE) {
-		bt_shell_error("Invalid enc_state %s", bt_bap_big_enc_state_str(enc_state));
+		bt_shell_error(sh, "Invalid enc_state %s", bt_bap_big_enc_state_str(enc_state));
 
 		return -EINVAL;
 	}
@@ -844,13 +906,13 @@ static int cmd_bap_scan_delegator_mod_src(const struct bt_shell *sh, size_t argc
 
 		bis_sync = bt_shell_strtoul(argv[4], 16, &err);
 		if (err != 0) {
-			bt_shell_error("Failed to parse bis_sync from %s", argv[4]);
+			bt_shell_error(sh, "Failed to parse bis_sync from %s", argv[4]);
 
 			return -EINVAL;
 		}
 
 		if (bis_sync > BT_BAP_BIS_SYNC_NO_PREF) {
-			bt_shell_error("Invalid bis_sync %lu", bis_sync);
+			bt_shell_error(sh, "Invalid bis_sync %lu", bis_sync);
 
 			return -EINVAL;
 		}
@@ -864,7 +926,7 @@ static int cmd_bap_scan_delegator_mod_src(const struct bt_shell *sh, size_t argc
 						       sizeof(subgroup_param->metadata));
 
 		if (subgroup_param->metadata_len == 0U) {
-			bt_shell_error("Could not parse metadata");
+			bt_shell_error(sh, "Could not parse metadata");
 
 			return -EINVAL;
 		}
@@ -879,7 +941,7 @@ static int cmd_bap_scan_delegator_mod_src(const struct bt_shell *sh, size_t argc
 
 	err = bt_bap_scan_delegator_mod_src(&param);
 	if (err < 0) {
-		bt_shell_error("Failed to modify source: %d", err);
+		bt_shell_error(sh, "Failed to modify source: %d", err);
 
 		return -ENOEXEC;
 	}
@@ -897,20 +959,20 @@ static int cmd_bap_scan_delegator_rem_src(const struct bt_shell *sh, size_t argc
 
 	src_id = bt_shell_strtoul(argv[1], 16, &err);
 	if (err != 0) {
-		bt_shell_error("Failed to parse src_id from %s", argv[1]);
+		bt_shell_error(sh, "Failed to parse src_id from %s", argv[1]);
 
 		return -EINVAL;
 	}
 
 	if (src_id > UINT8_MAX) {
-		bt_shell_error("Invalid src_id %lu", src_id);
+		bt_shell_error(sh, "Invalid src_id %lu", src_id);
 
 		return -EINVAL;
 	}
 
 	err = bt_bap_scan_delegator_rem_src((uint8_t)src_id);
 	if (err < 0) {
-		bt_shell_error("Failed to remove source source: %d", err);
+		bt_shell_error(sh, "Failed to remove source source: %d", err);
 
 		return -ENOEXEC;
 	}
@@ -929,39 +991,39 @@ static int cmd_bap_scan_delegator_bis_synced(const struct bt_shell *sh, size_t a
 
 	src_id = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error("Could not parse src_id: %d", result);
+		bt_shell_error(sh, "Could not parse src_id: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (src_id > UINT8_MAX) {
-		bt_shell_error("Invalid src_id: %lu", src_id);
+		bt_shell_error(sh, "Invalid src_id: %lu", src_id);
 
 		return -ENOEXEC;
 	}
 
 	pa_sync_state = bt_shell_strtoul(argv[2], 0, &result);
 	if (result != 0) {
-		bt_shell_error("Could not parse pa_sync_state: %d", result);
+		bt_shell_error(sh, "Could not parse pa_sync_state: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (pa_sync_state > BT_BAP_PA_STATE_NO_PAST) {
-		bt_shell_error("Invalid pa_sync_state %s", bt_bap_pa_state_str(pa_sync_state));
+		bt_shell_error(sh, "Invalid pa_sync_state %s", bt_bap_pa_state_str(pa_sync_state));
 
 		return -ENOEXEC;
 	}
 
 	bis_synced = bt_shell_strtoul(argv[3], 0, &result);
 	if (result != 0) {
-		bt_shell_error("Could not parse bis_synced: %d", result);
+		bt_shell_error(sh, "Could not parse bis_synced: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (bis_synced > UINT32_MAX) {
-		bt_shell_error("Invalid bis_synced %ld", bis_synced);
+		bt_shell_error(sh, "Invalid bis_synced %ld", bis_synced);
 
 		return -ENOEXEC;
 	}
@@ -972,7 +1034,7 @@ static int cmd_bap_scan_delegator_bis_synced(const struct bt_shell *sh, size_t a
 
 	result = bt_bap_scan_delegator_set_bis_sync_state(src_id, bis_syncs);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -982,16 +1044,16 @@ static int cmd_bap_scan_delegator(const struct bt_shell *sh, size_t argc,
 				  char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error("%s unknown parameter: %s",
+		bt_shell_error(sh, "%s unknown parameter: %s",
 			    argv[0], argv[1]);
 	} else {
-		bt_shell_error("%s Missing subcommand", argv[0]);
+		bt_shell_error(sh, "%s Missing subcommand", argv[0]);
 	}
 
 	return -ENOEXEC;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(bap_scan_delegator_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(bap_scan_delegator_cmds,
 	BT_SHELL_CMD_ARG(init, NULL,
 		      "Initialize the service and register callbacks",
 		      cmd_bap_scan_delegator_init, 1, 0),
@@ -1023,11 +1085,6 @@ BT_SHELL_SUBCMD_SET_CREATE(bap_scan_delegator_cmds,
 	BT_SHELL_SUBCMD_SET_END,
 );
 
-BT_SHELL_CMD_ARG_DEFINE(bap_scan_delegator, &bap_scan_delegator_cmds,
+BT_SHELL_CMD_ARG_REGISTER(bap_scan_delegator, &bap_scan_delegator_cmds,
 		       "Bluetooth BAP scan delegator shell commands",
 		       cmd_bap_scan_delegator, 1, 1);
-
-int bt_shell_cmd_bap_scan_delegator_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &bap_scan_delegator);
-}

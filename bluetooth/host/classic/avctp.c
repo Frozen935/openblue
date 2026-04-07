@@ -5,6 +5,7 @@
 /*
  * Copyright (c) 2015-2016 Intel Corporation
  * Copyright (C) 2024 Xiaomi Corporation
+ * Copyright 2025 NXP
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -19,7 +20,6 @@
 #include <bluetooth/classic/sdp.h>
 
 #include "avctp_internal.h"
-#include "osdep/os.h"
 #include "host/hci_core.h"
 #include "host/conn_internal.h"
 #include "l2cap_br_internal.h"
@@ -59,7 +59,7 @@ static void avctp_tx_raise(int msec)
 		return;
 	}
 	LOG_DBG("kick TX");
-	bt_work_schedule(&avctp_tx_work, OS_MSEC(msec));
+	bt_work_schedule(&avctp_tx_work, K_MSEC(msec));
 }
 
 static void bt_avctp_clear_tx(struct bt_avctp *session)
@@ -134,6 +134,29 @@ static void avctp_l2cap_disconnected(struct bt_l2cap_chan *chan)
 static void avctp_l2cap_encrypt_changed(struct bt_l2cap_chan *chan, uint8_t status)
 {
 	LOG_DBG("");
+}
+
+static struct bt_buf *avctp_l2cap_alloc_buf(struct bt_l2cap_chan *chan)
+{
+	struct bt_buf *buf;
+	struct bt_avctp *session;
+
+	if (chan == NULL) {
+		LOG_ERR("Invalid AVCTP chan");
+		return NULL;
+	}
+
+	session = AVCTP_CHAN(chan);
+	LOG_DBG("chan %p session %p", chan, session);
+
+	if (session->ops != NULL && session->ops->alloc_buf != NULL) {
+		buf = session->ops->alloc_buf(session);
+		if (buf == NULL) {
+			LOG_ERR("Failed to allocate buffer");
+		}
+		return buf;
+	}
+	return NULL;
 }
 
 static void avctp_tx_cb(struct bt_conn *conn, void *user_data, int err)
@@ -326,10 +349,6 @@ static void avctp_tx_processor(struct bt_work *item)
 		goto failed;
 	}
 
-	if (bt_buf_tailroom(buf) < chunk_size) {
-		LOG_WRN("Not enough tailroom for AVCTP payload (len: %d)", chunk_size);
-		goto failed;
-	}
 	bt_buf_pull_mem(buf, chunk_size);
 
 	user_data->sent_len += chunk_size;
@@ -389,7 +408,7 @@ static int dispatch_avctp_packet(struct bt_avctp *session, struct bt_buf *buf,
 	if (cr == BT_AVCTP_CMD) {
 		rsp = bt_avctp_create_pdu(NULL);
 		if (rsp == NULL) {
-			__ASSERT_MSG(0, "Failed to create AVCTP response PDU");
+			__ASSERT(0, "Failed to create AVCTP response PDU");
 			return -ENOMEM;
 		}
 
@@ -557,6 +576,7 @@ static const struct bt_l2cap_chan_ops ops = {
 	.disconnected = avctp_l2cap_disconnected,
 	.encrypt_change = avctp_l2cap_encrypt_changed,
 	.recv = avctp_l2cap_recv,
+	.alloc_buf = avctp_l2cap_alloc_buf,
 };
 
 int bt_avctp_connect(struct bt_conn *conn, uint16_t psm, struct bt_avctp *session)
@@ -694,12 +714,18 @@ int bt_avctp_server_register(struct bt_avctp_server *server)
 	return err;
 }
 
-int bt_avctp_init(void)
+void bt_avctp_init(void)
 {
+	static bool initialized;
+
+	if (initialized) {
+		return;
+	}
+
+	initialized = true;
+
 	LOG_DBG("Initializing AVCTP");
 	/* Locking semaphore initialized to 1 (unlocked) */
 	os_sem_init(&avctp_lock, 1, 1);
 	bt_work_init_delayable(&avctp_tx_work, avctp_tx_processor);
-
-	return 0;
 }

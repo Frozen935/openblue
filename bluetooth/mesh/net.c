@@ -76,6 +76,7 @@ struct iv_val {
 static struct {
 	uint32_t src : 15, /* MSb of source is always 0 */
 	      seq : 17;
+	uint16_t net_idx;
 } msg_cache[CONFIG_BT_MESH_MSG_CACHE_SIZE];
 static uint16_t msg_cache_next;
 
@@ -138,20 +139,22 @@ static bool check_dup(struct bt_buf_simple *data)
 	return false;
 }
 
-static bool msg_cache_match(struct bt_buf_simple *pdu)
+static bool msg_cache_match(struct bt_buf_simple *pdu, uint16_t net_idx)
 {
 	uint16_t i;
 
 	for (i = msg_cache_next; i > 0U;) {
 		if (msg_cache[--i].src == SRC(pdu->data) &&
-		    msg_cache[i].seq == (SEQ(pdu->data) & BIT_MASK(17))) {
+		    msg_cache[i].seq == (SEQ(pdu->data) & BIT_MASK(17)) &&
+		    msg_cache[i].net_idx == net_idx) {
 			return true;
 		}
 	}
 
 	for (i = ARRAY_SIZE(msg_cache); i > msg_cache_next;) {
 		if (msg_cache[--i].src == SRC(pdu->data) &&
-		    msg_cache[i].seq == (SEQ(pdu->data) & BIT_MASK(17))) {
+		    msg_cache[i].seq == (SEQ(pdu->data) & BIT_MASK(17)) &&
+		    msg_cache[i].net_idx == net_idx) {
 			return true;
 		}
 	}
@@ -164,6 +167,7 @@ static void msg_cache_add(struct bt_mesh_net_rx *rx)
 	msg_cache_next %= ARRAY_SIZE(msg_cache);
 	msg_cache[msg_cache_next].src = rx->ctx.addr;
 	msg_cache[msg_cache_next].seq = rx->seq;
+	msg_cache[msg_cache_next].net_idx = rx->sub->net_idx;
 	msg_cache_next++;
 }
 
@@ -646,7 +650,7 @@ static bool net_decrypt(struct bt_mesh_net_rx *rx, struct bt_buf_simple *in,
 		return false;
 	}
 
-	if (rx->net_if == BT_MESH_NET_IF_ADV && msg_cache_match(out)) {
+	if (rx->net_if == BT_MESH_NET_IF_ADV && msg_cache_match(out, rx->sub->net_idx)) {
 		LOG_DBG("Duplicate found in Network Message Cache");
 		return false;
 	}
@@ -916,8 +920,9 @@ void bt_mesh_net_recv(struct bt_buf_simple *data, int8_t rssi,
 	/* Relay if this was a group/virtual address, or if the destination
 	 * was neither a local element nor an LPN we're Friends for.
 	 */
-	if (!BT_MESH_ADDR_IS_UNICAST(rx.ctx.recv_dst) ||
-	    (!rx.local_match && !rx.friend_match)) {
+	if ((!BT_MESH_ADDR_IS_UNICAST(rx.ctx.recv_dst) ||
+	     (!rx.local_match && !rx.friend_match)) &&
+	    (!bt_mesh_lpn_established() || !rx.friend_cred)) {
 		bt_buf_simple_restore(&buf, &state);
 		bt_mesh_net_relay(&buf, &rx, false);
 	}
@@ -998,6 +1003,10 @@ static int net_set(const char *name, size_t len_rd, bt_storage_read_cb read_cb,
 	struct bt_mesh_key key;
 	int err;
 
+	if (!IS_ENABLED(CONFIG_BT_SETTINGS)) {
+		return 0;
+	}
+
 	if (len_rd == 0) {
 		LOG_DBG("val (null)");
 
@@ -1035,6 +1044,10 @@ static int iv_set(const char *name, size_t len_rd, bt_storage_read_cb read_cb,
 	struct iv_val iv;
 	int err;
 
+	if (!IS_ENABLED(CONFIG_BT_SETTINGS)) {
+		return 0;
+	}
+
 	if (len_rd == 0) {
 		LOG_DBG("IV deleted");
 
@@ -1066,6 +1079,10 @@ static int seq_set(const char *name, size_t len_rd, bt_storage_read_cb read_cb,
 {
 	struct seq_val seq;
 	int err;
+
+	if (!IS_ENABLED(CONFIG_BT_SETTINGS)) {
+		return 0;
+	}
 
 	if (len_rd == 0) {
 		LOG_DBG("val (null)");
@@ -1105,6 +1122,10 @@ static int dev_key_cand_set(const char *name, size_t len_rd, bt_storage_read_cb 
 {
 	int err;
 	struct bt_mesh_key key;
+
+	if (!IS_ENABLED(CONFIG_BT_SETTINGS)) {
+		return 0;
+	}
 
 	if (len_rd == 0) {
 		LOG_DBG("val (null)");

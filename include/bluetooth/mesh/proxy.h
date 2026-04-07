@@ -9,9 +9,9 @@
  */
 #ifndef __INCLUDE_BLUETOOTH_MESH_PROXY_H__
 #define __INCLUDE_BLUETOOTH_MESH_PROXY_H__
-
 #include <stdint.h>
 
+#include <base/utils.h>
 
 /**
  * @brief Proxy
@@ -53,7 +53,7 @@ struct bt_mesh_proxy_cb {
  */
 #define BT_MESH_PROXY_CB_DEFINE(_name)                                         \
 	static const STRUCT_SECTION_ITERABLE(                                  \
-		bt_mesh_proxy_cb, UTIL_CONCAT(bt_mesh_proxy_cb_, _name))
+		bt_mesh_proxy_cb, _CONCAT(bt_mesh_proxy_cb_, _name))
 
 /** @brief Enable advertising with Node Identity.
  *

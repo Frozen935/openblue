@@ -14,9 +14,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <bluetooth/conn.h>
-#include <bluetooth/gatt.h>
-#include <bluetooth/audio/tbs.h>
+#include <bluetooth/byteorder.h>
+#include <utils/bt_utils.h>
 
 #include "host/shell/bt.h"
 
@@ -27,7 +26,7 @@ static int cmd_tbs_client_discover(const struct bt_shell *sh, size_t argc,
 
 	result = bt_tbs_client_discover(default_conn);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -51,7 +50,7 @@ static int cmd_tbs_client_set_signal_strength_interval(const struct bt_shell *sh
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -59,7 +58,7 @@ static int cmd_tbs_client_set_signal_strength_interval(const struct bt_shell *sh
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -71,13 +70,13 @@ static int cmd_tbs_client_set_signal_strength_interval(const struct bt_shell *sh
 
 	interval = bt_shell_strtoul(argv[argc - 1], 0, &result);
 	if (result != 0) {
-		bt_shell_error("Failed to parse interval: %d", result);
+		bt_shell_error(sh, "Failed to parse interval: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (interval > UINT8_MAX) {
-		bt_shell_error("Invalid interval: %lu", interval);
+		bt_shell_error(sh, "Invalid interval: %lu", interval);
 
 		return -ENOEXEC;
 	}
@@ -86,7 +85,7 @@ static int cmd_tbs_client_set_signal_strength_interval(const struct bt_shell *sh
 							    inst_index,
 							    interval);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -107,7 +106,7 @@ static int cmd_tbs_client_hold(const struct bt_shell *sh, size_t argc,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -115,7 +114,7 @@ static int cmd_tbs_client_hold(const struct bt_shell *sh, size_t argc,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -127,20 +126,20 @@ static int cmd_tbs_client_hold(const struct bt_shell *sh, size_t argc,
 
 	call_index = bt_shell_strtoul(argv[argc - 1], 0, &result);
 	if (result != 0) {
-		bt_shell_error("Failed to parse call_index: %d", result);
+		bt_shell_error(sh, "Failed to parse call_index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (call_index > UINT8_MAX) {
-		bt_shell_error("Invalid call_index: %lu", call_index);
+		bt_shell_error(sh, "Invalid call_index: %lu", call_index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_tbs_client_hold_call(default_conn, inst_index, call_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -161,7 +160,7 @@ static int cmd_tbs_client_retrieve(const struct bt_shell *sh, size_t argc,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -169,7 +168,7 @@ static int cmd_tbs_client_retrieve(const struct bt_shell *sh, size_t argc,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -181,13 +180,13 @@ static int cmd_tbs_client_retrieve(const struct bt_shell *sh, size_t argc,
 
 	call_index = bt_shell_strtoul(argv[argc - 1], 0, &result);
 	if (result != 0) {
-		bt_shell_error("Failed to parse call_index: %d", result);
+		bt_shell_error(sh, "Failed to parse call_index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (call_index > UINT8_MAX) {
-		bt_shell_error("Invalid call_index: %lu", call_index);
+		bt_shell_error(sh, "Invalid call_index: %lu", call_index);
 
 		return -ENOEXEC;
 	}
@@ -195,7 +194,7 @@ static int cmd_tbs_client_retrieve(const struct bt_shell *sh, size_t argc,
 	result = bt_tbs_client_retrieve_call(default_conn, inst_index,
 					     call_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -216,7 +215,7 @@ static int cmd_tbs_client_accept(const struct bt_shell *sh, size_t argc,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -224,7 +223,7 @@ static int cmd_tbs_client_accept(const struct bt_shell *sh, size_t argc,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -236,13 +235,13 @@ static int cmd_tbs_client_accept(const struct bt_shell *sh, size_t argc,
 
 	call_index = bt_shell_strtoul(argv[argc - 1], 0, &result);
 	if (result != 0) {
-		bt_shell_error("Failed to parse call_index: %d", result);
+		bt_shell_error(sh, "Failed to parse call_index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (call_index > UINT8_MAX) {
-		bt_shell_error("Invalid call_index: %lu", call_index);
+		bt_shell_error(sh, "Invalid call_index: %lu", call_index);
 
 		return -ENOEXEC;
 	}
@@ -251,7 +250,7 @@ static int cmd_tbs_client_accept(const struct bt_shell *sh, size_t argc,
 					   call_index);
 
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -272,7 +271,7 @@ static int cmd_tbs_client_join(const struct bt_shell *sh, size_t argc,
 	} else {
 		inst_index = bt_shell_strtoul(argv[1], 0, &result);
 		if (result != 0) {
-			bt_shell_error(
+			bt_shell_error(sh,
 					"Failed to parse inst_index: %d",
 					result);
 
@@ -280,7 +279,7 @@ static int cmd_tbs_client_join(const struct bt_shell *sh, size_t argc,
 		}
 
 		if (inst_index > UINT8_MAX) {
-			bt_shell_error("Invalid index: %lu",
+			bt_shell_error(sh, "Invalid index: %lu",
 					inst_index);
 
 			return -ENOEXEC;
@@ -292,14 +291,14 @@ static int cmd_tbs_client_join(const struct bt_shell *sh, size_t argc,
 
 		call_index = bt_shell_strtoul(argv[i], 0, &result);
 		if (result != 0) {
-			bt_shell_error("Failed to parse call_index: %d",
+			bt_shell_error(sh, "Failed to parse call_index: %d",
 				    result);
 
 			return -ENOEXEC;
 		}
 
 		if (call_index > UINT8_MAX) {
-			bt_shell_error("Invalid call_index: %lu", call_index);
+			bt_shell_error(sh, "Invalid call_index: %lu", call_index);
 
 			return -ENOEXEC;
 		}
@@ -310,7 +309,7 @@ static int cmd_tbs_client_join(const struct bt_shell *sh, size_t argc,
 	result = bt_tbs_client_join_calls(default_conn, inst_index,
 					  call_indexes, argc - 2);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -331,7 +330,7 @@ static int cmd_tbs_client_terminate(const struct bt_shell *sh, size_t argc,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -339,7 +338,7 @@ static int cmd_tbs_client_terminate(const struct bt_shell *sh, size_t argc,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -351,13 +350,13 @@ static int cmd_tbs_client_terminate(const struct bt_shell *sh, size_t argc,
 
 	call_index = bt_shell_strtoul(argv[argc - 1], 0, &result);
 	if (result != 0) {
-		bt_shell_error("Failed to parse call_index: %d", result);
+		bt_shell_error(sh, "Failed to parse call_index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (call_index > UINT8_MAX) {
-		bt_shell_error("Invalid call_index: %lu", call_index);
+		bt_shell_error(sh, "Invalid call_index: %lu", call_index);
 
 		return -ENOEXEC;
 	}
@@ -365,7 +364,7 @@ static int cmd_tbs_client_terminate(const struct bt_shell *sh, size_t argc,
 	result = bt_tbs_client_terminate_call(default_conn, inst_index,
 					      call_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -385,7 +384,7 @@ static int cmd_tbs_client_originate(const struct bt_shell *sh, size_t argc,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -393,7 +392,7 @@ static int cmd_tbs_client_originate(const struct bt_shell *sh, size_t argc,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -406,7 +405,7 @@ static int cmd_tbs_client_originate(const struct bt_shell *sh, size_t argc,
 	result = bt_tbs_client_originate_call(default_conn, inst_index,
 					      argv[argc - 1]);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -426,7 +425,7 @@ static int cmd_tbs_client_read_bearer_provider_name(const struct bt_shell *sh,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -434,7 +433,7 @@ static int cmd_tbs_client_read_bearer_provider_name(const struct bt_shell *sh,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -447,7 +446,7 @@ static int cmd_tbs_client_read_bearer_provider_name(const struct bt_shell *sh,
 	result = bt_tbs_client_read_bearer_provider_name(default_conn,
 							 inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -467,7 +466,7 @@ static int cmd_tbs_client_read_bearer_uci(const struct bt_shell *sh, size_t argc
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -475,7 +474,7 @@ static int cmd_tbs_client_read_bearer_uci(const struct bt_shell *sh, size_t argc
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -487,7 +486,7 @@ static int cmd_tbs_client_read_bearer_uci(const struct bt_shell *sh, size_t argc
 
 	result = bt_tbs_client_read_bearer_uci(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -507,7 +506,7 @@ static int cmd_tbs_client_read_technology(const struct bt_shell *sh, size_t argc
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -515,7 +514,7 @@ static int cmd_tbs_client_read_technology(const struct bt_shell *sh, size_t argc
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -527,7 +526,7 @@ static int cmd_tbs_client_read_technology(const struct bt_shell *sh, size_t argc
 
 	result = bt_tbs_client_read_technology(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -547,7 +546,7 @@ static int cmd_tbs_client_read_uri_list(const struct bt_shell *sh, size_t argc,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -555,7 +554,7 @@ static int cmd_tbs_client_read_uri_list(const struct bt_shell *sh, size_t argc,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -567,7 +566,7 @@ static int cmd_tbs_client_read_uri_list(const struct bt_shell *sh, size_t argc,
 
 	result = bt_tbs_client_read_uri_list(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -587,7 +586,7 @@ static int cmd_tbs_client_read_signal_strength(const struct bt_shell *sh,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -595,7 +594,7 @@ static int cmd_tbs_client_read_signal_strength(const struct bt_shell *sh,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -607,7 +606,7 @@ static int cmd_tbs_client_read_signal_strength(const struct bt_shell *sh,
 
 	result = bt_tbs_client_read_signal_strength(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -627,7 +626,7 @@ static int cmd_tbs_client_read_signal_interval(const struct bt_shell *sh,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -635,7 +634,7 @@ static int cmd_tbs_client_read_signal_interval(const struct bt_shell *sh,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -647,7 +646,7 @@ static int cmd_tbs_client_read_signal_interval(const struct bt_shell *sh,
 
 	result = bt_tbs_client_read_signal_interval(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -667,7 +666,7 @@ static int cmd_tbs_client_read_current_calls(const struct bt_shell *sh,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -675,7 +674,7 @@ static int cmd_tbs_client_read_current_calls(const struct bt_shell *sh,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -687,7 +686,7 @@ static int cmd_tbs_client_read_current_calls(const struct bt_shell *sh,
 
 	result = bt_tbs_client_read_current_calls(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -707,7 +706,7 @@ static int cmd_tbs_client_read_ccid(const struct bt_shell *sh, size_t argc,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -715,7 +714,7 @@ static int cmd_tbs_client_read_ccid(const struct bt_shell *sh, size_t argc,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -727,7 +726,7 @@ static int cmd_tbs_client_read_ccid(const struct bt_shell *sh, size_t argc,
 
 	result = bt_tbs_client_read_ccid(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -747,7 +746,7 @@ static int cmd_tbs_client_read_uri(const struct bt_shell *sh, size_t argc,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -755,7 +754,7 @@ static int cmd_tbs_client_read_uri(const struct bt_shell *sh, size_t argc,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -767,7 +766,7 @@ static int cmd_tbs_client_read_uri(const struct bt_shell *sh, size_t argc,
 
 	result = bt_tbs_client_read_call_uri(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -787,7 +786,7 @@ static int cmd_tbs_client_read_status_flags(const struct bt_shell *sh, size_t ar
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -795,7 +794,7 @@ static int cmd_tbs_client_read_status_flags(const struct bt_shell *sh, size_t ar
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -807,7 +806,7 @@ static int cmd_tbs_client_read_status_flags(const struct bt_shell *sh, size_t ar
 
 	result = bt_tbs_client_read_status_flags(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -826,7 +825,7 @@ static int cmd_tbs_client_read_call_state(const struct bt_shell *sh, size_t argc
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -834,7 +833,7 @@ static int cmd_tbs_client_read_call_state(const struct bt_shell *sh, size_t argc
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -846,7 +845,7 @@ static int cmd_tbs_client_read_call_state(const struct bt_shell *sh, size_t argc
 
 	result = bt_tbs_client_read_call_state(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -865,7 +864,7 @@ static int cmd_tbs_client_read_remote_uri(const struct bt_shell *sh, size_t argc
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -873,7 +872,7 @@ static int cmd_tbs_client_read_remote_uri(const struct bt_shell *sh, size_t argc
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -885,7 +884,7 @@ static int cmd_tbs_client_read_remote_uri(const struct bt_shell *sh, size_t argc
 
 	result = bt_tbs_client_read_remote_uri(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -905,7 +904,7 @@ static int cmd_tbs_client_read_friendly_name(const struct bt_shell *sh,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -913,7 +912,7 @@ static int cmd_tbs_client_read_friendly_name(const struct bt_shell *sh,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -925,7 +924,7 @@ static int cmd_tbs_client_read_friendly_name(const struct bt_shell *sh,
 
 	result = bt_tbs_client_read_friendly_name(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -945,7 +944,7 @@ static int cmd_tbs_client_read_optional_opcodes(const struct bt_shell *sh,
 		} else {
 			inst_index = bt_shell_strtoul(argv[1], 0, &result);
 			if (result != 0) {
-				bt_shell_error(
+				bt_shell_error(sh,
 					    "Failed to parse inst_index: %d",
 					    result);
 
@@ -953,7 +952,7 @@ static int cmd_tbs_client_read_optional_opcodes(const struct bt_shell *sh,
 			}
 
 			if (inst_index > UINT8_MAX) {
-				bt_shell_error("Invalid index: %lu",
+				bt_shell_error(sh, "Invalid index: %lu",
 					    inst_index);
 
 				return -ENOEXEC;
@@ -965,7 +964,7 @@ static int cmd_tbs_client_read_optional_opcodes(const struct bt_shell *sh,
 
 	result = bt_tbs_client_read_optional_opcodes(default_conn, inst_index);
 	if (result != 0) {
-		bt_shell_print("Fail: %d", result);
+		bt_shell_print(sh, "Fail: %d", result);
 	}
 
 	return result;
@@ -975,16 +974,16 @@ static int cmd_tbs_client_read_optional_opcodes(const struct bt_shell *sh,
 static int cmd_tbs_client(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error("%s unknown parameter: %s",
+		bt_shell_error(sh, "%s unknown parameter: %s",
 			    argv[0], argv[1]);
 	} else {
-		bt_shell_error("%s Missing subcommand", argv[0]);
+		bt_shell_error(sh, "%s Missing subcommand", argv[0]);
 	}
 
 	return -ENOEXEC;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(tbs_client_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(tbs_client_cmds,
 	BT_SHELL_CMD_ARG(discover, NULL,
 		      "Discover TBS",
 		      cmd_tbs_client_discover, 1, 0),
@@ -1105,11 +1104,6 @@ BT_SHELL_SUBCMD_SET_CREATE(tbs_client_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_ARG_DEFINE(tbs_client, &tbs_client_cmds,
+BT_SHELL_CMD_ARG_REGISTER(tbs_client, &tbs_client_cmds,
 		       "Bluetooth TBS_CLIENT shell commands",
 		       cmd_tbs_client, 1, 1);
-
-int bt_shell_cmd_tbs_client_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &tbs_client);
-}

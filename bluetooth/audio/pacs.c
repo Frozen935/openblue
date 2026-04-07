@@ -17,6 +17,7 @@
 #include <sys/types.h>
 
 #include <bluetooth/addr.h>
+#include <bluetooth/assigned_numbers.h>
 #include <bluetooth/att.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/pacs.h>
@@ -24,8 +25,12 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-
 #include "osdep/os.h"
+#include <bluetooth/buf.h>
+#include <base/bt_atomic.h>
+#include <bluetooth/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 
 #include "common/bt_str.h"
 
@@ -197,7 +202,7 @@ static bool build_pac_records(const struct bt_pacs_cap *cap, void *user_data)
 	return true;
 
 fail:
-	__ASSERT_MSG(false, "No space for %p", cap);
+	__ASSERT(false, "No space for %p", cap);
 
 	bt_buf_simple_restore(buf, &state);
 
@@ -875,24 +880,32 @@ int bt_pacs_register(const struct bt_pacs_register_param *param)
 	__ASSERT_NO_MSG(pacs.supported_ctx_attr != NULL);
 #endif /* CONFIG_BT_PACS_SUPPORTED_CONTEXT_NOTIFIABLE */
 #if defined(CONFIG_BT_PAC_SNK_NOTIFIABLE)
-	pacs.snk_pac_attr =
-		bt_gatt_find_by_uuid(pacs_svc.attrs, pacs_svc.attr_count, BT_UUID_PACS_SNK);
-	__ASSERT_NO_MSG(pacs.snk_pac_attr != NULL);
+	if (param->snk_pac) {
+		pacs.snk_pac_attr =
+			bt_gatt_find_by_uuid(pacs_svc.attrs, pacs_svc.attr_count, BT_UUID_PACS_SNK);
+		__ASSERT_NO_MSG(pacs.snk_pac_attr != NULL);
+	}
 #endif /* CONFIG_BT_PAC_SNK_NOTIFIABLE */
 #if defined(CONFIG_BT_PAC_SNK_LOC_NOTIFIABLE)
-	pacs.snk_pac_loc_attr =
-		bt_gatt_find_by_uuid(pacs_svc.attrs, pacs_svc.attr_count, BT_UUID_PACS_SNK_LOC);
-	__ASSERT_NO_MSG(pacs.snk_pac_loc_attr != NULL);
+	if (param->snk_loc) {
+		pacs.snk_pac_loc_attr = bt_gatt_find_by_uuid(pacs_svc.attrs, pacs_svc.attr_count,
+							     BT_UUID_PACS_SNK_LOC);
+		__ASSERT_NO_MSG(pacs.snk_pac_loc_attr != NULL);
+	}
 #endif /* CONFIG_BT_PAC_SNK_LOC_NOTIFIABLE */
 #if defined(CONFIG_BT_PAC_SRC_NOTIFIABLE)
-	pacs.src_pac_attr =
-		bt_gatt_find_by_uuid(pacs_svc.attrs, pacs_svc.attr_count, BT_UUID_PACS_SRC);
-	__ASSERT_NO_MSG(pacs.src_pac_attr != NULL);
+	if (param->src_pac) {
+		pacs.src_pac_attr =
+			bt_gatt_find_by_uuid(pacs_svc.attrs, pacs_svc.attr_count, BT_UUID_PACS_SRC);
+		__ASSERT_NO_MSG(pacs.src_pac_attr != NULL);
+	}
 #endif /* CONFIG_BT_PAC_SRC_NOTIFIABLE */
 #if defined(CONFIG_BT_PAC_SRC_LOC_NOTIFIABLE)
-	pacs.src_pac_loc_attr =
-		bt_gatt_find_by_uuid(pacs_svc.attrs, pacs_svc.attr_count, BT_UUID_PACS_SRC_LOC);
-	__ASSERT_NO_MSG(pacs.src_pac_loc_attr != NULL);
+	if (param->src_loc) {
+		pacs.src_pac_loc_attr = bt_gatt_find_by_uuid(pacs_svc.attrs, pacs_svc.attr_count,
+							     BT_UUID_PACS_SRC_LOC);
+		__ASSERT_NO_MSG(pacs.src_pac_loc_attr != NULL);
+	}
 #endif /* CONFIG_BT_PAC_SRC_LOC_NOTIFIABLE */
 
 	return 0;
@@ -930,6 +943,23 @@ int bt_pacs_unregister(void)
 	/* Restore to original definition */
 	memcpy(pacs_svc.attrs, &_pacs_attrs, sizeof(_pacs_attrs));
 	pacs_svc.attr_count = ARRAY_SIZE(pacs_attrs);
+
+	pacs.available_ctx_attr = NULL;
+#if defined(CONFIG_BT_PACS_SUPPORTED_CONTEXT_NOTIFIABLE)
+	pacs.supported_ctx_attr = NULL;
+#endif /* CONFIG_BT_PACS_SUPPORTED_CONTEXT_NOTIFIABLE */
+#if defined(CONFIG_BT_PAC_SNK_NOTIFIABLE)
+	pacs.snk_pac_attr = NULL;
+#endif /* CONFIG_BT_PAC_SNK_NOTIFIABLE */
+#if defined(CONFIG_BT_PAC_SNK_LOC_NOTIFIABLE)
+	pacs.snk_pac_loc_attr = NULL;
+#endif /* CONFIG_BT_PAC_SNK_LOC_NOTIFIABLE */
+#if defined(CONFIG_BT_PAC_SRC_NOTIFIABLE)
+	pacs.src_pac_attr = NULL;
+#endif /* CONFIG_BT_PAC_SRC_NOTIFIABLE */
+#if defined(CONFIG_BT_PAC_SRC_LOC_NOTIFIABLE)
+	pacs.src_pac_loc_attr = NULL;
+#endif /* CONFIG_BT_PAC_SRC_LOC_NOTIFIABLE */
 
 	bt_atomic_clear_bit(pacs.flags, PACS_FLAG_REGISTERED);
 	bt_atomic_clear_bit(pacs.flags, PACS_FLAG_SVC_CHANGING);
@@ -1001,7 +1031,7 @@ static int pac_notify(struct bt_conn *conn, enum bt_audio_dir dir)
 	}
 
 	pac = pacs_get_pac(dir);
-	__ASSERT_MSG(pac, "Failed to get pacs.\n");
+	__ASSERT(pac, "Failed to get pacs.\n");
 	get_pac_records(pac, &read_buf);
 
 	err = pacs_gatt_notify(conn, uuid, pacs_svc.attrs,
@@ -1335,7 +1365,7 @@ void bt_pacs_cap_foreach(enum bt_audio_dir dir, bt_pacs_cap_foreach_func_t func,
 {
 	bt_slist_t *pac;
 
-	CHECKIF(func == NULL) {
+	if (func == NULL) {
 		LOG_ERR("func is NULL");
 		return;
 	}
@@ -1611,7 +1641,7 @@ enum bt_audio_context bt_pacs_get_available_contexts(enum bt_audio_dir dir)
 enum bt_audio_context bt_pacs_get_available_contexts_for_conn(struct bt_conn *conn,
 							      enum bt_audio_dir dir)
 {
-	CHECKIF(conn == NULL) {
+	if (conn == NULL) {
 		LOG_ERR("NULL conn");
 		return BT_AUDIO_CONTEXT_TYPE_NONE;
 	}

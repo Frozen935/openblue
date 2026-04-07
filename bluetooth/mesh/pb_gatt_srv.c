@@ -178,7 +178,7 @@ int bt_mesh_pb_gatt_srv_enable(void)
 
 	(void)bt_gatt_service_register(&prov_svc);
 	service_registered = true;
-	fast_adv_timestamp = k_uptime_get();
+	fast_adv_timestamp = os_time_get();
 
 	return 0;
 }
@@ -282,7 +282,7 @@ int bt_mesh_pb_gatt_srv_adv_start(void)
 	struct bt_data prov_sd[2];
 	size_t prov_sd_len;
 	int64_t timestamp = fast_adv_timestamp;
-	int64_t elapsed_time = k_uptime_delta(&timestamp);
+	int64_t elapsed_time = os_time_delta(&timestamp);
 
 	prov_sd_len = gatt_prov_adv_create(prov_sd);
 

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_BRG_CFG_CLI_H___
-#define __INCLUDE_BLUETOOTH_MESH_BRG_CFG_CLI_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_BRG_CFG_CLI_H___H__
+#define __INCLUDE_BLUETOOTH_MESH_BRG_CFG_CLI_H___H__
 
 #include <bluetooth/mesh/brg_cfg.h>
 
@@ -316,4 +316,4 @@ extern const struct bt_mesh_model_cb _bt_mesh_brg_cfg_cli_cb;
 }
 #endif
 
-#endif /* __INCLUDE_BLUETOOTH_MESH_BRG_CFG_CLI_H__ */
+#endif /* __INCLUDE_BLUETOOTH_MESH_BRG_CFG_CLI_H___H__ */

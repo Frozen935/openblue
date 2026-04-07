@@ -9,7 +9,7 @@
  */
 #ifndef __INCLUDE_BLUETOOTH_MESH_HEALTH_CLI_H__
 #define __INCLUDE_BLUETOOTH_MESH_HEALTH_CLI_H__
-
+#include <base/bt_buf.h>
 #include <bluetooth/mesh.h>
 
 /**

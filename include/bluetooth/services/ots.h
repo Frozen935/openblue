@@ -19,9 +19,12 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include <sys/types.h>
 
+#include <bluetooth/byteorder.h>
+#include <utils/bt_utils.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
@@ -517,7 +520,6 @@ struct bt_ots_date_time {
  */
 struct bt_ots_obj_metadata {
 
-#if defined(CONFIG_BT_OTS)
 	/** @brief Object Name */
 	char                           *name;
 #endif /* CONFIG_BT_OTS */
@@ -549,7 +551,10 @@ struct bt_ots_obj_metadata {
 	uint32_t                       props;
 };
 
-/** @brief Opaque OTS instance. */
+/**
+ * @struct bt_ots
+ * @brief Opaque OTS instance.
+ */
 struct bt_ots;
 
 /** @brief Descriptor for OTS object addition */

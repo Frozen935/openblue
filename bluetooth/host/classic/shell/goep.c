@@ -38,7 +38,7 @@ struct bt_goep_app {
 	struct bt_buf *tx_buf;
 };
 
-static struct bt_goep_app goep_app;
+ZTESTABLE_STATIC struct bt_goep_app goep_app;
 
 static struct bt_goep_transport_rfcomm_server rfcomm_server;
 static struct bt_goep_transport_l2cap_server l2cap_server;
@@ -46,9 +46,9 @@ static struct bt_goep_transport_l2cap_server l2cap_server;
 #define TLV_COUNT       3
 #define TLV_BUFFER_SIZE 64
 
-static struct bt_obex_tlv tlvs[TLV_COUNT];
-static uint8_t tlv_buffers[TLV_COUNT][TLV_BUFFER_SIZE];
-static uint8_t tlv_count;
+ZTESTABLE_STATIC struct bt_obex_tlv tlvs[TLV_COUNT];
+ZTESTABLE_STATIC uint8_t tlv_buffers[TLV_COUNT][TLV_BUFFER_SIZE];
+ZTESTABLE_STATIC uint8_t tlv_count;
 
 static struct bt_goep_app *goep_alloc(struct bt_conn *conn)
 {
@@ -177,7 +177,7 @@ static void goep_server_action(struct bt_obex_server *server, bool final, struct
 	goep_parse_headers(buf);
 }
 
-struct bt_obex_server_ops goep_server_ops = {
+ZTESTABLE_STATIC struct bt_obex_server_ops goep_server_ops = {
 	.connect = goep_server_connect,
 	.disconnect = goep_server_disconnect,
 	.put = goep_server_put,
@@ -241,7 +241,7 @@ static void goep_client_action(struct bt_obex_client *client, uint8_t rsp_code,
 	goep_parse_headers(buf);
 }
 
-struct bt_obex_client_ops goep_client_ops = {
+ZTESTABLE_STATIC struct bt_obex_client_ops goep_client_ops = {
 	.connect = goep_client_connect,
 	.disconnect = goep_client_disconnect,
 	.put = goep_client_put,
@@ -929,7 +929,7 @@ static int cmd_add_header_action_id(const struct bt_shell *sh, size_t argc, char
 
 	action_id = strtoul(argv[1], NULL, 16);
 
-	err = bt_obex_add_header_action_id(goep_app.tx_buf, action_id);
+	err = bt_obex_add_header_action_id(goep_app.tx_buf, (uint8_t)action_id);
 	if (err) {
 		bt_shell_error("Fail to add header action_id");
 	}
@@ -1076,7 +1076,7 @@ static int cmd_goep_client_put(const struct bt_shell *sh, size_t argc, char *arg
 
 	final = bt_shell_strtobool(argv[1], 0, &err);
 	if (err != 0) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1106,7 +1106,7 @@ static int cmd_goep_client_get(const struct bt_shell *sh, size_t argc, char *arg
 
 	final = bt_shell_strtobool(argv[1], 0, &err);
 	if (err != 0) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1163,7 +1163,7 @@ static int cmd_goep_client_setpath(const struct bt_shell *sh, size_t argc, char 
 		} else if (!strcmp(argv[index], "create")) {
 			flags &= ~BIT(1);
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	}
@@ -1194,7 +1194,7 @@ static int cmd_goep_client_action(const struct bt_shell *sh, size_t argc, char *
 
 	final = bt_shell_strtobool(argv[1], 0, &err);
 	if (err != 0) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1269,12 +1269,12 @@ static int cmd_goep_server_conn(const struct bt_shell *sh, size_t argc, char *ar
 	} else if (!strcmp(rsp, "error")) {
 		if (argc < 4) {
 			bt_shell_error("[rsp_code] is needed if the rsp is %s", rsp);
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 		rsp_code = (uint8_t)strtoul(argv[3], NULL, 16);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1313,12 +1313,12 @@ static int cmd_goep_server_disconn(const struct bt_shell *sh, size_t argc, char 
 	} else if (!strcmp(rsp, "error")) {
 		if (argc < 3) {
 			bt_shell_error("[rsp_code] is needed if the rsp is %s", rsp);
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 		rsp_code = (uint8_t)strtoul(argv[2], NULL, 16);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1355,12 +1355,12 @@ static int cmd_goep_server_put(const struct bt_shell *sh, size_t argc, char *arg
 	} else if (!strcmp(rsp, "error")) {
 		if (argc < 3) {
 			bt_shell_error("[rsp_code] is needed if the rsp is %s", rsp);
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 		rsp_code = (uint8_t)strtoul(argv[2], NULL, 16);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1397,12 +1397,12 @@ static int cmd_goep_server_get(const struct bt_shell *sh, size_t argc, char *arg
 	} else if (!strcmp(rsp, "error")) {
 		if (argc < 3) {
 			bt_shell_error("[rsp_code] is needed if the rsp is %s", rsp);
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 		rsp_code = (uint8_t)strtoul(argv[2], NULL, 16);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1439,12 +1439,12 @@ static int cmd_goep_server_abort(const struct bt_shell *sh, size_t argc, char *a
 	} else if (!strcmp(rsp, "error")) {
 		if (argc < 3) {
 			bt_shell_error("[rsp_code] is needed if the rsp is %s", rsp);
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 		rsp_code = (uint8_t)strtoul(argv[2], NULL, 16);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1481,12 +1481,12 @@ static int cmd_goep_server_setpath(const struct bt_shell *sh, size_t argc, char 
 	} else if (!strcmp(rsp, "error")) {
 		if (argc < 3) {
 			bt_shell_error("[rsp_code] is needed if the rsp is %s", rsp);
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 		rsp_code = (uint8_t)strtoul(argv[2], NULL, 16);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1523,12 +1523,12 @@ static int cmd_goep_server_action(const struct bt_shell *sh, size_t argc, char *
 	} else if (!strcmp(rsp, "error")) {
 		if (argc < 3) {
 			bt_shell_error("[rsp_code] is needed if the rsp is %s", rsp);
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 		rsp_code = (uint8_t)strtoul(argv[2], NULL, 16);
 	} else {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1543,7 +1543,7 @@ static int cmd_goep_server_action(const struct bt_shell *sh, size_t argc, char *
 
 #define HELP_NONE ""
 
-BT_SHELL_SUBCMD_SET_CREATE(obex_add_header_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(obex_add_header_cmds,
 	BT_SHELL_CMD_ARG(count, NULL, "<number of objects (used by Connect)>", cmd_add_header_count, 2,
 		      0),
 	BT_SHELL_CMD_ARG(name, NULL, "[name of the object (often a file name)]", cmd_add_header_name,
@@ -1601,7 +1601,7 @@ BT_SHELL_SUBCMD_SET_CREATE(obex_add_header_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_SUBCMD_SET_CREATE(obex_client_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(obex_client_cmds,
 	BT_SHELL_CMD_ARG(conn, NULL, "<mopl>", cmd_goep_client_conn, 2, 0),
 	BT_SHELL_CMD_ARG(disconn, NULL, HELP_NONE, cmd_goep_client_disconn, 1, 0),
 	BT_SHELL_CMD_ARG(put, NULL, "<final: true, false>", cmd_goep_client_put, 2, 0),
@@ -1612,7 +1612,7 @@ BT_SHELL_SUBCMD_SET_CREATE(obex_client_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_SUBCMD_SET_CREATE(obex_server_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(obex_server_cmds,
 	BT_SHELL_CMD_ARG(reg, NULL, "[UUID 128]", cmd_goep_server_reg, 1, 1),
 	BT_SHELL_CMD_ARG(unreg, NULL, HELP_NONE, cmd_goep_server_unreg, 1, 0),
 	BT_SHELL_CMD_ARG(conn, NULL, "<rsp: continue, success, error> <mopl> [rsp_code]",
@@ -1664,7 +1664,7 @@ static int cmd_release_buf(const struct bt_shell *sh, size_t argc, char **argv)
 static int cmd_common(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		bt_shell_help(sh);
+		shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -1673,7 +1673,7 @@ static int cmd_common(const struct bt_shell *sh, size_t argc, char **argv)
 	return -ENOEXEC;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(goep_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(goep_cmds,
 	BT_SHELL_CMD_ARG(register-rfcomm, NULL, "<channel>", cmd_register_rfcomm, 2, 0),
 	BT_SHELL_CMD_ARG(connect-rfcomm, NULL, "<channel>", cmd_connect_rfcomm, 2, 0),
 	BT_SHELL_CMD_ARG(disconnect-rfcomm, NULL, HELP_NONE, cmd_disconnect_rfcomm, 1, 0),
@@ -1688,9 +1688,4 @@ BT_SHELL_SUBCMD_SET_CREATE(goep_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_ARG_DEFINE(goep, &goep_cmds, "Bluetooth GOEP shell commands", cmd_common, 1, 1);
-
-int bt_shell_cmd_goep_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &goep);
-}
+BT_SHELL_CMD_ARG_REGISTER(goep, &goep_cmds, "Bluetooth GOEP shell commands", cmd_common, 1, 1);

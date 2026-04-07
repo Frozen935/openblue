@@ -101,7 +101,7 @@ struct bt_mesh_subnet_cb {
  */
 #define BT_MESH_SUBNET_CB_DEFINE(_name)                                    \
 	static const STRUCT_SECTION_ITERABLE(                               \
-		bt_mesh_subnet_cb, UTIL_CONCAT(bt_mesh_subnet_cb_, _name))
+		bt_mesh_subnet_cb, _CONCAT(bt_mesh_subnet_cb_, _name))
 
 /** @brief Reset all Network keys. */
 void bt_mesh_net_keys_reset(void);

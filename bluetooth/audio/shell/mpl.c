@@ -13,12 +13,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <bluetooth/audio/media_proxy.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/conn.h>
-
 #include "../mpl_internal.h"
-
 
 #if defined(CONFIG_BT_MPL)
 
@@ -31,13 +26,13 @@ int cmd_mpl_test_set_media_state(const struct bt_shell *sh, size_t argc,
 
 	state = bt_shell_strtoul(argv[1], 0, &err);
 	if (err != 0) {
-		bt_shell_error("Could not parse state: %d", err);
+		bt_shell_error(sh, "Could not parse state: %d", err);
 
 		return -ENOEXEC;
 	}
 
 	if (state > UINT8_MAX) {
-		bt_shell_error("Invalid state %lu", state);
+		bt_shell_error(sh, "Invalid state %lu", state);
 
 		return -ENOEXEC;
 	}
@@ -73,7 +68,7 @@ int cmd_media_proxy_pl_init(const struct bt_shell *sh, size_t argc, char *argv[]
 	int err = media_proxy_pl_init();
 
 	if (err) {
-		bt_shell_error("Could not init mpl");
+		bt_shell_error(sh, "Could not init mpl");
 	}
 
 	return err;
@@ -201,12 +196,12 @@ int cmd_mpl_test_search_results_changed_cb(const struct bt_shell *sh, size_t arg
 
 static int cmd_mpl(const struct bt_shell *sh, size_t argc, char **argv)
 {
-	bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
+	bt_shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
 
 	return -ENOEXEC;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(mpl_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(mpl_cmds,
 #if defined(CONFIG_BT_TESTING)
 	BT_SHELL_CMD_ARG(test_set_media_state, NULL,
 		      "Set the media player state (test) <state>",
@@ -289,11 +284,7 @@ BT_SHELL_SUBCMD_SET_CREATE(mpl_cmds,
  * and https://github.com/nexB/scancode-toolkit/commit/6abbc4a22973f40ab74f6f8d948dd06416c97bd4
  */
 #define CMD_NQM cmd_mpl
-BT_SHELL_CMD_ARG_DEFINE(mpl, &mpl_cmds, "Media player (MPL) related commands",
+BT_SHELL_CMD_ARG_REGISTER(mpl, &mpl_cmds, "Media player (MPL) related commands",
 		       CMD_NQM, 1, 1);
 
-int bt_shell_cmd_mpl_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &mpl);
-}
 #endif /* CONFIG_BT_MPL */

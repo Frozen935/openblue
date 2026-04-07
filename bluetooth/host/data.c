@@ -58,12 +58,12 @@ size_t bt_data_get_len(const struct bt_data data[], size_t data_count)
 
 size_t bt_data_serialize(const struct bt_data *input, uint8_t *output)
 {
-	CHECKIF(input == NULL) {
+	if (input == NULL) {
 		LOG_DBG("input is NULL");
 		return 0;
 	}
 
-	CHECKIF(output == NULL) {
+	if (output == NULL) {
 		LOG_DBG("output is NULL");
 		return 0;
 	}

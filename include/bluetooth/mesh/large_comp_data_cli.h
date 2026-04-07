@@ -20,6 +20,7 @@ extern "C" {
  */
 
 struct bt_mesh_large_comp_data_cli;
+struct bt_buf_simple;
 
 /** Large Composition Data response. */
 struct bt_mesh_large_comp_data_rsp {

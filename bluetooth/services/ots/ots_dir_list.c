@@ -14,6 +14,7 @@
 #include "ots_dir_list_internal.h"
 
 
+
 static struct bt_ots_dir_list dir_lists[CONFIG_BT_OTS_MAX_INST_CNT];
 
 static size_t dir_list_object_record_size(const struct bt_gatt_ots_object *obj)
@@ -32,7 +33,7 @@ static size_t dir_list_object_record_size(const struct bt_gatt_ots_object *obj)
 
 	/* Name */
 	obj_name_len = strlen(obj->metadata.name);
-	__ASSERT_MSG(obj_name_len > 0 && obj_name_len <= CONFIG_BT_OTS_OBJ_MAX_NAME_LEN,
+	__ASSERT(obj_name_len > 0 && obj_name_len <= CONFIG_BT_OTS_OBJ_MAX_NAME_LEN,
 		 "Dir list object len is incorrect %zu", obj_name_len);
 	len += obj_name_len;
 
@@ -52,9 +53,9 @@ static size_t dir_list_object_record_size(const struct bt_gatt_ots_object *obj)
 	/* Object properties */
 	len += sizeof(obj->metadata.props);
 
-	__ASSERT_MSG(len >= DIR_LIST_OBJ_RECORD_MIN_SIZE,
+	__ASSERT(len >= DIR_LIST_OBJ_RECORD_MIN_SIZE,
 		 "Dir list object len is too small %u", len);
-	__ASSERT_MSG(len <= DIR_LIST_OBJ_RECORD_MAX_SIZE,
+	__ASSERT(len <= DIR_LIST_OBJ_RECORD_MAX_SIZE,
 		 "Dir list object len is too large %u", len);
 
 	return len;
@@ -82,7 +83,7 @@ static void dir_list_object_encode(const struct bt_gatt_ots_object *obj,
 
 	/* Name length */
 	obj_name_len = strlen(obj->metadata.name);
-	__ASSERT_MSG(obj_name_len > 0 && obj_name_len <= CONFIG_BT_OTS_OBJ_MAX_NAME_LEN,
+	__ASSERT(obj_name_len > 0 && obj_name_len <= CONFIG_BT_OTS_OBJ_MAX_NAME_LEN,
 		 "Dir list object len is incorrect %zu", obj_name_len);
 	bt_buf_simple_add_u8(bt_buf, obj_name_len);
 
@@ -108,9 +109,9 @@ static void dir_list_object_encode(const struct bt_gatt_ots_object *obj,
 
 	len = bt_buf_simple_tail(bt_buf) - start;
 
-	__ASSERT_MSG(len >= DIR_LIST_OBJ_RECORD_MIN_SIZE,
+	__ASSERT(len >= DIR_LIST_OBJ_RECORD_MIN_SIZE,
 		 "Dir list object len is too small %u", len);
-	__ASSERT_MSG(len <= DIR_LIST_OBJ_RECORD_MAX_SIZE,
+	__ASSERT(len <= DIR_LIST_OBJ_RECORD_MAX_SIZE,
 		 "Dir list object len is too large %u", len);
 
 	/* Update the record length at the beginning */
@@ -235,7 +236,7 @@ static void dir_list_update_size(struct bt_ots_dir_list *dir_list, void *obj_man
 
 	err = bt_gatt_ots_obj_manager_first_obj_get(obj_manager, &obj);
 
-	__ASSERT_MSG(err == 0 && obj == dir_list->dir_list_obj,
+	__ASSERT(err == 0 && obj == dir_list->dir_list_obj,
 		 "Expecting first object to be the Directory Listing Object");
 
 	do {
@@ -268,7 +269,7 @@ void bt_ots_dir_list_init(struct bt_ots_dir_list **dir_list, void *obj_manager)
 	int err;
 	static char *dir_list_obj_name = CONFIG_BT_OTS_DIR_LIST_OBJ_NAME;
 
-	__ASSERT_MSG(*dir_list == NULL, "Already initialized");
+	__ASSERT(*dir_list == NULL, "Already initialized");
 
 	for (size_t i = 0; i < ARRAY_SIZE(dir_lists); i++) {
 		if (!dir_lists[i].dir_list_obj) {
@@ -276,15 +277,15 @@ void bt_ots_dir_list_init(struct bt_ots_dir_list **dir_list, void *obj_manager)
 		}
 	}
 
-	__ASSERT_MSG(*dir_list, "Could not assign Directory Listing Object");
+	__ASSERT(*dir_list, "Could not assign Directory Listing Object");
 
-	__ASSERT_MSG(strlen(dir_list_obj_name) <= CONFIG_BT_OTS_OBJ_MAX_NAME_LEN,
+	__ASSERT(strlen(dir_list_obj_name) <= CONFIG_BT_OTS_OBJ_MAX_NAME_LEN,
 		 "BT_OTS_DIR_LIST_OBJ_NAME shall be less than or equal to %u octets",
 		 CONFIG_BT_OTS_OBJ_MAX_NAME_LEN);
 
 	err = bt_gatt_ots_obj_manager_obj_add(obj_manager, &dir_list_obj);
 
-	__ASSERT_MSG(!err, "Could not add Directory Listing Object for object manager %p", obj_manager);
+	__ASSERT(!err, "Could not add Directory Listing Object for object manager %p", obj_manager);
 
 	memset(&dir_list_obj->metadata, 0, sizeof(dir_list_obj->metadata));
 	dir_list_obj->metadata.name = dir_list_obj_name;

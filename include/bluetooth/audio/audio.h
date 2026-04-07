@@ -31,6 +31,9 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/iso.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+#include <utils/bt_utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -1898,4 +1901,4 @@ static inline char *bt_audio_location_bit_to_str(enum bt_audio_location location
 
 /** @} */ /* end of bt_audio */
 
-#endif /* __INCLUDE_BLUETOOTH_AUDIO_H__ */
+#endif /* __INCLUDE_BLUETOOTH_AUDIO_AUDIO_H__ */

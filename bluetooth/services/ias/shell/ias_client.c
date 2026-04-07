@@ -94,7 +94,7 @@ static int cmd_ias_client(const struct bt_shell *sh, size_t argc, char **argv)
 	return -ENOEXEC;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(ias_cli_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(ias_cli_cmds,
 	BT_SHELL_CMD_ARG(init, NULL,
 		      "Initialize the client and register callbacks",
 		      cmd_ias_client_init, 1, 0),
@@ -107,10 +107,5 @@ BT_SHELL_SUBCMD_SET_CREATE(ias_cli_cmds,
 		      BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_ARG_DEFINE(ias_client, &ias_cli_cmds, "Bluetooth IAS client shell commands",
+BT_SHELL_CMD_ARG_REGISTER(ias_client, &ias_cli_cmds, "Bluetooth IAS client shell commands",
 		       cmd_ias_client, 1, 1);
-
-int bt_shell_cmd_ias_client_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &ias_client);
-}

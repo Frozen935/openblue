@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_AUDIO_PBP_
-#define __INCLUDE_BLUETOOTH_AUDIO_PBP_
+#ifndef __INCLUDE_BLUETOOTH_AUDIO_PBP__H__
+#define __INCLUDE_BLUETOOTH_AUDIO_PBP__H__
 
 /**
  * @brief Public Broadcast Profile (PBP)
@@ -32,6 +32,8 @@
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/uuid.h>
+#include <utils/bt_utils.h>
+#include <utils/bt_utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,4 +99,4 @@ int bt_pbp_parse_announcement(struct bt_data *data, enum bt_pbp_announcement_fea
  * @}
  */
 
-#endif /* __INCLUDE_BLUETOOTH_AUDIO_PBP_ */
+#endif /* __INCLUDE_BLUETOOTH_AUDIO_PBP__H__ */

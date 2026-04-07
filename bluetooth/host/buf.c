@@ -28,17 +28,26 @@
  */
 #define SYNC_EVT_SIZE (BT_BUF_RESERVE + BT_HCI_EVT_HDR_SIZE + 255)
 
-static bt_buf_rx_freed_cb_t buf_rx_freed_cb;
+static bt_atomic_ptr_t buf_rx_freed_cb;
 
 static void buf_rx_freed_notify(enum bt_buf_type mask)
 {
-	os_sched_lock();
+	bt_buf_rx_freed_cb_t cb;
+	bool in_isr = k_is_in_isr();
 
-	if (buf_rx_freed_cb) {
-		buf_rx_freed_cb(mask);
+	if (!in_isr) {
+		k_sched_lock();
 	}
 
-	os_sched_unlock();
+	cb = (bt_buf_rx_freed_cb_t)bt_atomic_ptr_get(&buf_rx_freed_cb);
+
+	if (cb != NULL) {
+		cb(mask);
+	}
+
+	if (!in_isr) {
+		k_sched_unlock();
+	}
 }
 
 #if defined(CONFIG_BT_ISO_RX)
@@ -56,7 +65,7 @@ static void iso_rx_freed_cb(void)
  * the HCI transport to fill buffers in parallel with `bt_recv`
  * consuming them.
  */
-BT_BUF_POOL_FIXED_DEFINE(sync_evt_pool, 1, SYNC_EVT_SIZE, 0, NULL);
+BT_BUF_POOL_FIXED_DEFINE(sync_evt_pool, CONFIG_BT_BUF_SYNC_EVT_POOL_COUNT, SYNC_EVT_SIZE, 0, NULL);
 
 BT_BUF_POOL_FIXED_DEFINE(discardable_pool, CONFIG_BT_BUF_EVT_DISCARDABLE_COUNT,
 			  BT_BUF_EVT_SIZE(CONFIG_BT_BUF_EVT_DISCARDABLE_SIZE),
@@ -101,7 +110,7 @@ struct bt_buf *bt_buf_get_rx(enum bt_buf_type type, os_timeout_t timeout)
 {
 	struct bt_buf *buf;
 
-	__ASSERT_MSG(type == BT_BUF_EVT || type == BT_BUF_ACL_IN ||
+	__ASSERT(type == BT_BUF_EVT || type == BT_BUF_ACL_IN ||
 		 type == BT_BUF_ISO_IN, "Invalid buffer type requested");
 
 	if (IS_ENABLED(CONFIG_BT_ISO_RX) && type == BT_BUF_ISO_IN) {
@@ -126,15 +135,11 @@ struct bt_buf *bt_buf_get_rx(enum bt_buf_type type, os_timeout_t timeout)
 
 void bt_buf_rx_freed_cb_set(bt_buf_rx_freed_cb_t cb)
 {
-	os_sched_lock();
-
-	buf_rx_freed_cb = cb;
+	bt_atomic_ptr_set(&buf_rx_freed_cb, (void *)cb);
 
 #if defined(CONFIG_BT_ISO_RX)
 	bt_iso_buf_rx_freed_cb_set(cb != NULL ? iso_rx_freed_cb : NULL);
 #endif
-
-	os_sched_unlock();
 }
 
 struct bt_buf *bt_buf_get_evt(uint8_t evt, bool discardable,

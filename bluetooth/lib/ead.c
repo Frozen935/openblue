@@ -11,7 +11,6 @@
 #include <string.h>
 
 
-
 /** nonce size in bytes */
 #define BT_EAD_NONCE_SIZE 13
 
@@ -102,22 +101,22 @@ static int ead_encrypt(const uint8_t session_key[BT_EAD_KEY_SIZE], const uint8_t
 int bt_ead_encrypt(const uint8_t session_key[BT_EAD_KEY_SIZE], const uint8_t iv[BT_EAD_IV_SIZE],
 		   const uint8_t *payload, size_t payload_size, uint8_t *encrypted_payload)
 {
-	CHECKIF(session_key == NULL) {
+	if (session_key == NULL) {
 		LOG_DBG("session_key is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(iv == NULL) {
+	if (iv == NULL) {
 		LOG_DBG("iv is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(payload == NULL) {
+	if (payload == NULL) {
 		LOG_DBG("payload is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(encrypted_payload == NULL) {
+	if (encrypted_payload == NULL) {
 		LOG_DBG("encrypted_payload is NULL");
 		return -EINVAL;
 	}
@@ -137,27 +136,27 @@ int bt_test_ead_encrypt(const uint8_t session_key[BT_EAD_KEY_SIZE],
 			const uint8_t randomizer[BT_EAD_RANDOMIZER_SIZE], const uint8_t *payload,
 			size_t payload_size, uint8_t *encrypted_payload)
 {
-	CHECKIF(session_key == NULL) {
+	if (session_key == NULL) {
 		LOG_DBG("session_key is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(iv == NULL) {
+	if (iv == NULL) {
 		LOG_DBG("iv is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(randomizer == NULL) {
+	if (randomizer == NULL) {
 		LOG_DBG("randomizer is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(payload == NULL) {
+	if (payload == NULL) {
 		LOG_DBG("payload is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(encrypted_payload == NULL) {
+	if (encrypted_payload == NULL) {
 		LOG_DBG("encrypted_payload is NULL");
 		return -EINVAL;
 	}
@@ -206,22 +205,22 @@ int bt_ead_decrypt(const uint8_t session_key[BT_EAD_KEY_SIZE], const uint8_t iv[
 		   const uint8_t *encrypted_payload, size_t encrypted_payload_size,
 		   uint8_t *payload)
 {
-	CHECKIF(session_key == NULL) {
+	if (session_key == NULL) {
 		LOG_DBG("session_key is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(iv == NULL) {
+	if (iv == NULL) {
 		LOG_DBG("iv is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(encrypted_payload == NULL) {
+	if (encrypted_payload == NULL) {
 		LOG_DBG("encrypted_payload is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(payload == NULL) {
+	if (payload == NULL) {
 		LOG_DBG("payload is NULL");
 		return -EINVAL;
 	}

@@ -21,6 +21,10 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
+#include "osdep/os.h"
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 
 #include "common/bt_str.h"
 #include "vcp_internal.h"
@@ -559,7 +563,7 @@ static int write_common_vcs_cp(struct bt_vcp_vol_ctlr *vol_ctlr)
 
 static int vcp_vol_ctlr_common_vcs_cp(struct bt_vcp_vol_ctlr *vol_ctlr, uint8_t opcode)
 {
-	CHECKIF(vol_ctlr == NULL) {
+	if (vol_ctlr == NULL) {
 		LOG_DBG("NULL ctlr");
 		return -EINVAL;
 	}
@@ -585,7 +589,7 @@ static int vcp_vol_ctlr_common_vcs_cp(struct bt_vcp_vol_ctlr *vol_ctlr, uint8_t 
 #if defined(CONFIG_BT_VCP_VOL_CTLR_AICS)
 static struct bt_vcp_vol_ctlr *lookup_vcp_by_aics(const struct bt_aics *aics)
 {
-	__ASSERT_MSG(aics != NULL, "aics pointer cannot be NULL");
+	__ASSERT(aics != NULL, "aics pointer cannot be NULL");
 
 	for (size_t i = 0U; i < ARRAY_SIZE(vol_ctlr_insts); i++) {
 		for (size_t j = 0U; j < ARRAY_SIZE(vol_ctlr_insts[i].aics); j++) {
@@ -662,7 +666,6 @@ static void vcp_vol_ctlr_aics_discover_cb(struct bt_aics *inst, int err)
 
 	if (vol_ctlr == NULL) {
 		LOG_ERR("Could not lookup vol_ctlr from aics");
-		vcp_vol_ctlr_discover_complete(vol_ctlr, BT_GATT_ERR(BT_ATT_ERR_UNLIKELY));
 
 		return;
 	}
@@ -743,7 +746,7 @@ static void vcp_vol_ctlr_aics_set_auto_mode_cb(struct bt_aics *inst, int err)
 #if defined(CONFIG_BT_VCP_VOL_CTLR_VOCS)
 static struct bt_vcp_vol_ctlr *lookup_vcp_by_vocs(const struct bt_vocs *vocs)
 {
-	__ASSERT_MSG(vocs != NULL, "VOCS pointer cannot be NULL");
+	__ASSERT(vocs != NULL, "VOCS pointer cannot be NULL");
 
 	for (int i = 0; i < ARRAY_SIZE(vol_ctlr_insts); i++) {
 		for (int j = 0; j < ARRAY_SIZE(vol_ctlr_insts[i].vocs); j++) {
@@ -884,7 +887,7 @@ static void bt_vcp_vol_ctlr_init(void)
 
 			vol_ctlr_insts[i].vocs[j] = bt_vocs_client_free_instance_get();
 
-			__ASSERT_MSG(vol_ctlr_insts[i].vocs[j],
+			__ASSERT(vol_ctlr_insts[i].vocs[j],
 				 "Could not allocate VOCS client instance");
 
 			bt_vocs_client_cb_register(vol_ctlr_insts[i].vocs[j], &vocs_cb);
@@ -911,7 +914,7 @@ static void bt_vcp_vol_ctlr_init(void)
 
 			vol_ctlr_insts[i].aics[j] = bt_aics_client_free_instance_get();
 
-			__ASSERT_MSG(vol_ctlr_insts[i].aics[j],
+			__ASSERT(vol_ctlr_insts[i].aics[j],
 				 "Could not allocate AICS client instance");
 
 			bt_aics_client_cb_register(vol_ctlr_insts[i].aics[j], &aics_cb);
@@ -936,12 +939,12 @@ int bt_vcp_vol_ctlr_discover(struct bt_conn *conn, struct bt_vcp_vol_ctlr **out_
 	 * 5) When everything above have been discovered, the callback is called
 	 */
 
-	CHECKIF(conn == NULL) {
+	if (conn == NULL) {
 		LOG_DBG("NULL conn");
 		return -EINVAL;
 	}
 
-	CHECKIF(out_vol_ctlr == NULL) {
+	if (out_vol_ctlr == NULL) {
 		LOG_DBG("NULL ctlr");
 		return -EINVAL;
 	}
@@ -983,7 +986,7 @@ int bt_vcp_vol_ctlr_cb_register(struct bt_vcp_vol_ctlr_cb *cb)
 {
 	struct bt_vcp_vol_ctlr_cb *tmp;
 
-	CHECKIF(cb == NULL) {
+	if (cb == NULL) {
 		return -EINVAL;
 	}
 
@@ -1001,7 +1004,7 @@ int bt_vcp_vol_ctlr_cb_register(struct bt_vcp_vol_ctlr_cb *cb)
 
 int bt_vcp_vol_ctlr_cb_unregister(struct bt_vcp_vol_ctlr_cb *cb)
 {
-	CHECKIF(cb == NULL) {
+	if (cb == NULL) {
 		return -EINVAL;
 	}
 
@@ -1016,7 +1019,7 @@ int bt_vcp_vol_ctlr_cb_unregister(struct bt_vcp_vol_ctlr_cb *cb)
 int bt_vcp_vol_ctlr_included_get(struct bt_vcp_vol_ctlr *vol_ctlr,
 			       struct bt_vcp_included *included)
 {
-	CHECKIF(!included || vol_ctlr == NULL) {
+	if (!included || vol_ctlr == NULL) {
 		return -EINVAL;
 	}
 
@@ -1040,7 +1043,7 @@ struct bt_vcp_vol_ctlr *bt_vcp_vol_ctlr_get_by_conn(const struct bt_conn *conn)
 {
 	struct bt_vcp_vol_ctlr *vol_ctlr;
 
-	CHECKIF(conn == NULL) {
+	if (conn == NULL) {
 		LOG_DBG("NULL conn pointer");
 		return NULL;
 	}
@@ -1057,12 +1060,12 @@ struct bt_vcp_vol_ctlr *bt_vcp_vol_ctlr_get_by_conn(const struct bt_conn *conn)
 
 int bt_vcp_vol_ctlr_conn_get(const struct bt_vcp_vol_ctlr *vol_ctlr, struct bt_conn **conn)
 {
-	CHECKIF(vol_ctlr == NULL) {
+	if (vol_ctlr == NULL) {
 		LOG_DBG("NULL vol_ctlr pointer");
 		return -EINVAL;
 	}
 
-	CHECKIF(conn == NULL) {
+	if (conn == NULL) {
 		LOG_DBG("NULL conn pointer");
 		return -EINVAL;
 	}
@@ -1081,7 +1084,7 @@ int bt_vcp_vol_ctlr_read_state(struct bt_vcp_vol_ctlr *vol_ctlr)
 {
 	int err;
 
-	CHECKIF(vol_ctlr == NULL) {
+	if (vol_ctlr == NULL) {
 		LOG_DBG("NULL ctlr");
 		return -EINVAL;
 	}
@@ -1116,7 +1119,7 @@ int bt_vcp_vol_ctlr_read_flags(struct bt_vcp_vol_ctlr *vol_ctlr)
 {
 	int err;
 
-	CHECKIF(vol_ctlr == NULL) {
+	if (vol_ctlr == NULL) {
 		LOG_DBG("NULL ctlr");
 		return -EINVAL;
 	}
@@ -1187,7 +1190,7 @@ static int write_set_vol_cp(struct bt_vcp_vol_ctlr *vol_ctlr)
 
 int bt_vcp_vol_ctlr_set_vol(struct bt_vcp_vol_ctlr *vol_ctlr, uint8_t volume)
 {
-	CHECKIF(vol_ctlr == NULL) {
+	if (vol_ctlr == NULL) {
 		LOG_DBG("NULL ctlr");
 		return -EINVAL;
 	}

@@ -13,8 +13,10 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/hci_types.h>
+#include <drivers/bluetooth.h>
 
-#include "osdep/os.h"
+#include <base/queue/bt_fifo.h>
+#include <osdep/os.h>
 
 /* LL connection parameters */
 #define LE_CONN_LATENCY		0x0000
@@ -28,13 +30,6 @@
 
 /* SCO  settings */
 #define BT_VOICE_CVSD_16BIT     0x0060
-
-/* bt_poll event tags */
-enum {
-	BT_EVENT_CMD_TX,
-	BT_EVENT_CONN_TX_QUEUE,
-	BT_EVENT_CONN_FREE_TX,
-};
 
 /* bt_dev flags: the flags defined here represent BT controller state */
 enum {
@@ -111,6 +106,10 @@ enum {
 	BT_ADV_PARAMS_SET,
 	/* Advertising data has been set in the controller. */
 	BT_ADV_DATA_SET,
+	/* Advertising random address has been updated in the controller before
+	 * enabling advertising.
+	 */
+	BT_ADV_RANDOM_ADDR_UPDATED,
 	/* Advertising random address pending to be set in the controller. */
 	BT_ADV_RANDOM_ADDR_PENDING,
 	/* The private random address of the advertiser is valid for this cycle
@@ -283,14 +282,14 @@ struct bt_dev_le {
 #if defined(CONFIG_BT_CONN)
 	/* Controller buffer information */
 	uint16_t		mtu;
-		os_sem_t	pkts;
+	os_sem_t			pkts;
 	uint16_t		acl_mtu;
-		os_sem_t	acl_pkts;
+	os_sem_t			acl_pkts;
 #endif /* CONFIG_BT_CONN */
 #if defined(CONFIG_BT_ISO)
 	uint16_t		iso_mtu;
 	uint8_t			iso_limit;
-	os_sem_t	iso_pkts;
+	os_sem_t			iso_pkts;
 #endif /* CONFIG_BT_ISO */
 #if defined(CONFIG_BT_BROADCASTER)
 	uint16_t max_adv_data_len;
@@ -315,7 +314,7 @@ struct bt_dev_le {
 struct bt_dev_br {
 	/* Max controller's acceptable ACL packet length */
 	uint16_t         mtu;
-	os_sem_t	pkts;
+	os_sem_t           pkts;
 	uint16_t         esco_pkt_type;
 };
 
@@ -394,7 +393,7 @@ struct bt_dev {
 #endif
 
 	/* Number of commands controller can accept */
-	os_sem_t		ncmd_sem;
+	os_sem_t			ncmd_sem;
 
 	/* Last sent HCI command */
 	struct bt_buf		*sent_cmd;
@@ -529,6 +528,7 @@ void bt_hci_le_past_received_v2(struct bt_buf *buf);
 
 /* CS HCI event handlers */
 void bt_hci_le_cs_read_remote_supported_capabilities_complete(struct bt_buf *buf);
+void bt_hci_le_cs_read_remote_supported_capabilities_complete_v2(struct bt_buf *buf);
 void bt_hci_le_cs_read_remote_fae_table_complete(struct bt_buf *buf);
 void bt_hci_le_cs_config_complete_event(struct bt_buf *buf);
 void bt_hci_le_cs_security_enable_complete(struct bt_buf *buf);
@@ -554,6 +554,9 @@ void bt_hci_remote_name_request_complete(struct bt_buf *buf);
 void bt_hci_read_remote_features_complete(struct bt_buf *buf);
 void bt_hci_read_remote_ext_features_complete(struct bt_buf *buf);
 void bt_hci_role_change(struct bt_buf *buf);
+#if defined(CONFIG_BT_POWER_MODE_CONTROL)
+void bt_hci_link_mode_change(struct bt_buf *buf);
+#endif /* CONFIG_BT_POWER_MODE_CONTROL */
 void bt_hci_synchronous_conn_complete(struct bt_buf *buf);
 
 void bt_hci_le_df_connection_iq_report(struct bt_buf *buf);

@@ -28,8 +28,10 @@
 
 #include <stdbool.h>
 
+#include <bluetooth/assigned_numbers.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/conn.h>
+#include <utils/bt_slist.h>
 
 #ifdef __cplusplus
 extern "C" {

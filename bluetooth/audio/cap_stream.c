@@ -15,6 +15,8 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
+#include <bluetooth/buf.h>
+#include <utils/bt_utils.h>
 
 #include "cap_internal.h"
 
@@ -30,7 +32,7 @@ static bool stream_is_central(struct bt_bap_stream *bap_stream)
 		}
 
 		err = bt_conn_get_info(bap_stream->conn, &info);
-		if (err == 0 && info.role == BT_HCI_ROLE_CENTRAL) {
+		if (err == 0 && info.role == BT_CONN_ROLE_CENTRAL) {
 			return true;
 		}
 	}
@@ -329,7 +331,7 @@ void bt_cap_stream_ops_register(struct bt_cap_stream *stream,
 #if defined(CONFIG_BT_AUDIO_TX)
 int bt_cap_stream_send(struct bt_cap_stream *stream, struct bt_buf *buf, uint16_t seq_num)
 {
-	CHECKIF(stream == NULL) {
+	if (stream == NULL) {
 		LOG_DBG("stream is NULL");
 
 		return -EINVAL;
@@ -341,7 +343,7 @@ int bt_cap_stream_send(struct bt_cap_stream *stream, struct bt_buf *buf, uint16_
 int bt_cap_stream_send_ts(struct bt_cap_stream *stream, struct bt_buf *buf, uint16_t seq_num,
 			  uint32_t ts)
 {
-	CHECKIF(stream == NULL) {
+	if (stream == NULL) {
 		LOG_DBG("stream is NULL");
 
 		return -EINVAL;
@@ -352,7 +354,7 @@ int bt_cap_stream_send_ts(struct bt_cap_stream *stream, struct bt_buf *buf, uint
 
 int bt_cap_stream_get_tx_sync(struct bt_cap_stream *stream, struct bt_iso_tx_info *info)
 {
-	CHECKIF(stream == NULL) {
+	if (stream == NULL) {
 		LOG_DBG("stream is NULL");
 
 		return -EINVAL;

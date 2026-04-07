@@ -22,6 +22,9 @@
 #include <bluetooth/uuid.h>
 #include <sys/types.h>
 
+#include <base/bt_mem_pool.h>
+#include <base/queue/bt_fifo.h>
+
 #include "att_internal.h"
 #include "common/bt_str.h"
 #include "conn_internal.h"
@@ -67,7 +70,7 @@ BT_BUF_POOL_DEFINE(prep_pool, CONFIG_BT_ATT_PREPARE_COUNT, BT_ATT_BUF_SIZE,
 #endif /* CONFIG_BT_ATT_PREPARE_COUNT */
 
 BT_MEM_POOL_DEFINE_STATIC(req_slab, sizeof(struct bt_att_req),
-		  CONFIG_BT_ATT_TX_COUNT, __alignof__(struct bt_att_req));
+			  CONFIG_BT_ATT_TX_COUNT, __alignof__(struct bt_att_req));
 
 enum {
 	ATT_CONNECTED,
@@ -153,10 +156,10 @@ struct bt_att {
 };
 
 BT_MEM_POOL_DEFINE_STATIC(att_slab, sizeof(struct bt_att),
-		  CONFIG_BT_MAX_CONN, __alignof__(struct bt_att));
+			  CONFIG_BT_MAX_CONN, __alignof__(struct bt_att));
 BT_MEM_POOL_DEFINE_STATIC(chan_slab, sizeof(struct bt_att_chan),
-		  CONFIG_BT_MAX_CONN * ATT_CHAN_MAX,
-		  __alignof__(struct bt_att_chan));
+			  CONFIG_BT_MAX_CONN * ATT_CHAN_MAX,
+			  __alignof__(struct bt_att_chan));
 static struct bt_att_req cancel;
 
 /** The thread ATT response handlers likely run on.
@@ -234,10 +237,36 @@ const char *bt_att_err_to_str(uint8_t att_err)
 }
 #endif /* CONFIG_BT_ATT_ERR_TO_STR */
 
-static void att_tx_destroy(struct bt_buf *buf)
+static void att_tx_destroy_work_handler(struct bt_work *work);
+static BT_WORK_DEFINE(att_tx_destroy_work, att_tx_destroy_work_handler);
+static os_mutex_t tx_destroy_queue_lock = OS_MUTEX_INITIALIZER;
+static bt_slist_t tx_destroy_queue = BT_SLIST_STATIC_INIT(&tx_destroy_queue);
+
+static void att_tx_destroy_work_handler(struct bt_work *work)
 {
-	struct bt_att_tx_meta_data *p_meta = att_get_tx_meta_data(buf);
+	struct bt_buf *buf;
+	struct bt_att_tx_meta_data *p_meta;
 	struct bt_att_tx_meta_data meta;
+	bt_snode_t *buf_node;
+	bool resubmit;
+
+	os_mutex_lock(&tx_destroy_queue_lock, OS_TIMEOUT_FOREVER);
+	buf_node = bt_slist_get(&tx_destroy_queue);
+	/* If there are more items in the queue, those likely have
+	 * been there before this handler started running and
+	 * coalesced into a single work submission, so we need to
+	 * resubmit.
+	 */
+	resubmit = !bt_slist_is_empty(&tx_destroy_queue);
+	os_mutex_unlock(&tx_destroy_queue_lock);
+
+	/* Spurious wakeups can occur in with some thread interleavings. */
+	if (buf_node == NULL) {
+		return;
+	}
+
+	buf = CONTAINER_OF(buf_node, struct bt_buf, node);
+	p_meta = att_get_tx_meta_data(buf);
 
 	LOG_DBG("%p", buf);
 
@@ -252,8 +281,8 @@ static void att_tx_destroy(struct bt_buf *buf)
 	 */
 	memset(p_meta, 0x00, sizeof(*p_meta));
 
-	/* After this point, p_meta doesn't belong to us.
-	 * The user data will be memset to 0 on allocation.
+	/* After this point, p_meta doesn't belong to us. The user data will
+	 * be memset to 0 on allocation.
 	 */
 	bt_buf_destroy(buf);
 
@@ -264,6 +293,50 @@ static void att_tx_destroy(struct bt_buf *buf)
 	if (meta.opcode != 0) {
 		att_on_sent_cb(&meta);
 	}
+
+	/* We resubmit this work instead of looping to allow other work on
+	 * the work queue to run.
+	 */
+	if (resubmit) {
+		int err = bt_work_submit_to_queue(NULL, work);
+
+		if (err < 0) {
+			LOG_ERR("Failed to re-submit %s: %d", __func__, err);
+			__ASSERT_NO_MSG(false);
+		}
+	}
+}
+
+static void att_tx_destroy(struct bt_buf *buf)
+{
+	int err;
+
+	/* We need to invoke att_on_sent_cb, which may block. We
+	 * don't want to block in a net buf destroy callback, so we
+	 * defer to a sensible workqueue.
+	 *
+	 * bt_workq cannot be used because it currently forms a
+	 * deadlock with att_pool: bt_workq -> bt_att_recv ->
+	 * send_err_rsp waits for att pool.
+	 *
+	 * We use the system work queue to preserve earlier
+	 * behavior. The tx_processor used to run on the system work
+	 * queue, and it could end up here: tx_processor ->
+	 * bt_hci_send -> bt_buf_unref.
+	 *
+	 * A possible alternative is tx_notify_workqueue_get() since
+	 * this workqueue is processing similar "completion" events.
+	 */
+	os_mutex_lock(&tx_destroy_queue_lock, OS_TIMEOUT_FOREVER);
+	bt_slist_append(&tx_destroy_queue, &buf->node);
+	os_mutex_unlock(&tx_destroy_queue_lock);
+
+	err = bt_work_submit(&att_tx_destroy_work);
+	if (err < 0) {
+		LOG_ERR("Failed to submit att_tx_destroy_work: %d", err);
+		__ASSERT_NO_MSG(false);
+	}
+	/* Continues in att_tx_destroy_work_handler() */
 }
 
 BT_BUF_POOL_DEFINE(att_pool, CONFIG_BT_ATT_TX_COUNT,
@@ -272,7 +345,7 @@ BT_BUF_POOL_DEFINE(att_pool, CONFIG_BT_ATT_TX_COUNT,
 
 static struct bt_att_tx_meta_data *att_get_tx_meta_data(const struct bt_buf *buf)
 {
-	__ASSERT_NO_MSG(buf->pool == &att_pool);
+	__ASSERT_NO_MSG(bt_buf_pool_get(buf->pool_id) == &att_pool);
 
 	/* Metadata lifetime is implicitly tied to the buffer lifetime.
 	 * Treat it as part of the buffer itself.
@@ -289,7 +362,6 @@ static struct bt_buf *att_create_rsp_pdu(struct bt_att_chan *chan, uint8_t op);
 
 static void att_disconnect(struct bt_att_chan *chan)
 {
-	char addr[BT_ADDR_LE_STR_LEN];
 	int err;
 
 	/* In rare circumstances we are "forced" to disconnect the ATT bearer and the ACL.
@@ -298,8 +370,7 @@ static void att_disconnect(struct bt_att_chan *chan)
 	 * invalid
 	 */
 
-	bt_addr_le_to_str(bt_conn_get_dst(chan->att->conn), addr, sizeof(addr));
-	LOG_DBG("ATT disconnecting device %s", addr);
+	LOG_DBG("ATT disconnecting device %s", bt_addr_le_str(bt_conn_get_dst(chan->att->conn)));
 
 	bt_att_disconnected(&chan->chan.chan);
 
@@ -434,7 +505,7 @@ static bool att_chan_matches_chan_opt(struct bt_att_chan *chan, enum bt_att_chan
 static struct bt_buf *get_first_buf_matching_chan(struct bt_fifo *fifo, struct bt_att_chan *chan)
 {
 	if (IS_ENABLED(CONFIG_BT_EATT)) {
-		struct bt_fifo skipped;
+		struct bt_fifo skipped = BT_FIFO_INITIALIZER(skipped);
 		struct bt_buf *buf;
 		struct bt_buf *ret = NULL;
 		struct bt_att_tx_meta_data *meta;
@@ -687,7 +758,7 @@ static void att_on_sent_cb(struct bt_att_tx_meta_data *meta)
 		chan_req_notif_sent(meta);
 		return;
 	default:
-		__ASSERT_MSG(false, "Unknown op type 0x%02X", op_type);
+		__ASSERT(false, "Unknown op type 0x%02X", op_type);
 		return;
 	}
 }
@@ -714,7 +785,7 @@ static struct bt_buf *bt_att_chan_create_pdu(struct bt_att_chan *chan, uint8_t o
 	default: {
 		os_tid_t current_thread = os_thread_self();
 
-		if (current_thread == bt_work_queue_thread_get(&main_work_q)) {
+		if (current_thread == bt_work_queue_thread_get(bt_work_main_work_queue())) {
 			/* No blocking in the sysqueue. */
 			timeout = OS_TIMEOUT_NO_WAIT;
 		} else if (current_thread == att_handle_rsp_thread) {
@@ -1178,7 +1249,7 @@ static uint8_t find_type_cb(const struct bt_gatt_attr *attr, uint16_t handle,
 	len = MIN(bt_att_mtu(chan) - bt_buf_frags_len(data->buf),
 		  bt_buf_tailroom(frag));
 	if (!len) {
-		frag = bt_buf_alloc(data->buf->pool,
+		frag = bt_buf_alloc(bt_buf_pool_get(data->buf->pool_id),
 				     OS_TIMEOUT_NO_WAIT);
 		/* If not buffer can be allocated immediately stop */
 		if (!frag) {
@@ -1372,7 +1443,7 @@ static ssize_t att_chan_read(struct bt_att_chan *chan,
 		len = MIN(bt_att_mtu(chan) - bt_buf_frags_len(buf),
 			  bt_buf_tailroom(frag));
 		if (!len) {
-			frag = bt_buf_alloc(buf->pool,
+			frag = bt_buf_alloc(bt_buf_pool_get(buf->pool_id),
 					     OS_TIMEOUT_NO_WAIT);
 			/* If not buffer can be allocated immediately return */
 			if (!frag) {
@@ -2346,6 +2417,11 @@ static uint8_t att_exec_write_rsp(struct bt_att_chan *chan, uint8_t flags)
 					    &chan->att->prep_queue,
 					    &reassembled_data);
 		if (err != BT_ATT_ERR_SUCCESS) {
+			/* Discard queued buffers */
+			do {
+				bt_buf_unref(buf);
+				buf = bt_buf_slist_get(&chan->att->prep_queue);
+			} while (buf != NULL);
 			send_err_rsp(chan, BT_ATT_OP_EXEC_WRITE_REQ,
 				     handle, err);
 			return 0;
@@ -3108,12 +3184,11 @@ static void att_chan_detach(struct bt_att_chan *chan)
 
 static void att_timeout(struct bt_work *work)
 {
-	char addr[BT_ADDR_LE_STR_LEN];
 	struct bt_work_delayable *dwork = bt_work_delayable_from_work(work);
 	struct bt_att_chan *chan = CONTAINER_OF(dwork, struct bt_att_chan, timeout_work);
 
-	bt_addr_le_to_str(bt_conn_get_dst(chan->att->conn), addr, sizeof(addr));
-	LOG_ERR("ATT Timeout for device %s. Disconnecting...", addr);
+	LOG_ERR("ATT Timeout for device %s. Disconnecting...",
+		bt_addr_le_str(bt_conn_get_dst(chan->att->conn)));
 
 	/* BLUETOOTH SPECIFICATION Version 4.2 [Vol 3, Part F] page 480:
 	 *
@@ -3137,7 +3212,7 @@ static struct bt_att_chan *att_get_fixed_chan(struct bt_conn *conn)
 	struct bt_l2cap_chan *chan;
 
 	chan = bt_l2cap_le_lookup_tx_cid(conn, BT_L2CAP_CID_ATT);
-	__ASSERT_MSG(chan, "No ATT channel found");
+	__ASSERT(chan, "No ATT channel found");
 
 	return ATT_CHAN(chan);
 }
@@ -3509,7 +3584,7 @@ static os_timeout_t credit_based_connection_delay(struct bt_conn *conn)
 		 * result in an overflow
 		 */
 		const uint32_t calculated_delay_us =
-			2 * (conn->le.latency + 1) * BT_CONN_INTERVAL_TO_US(conn->le.interval);
+			2 * (conn->le.latency + 1) * conn->le.interval_us;
 		const uint32_t calculated_delay_ms = calculated_delay_us / USEC_PER_MSEC;
 
 		return OS_MSEC(MAX(100, calculated_delay_ms + rand_delay));
@@ -3664,7 +3739,8 @@ static void eatt_auto_connect(struct bt_conn *conn, bt_security_t level,
 {
 	int eatt_err;
 
-	if (err || level < BT_SECURITY_L2 || !bt_att_fixed_chan_only(conn)) {
+	if (!bt_conn_is_le(conn) || (err != 0) || level < BT_SECURITY_L2 ||
+	    !bt_att_fixed_chan_only(conn)) {
 		return;
 	}
 
@@ -3809,8 +3885,6 @@ static void bt_eatt_init(void)
 
 void bt_att_init(void)
 {
-	bt_l2cap_chan_register(&z_att_fixed_chan);
-
 	bt_gatt_init();
 
 	if (IS_ENABLED(CONFIG_BT_EATT)) {
@@ -3889,7 +3963,7 @@ struct bt_att_req *bt_att_req_alloc(os_timeout_t timeout)
 	os_tid_t current_thread = os_thread_self();
 
 	if (current_thread == att_handle_rsp_thread ||
-	    current_thread == bt_work_queue_thread_get(&main_work_q)) {
+	    current_thread == bt_work_queue_thread_get(bt_work_main_work_queue())) {
 		/* bt_att_req are released by the att_handle_rsp_thread.
 		 * A blocking allocation the same thread would cause a
 		 * deadlock.

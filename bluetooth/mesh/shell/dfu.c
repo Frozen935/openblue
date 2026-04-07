@@ -130,7 +130,7 @@ void bt_mesh_shell_dfu_cmds_init(void)
 #if defined(CONFIG_BT_MESH_SHELL_DFU_SRV) && defined(CONFIG_BOOTLOADER_MCUBOOT)
 	struct mcuboot_img_header img_header;
 
-	int err = boot_read_bank_header(FIXED_PARTITION_ID(slot0_partition),
+	int err = boot_read_bank_header(PARTITION_ID(slot0_partition),
 					&img_header, sizeof(img_header));
 	if (!err) {
 		struct shell_dfu_fwid *fwid =
@@ -933,7 +933,7 @@ BT_MESH_SHELL_MDL_INSTANCE_CMDS(srv_instance_cmds, BT_MESH_MODEL_ID_DFU_SRV, mod
 #endif
 
 #if defined(CONFIG_BT_MESH_SHELL_DFU_METADATA)
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	dfu_metadata_cmds,
 	BT_SHELL_CMD_ARG(comp-clear, NULL, NULL, cmd_dfu_comp_clear, 1, 0),
 	BT_SHELL_CMD_ARG(comp-add, NULL, "<CID> <ProductID> <VendorID> <Crpl> <Features>",
@@ -949,7 +949,7 @@ BT_SHELL_SUBCMD_SET_CREATE(
 #endif
 
 #if defined(CONFIG_BT_MESH_SHELL_DFU_SLOT)
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	dfu_slot_cmds,
 	BT_SHELL_CMD_ARG(add, NULL,
 		      "<Size> <FwID> [<Metadata>]",
@@ -961,7 +961,7 @@ BT_SHELL_SUBCMD_SET_CREATE(
 #endif
 
 #if defined(CONFIG_BT_MESH_SHELL_DFU_CLI)
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	dfu_cli_cmds,
 	/* DFU Client Model Operations */
 	BT_SHELL_CMD_ARG(target, NULL, "<Addr> <ImgIdx>", cmd_dfu_target, 3,
@@ -985,7 +985,7 @@ BT_SHELL_SUBCMD_SET_CREATE(
 #endif
 
 #if defined(CONFIG_BT_MESH_SHELL_DFU_SRV)
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	dfu_srv_cmds,
 	BT_SHELL_CMD_ARG(applied, NULL, NULL, cmd_dfu_applied, 1, 0),
 	BT_SHELL_CMD_ARG(rx-cancel, NULL, NULL, cmd_dfu_rx_cancel, 1, 0),
@@ -994,7 +994,7 @@ BT_SHELL_SUBCMD_SET_CREATE(
 	BT_SHELL_SUBCMD_SET_END);
 #endif
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	dfu_cmds,
 #if defined(CONFIG_BT_MESH_SHELL_DFU_METADATA)
 	BT_SHELL_CMD(metadata, &dfu_metadata_cmds, "Metadata commands", bt_mesh_shell_mdl_cmds_help),

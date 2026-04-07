@@ -408,7 +408,7 @@ static int cmd_dfd_fw_delete_all(const struct bt_shell *sh, size_t argc, char *a
 
 BT_MESH_SHELL_MDL_INSTANCE_CMDS(instance_cmds, BT_MESH_MODEL_ID_DFD_SRV, mod);
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	dfd_cmds,
 	BT_SHELL_CMD_ARG(receivers-add, NULL, "<Addr>,<FwIdx>[;<Addr>,<FwIdx>]...",
 		      cmd_dfd_receivers_add, 2, 0),

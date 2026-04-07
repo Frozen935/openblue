@@ -1,10 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
-openblue_library()
+openblue_library_sources_ifdef(CONFIG_BT_ANS ans.c)
 
 openblue_library_sources_ifdef(CONFIG_BT_DIS dis.c)
+
+openblue_library_sources_ifdef(CONFIG_BT_GAP_SVC gap_svc.c)
+
 openblue_library_sources_ifdef(CONFIG_BT_CTS cts.c)
+
+openblue_library_sources_ifdef(CONFIG_BT_ETS ets.c)
+
 openblue_library_sources_ifdef(CONFIG_BT_HRS hrs.c)
+
 openblue_library_sources_ifdef(CONFIG_BT_TPS tps.c)
 
 if(CONFIG_BT_BAS)
@@ -17,8 +24,4 @@ endif()
 
 if(CONFIG_BT_IAS OR CONFIG_BT_IAS_CLIENT)
   add_subdirectory(ias)
-endif()
-
-if(CONFIG_BT_NORDIC_NUS)
-  add_subdirectory(nus)
 endif()

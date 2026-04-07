@@ -44,7 +44,7 @@ static int bt_data_send(uint8_t num_events, uint16_t adv_int,
 			struct bt_mesh_adv_ctx *ctx)
 {
 	struct bt_le_adv_param param = {};
-	uint64_t uptime = k_uptime_get();
+	uint64_t uptime = os_time_get();
 	uint16_t duration;
 	int err;
 	const int32_t adv_int_min =
@@ -113,7 +113,7 @@ static int bt_data_send(uint8_t num_events, uint16_t adv_int,
 		return err;
 	}
 
-	LOG_DBG("Advertising stopped (%u ms)", (uint32_t) k_uptime_delta(&uptime));
+	LOG_DBG("Advertising stopped (%u ms)", (uint32_t) os_time_delta(&uptime));
 
 	return 0;
 }
@@ -245,7 +245,7 @@ int bt_mesh_adv_disable(void)
 {
 	int err;
 
-	/* k_thread_join will sleep forever if BT_MESH_SUSPENDED flag is not set. The advertiser
+	/* os_thread_join will sleep forever if BT_MESH_SUSPENDED flag is not set. The advertiser
 	 * thread will exit once the flag is set. The flag is set by the higher layer function. Here
 	 * we need to check that the flag is dropped and ensure that the thread is stopped.
 	 */

@@ -20,10 +20,15 @@
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
 #include <bluetooth/audio/pacs.h>
-#include <bluetooth/audio/bap.h>
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
+#include "osdep/os.h"
+#include <bluetooth/buf.h>
+#include <base/bt_atomic.h>
+#include <bluetooth/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 
 #include "../host/conn_internal.h"
 #include "../host/iso_internal.h"
@@ -762,7 +767,7 @@ static void update_recv_state_encryption(const struct bt_bap_broadcast_sink *sin
 	const struct bt_bap_scan_delegator_recv_state *recv_state;
 	int err;
 
-	__ASSERT_MSG(sink->big == NULL, "Encryption state shall not be updated while synced");
+	__ASSERT(sink->big == NULL, "Encryption state shall not be updated while synced");
 
 	recv_state = bt_bap_scan_delegator_find_state(find_recv_state_by_src_id_cb, (void *)sink);
 	if (recv_state == NULL) {
@@ -902,7 +907,7 @@ int bt_bap_broadcast_sink_register_cb(struct bt_bap_broadcast_sink_cb *cb)
 {
 	static bool iso_big_cb_registered;
 
-	CHECKIF(cb == NULL) {
+	if (cb == NULL) {
 		LOG_DBG("cb is NULL");
 
 		return -EINVAL;
@@ -922,7 +927,7 @@ int bt_bap_broadcast_sink_register_cb(struct bt_bap_broadcast_sink_cb *cb)
 		const int err = bt_iso_big_register_cb(&big_cb);
 
 		if (err != 0) {
-			__ASSERT_MSG(false, "Failed to register ISO BIG callbacks: %d", err);
+			__ASSERT(false, "Failed to register ISO BIG callbacks: %d", err);
 		}
 
 		iso_big_cb_registered = true;
@@ -1046,19 +1051,19 @@ int bt_bap_broadcast_sink_create(struct bt_le_per_adv_sync *pa_sync, uint32_t br
 	const struct bt_bap_scan_delegator_recv_state *recv_state;
 	struct bt_bap_broadcast_sink *sink;
 
-	CHECKIF(pa_sync == NULL) {
+	if (pa_sync == NULL) {
 		LOG_DBG("pa_sync is NULL");
 
 		return -EINVAL;
 	}
 
-	CHECKIF(broadcast_id > BT_AUDIO_BROADCAST_ID_MAX) {
+	if (broadcast_id > BT_AUDIO_BROADCAST_ID_MAX) {
 		LOG_DBG("Invalid broadcast_id: 0x%X", broadcast_id);
 
 		return -EINVAL;
 	}
 
-	CHECKIF(out_sink == NULL) {
+	if (out_sink == NULL) {
 		LOG_DBG("sink was NULL");
 
 		return -EINVAL;
@@ -1260,17 +1265,17 @@ int bt_bap_broadcast_sink_sync(struct bt_bap_broadcast_sink *sink, uint32_t inde
 	int err;
 	int ret;
 
-	CHECKIF(sink == NULL) {
+	if (sink == NULL) {
 		LOG_DBG("sink is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(indexes_bitfield == 0U || indexes_bitfield > BIT_MASK(BT_ISO_BIS_INDEX_MAX)) {
+	if (indexes_bitfield == 0U || indexes_bitfield > BIT_MASK(BT_ISO_BIS_INDEX_MAX)) {
 		LOG_DBG("Invalid indexes_bitfield: 0x%08X", indexes_bitfield);
 		return -EINVAL;
 	}
 
-	CHECKIF(streams == NULL) {
+	if (streams == NULL) {
 		LOG_DBG("streams is NULL");
 		return -EINVAL;
 	}
@@ -1327,7 +1332,7 @@ int bt_bap_broadcast_sink_sync(struct bt_bap_broadcast_sink *sink, uint32_t inde
 	stream_count = data.stream_count;
 
 	for (size_t i = 0; i < stream_count; i++) {
-		CHECKIF(streams[i] == NULL) {
+		if (streams[i] == NULL) {
 			LOG_DBG("streams[%zu] is NULL", i);
 			return -EINVAL;
 		}
@@ -1389,7 +1394,7 @@ int bt_bap_broadcast_sink_stop(struct bt_bap_broadcast_sink *sink)
 {
 	int err;
 
-	CHECKIF(sink == NULL) {
+	if (sink == NULL) {
 		LOG_DBG("sink is NULL");
 		return -EINVAL;
 	}
@@ -1416,7 +1421,7 @@ int bt_bap_broadcast_sink_stop(struct bt_bap_broadcast_sink *sink)
 int bt_bap_broadcast_sink_delete(struct bt_bap_broadcast_sink *sink)
 {
 
-	CHECKIF(sink == NULL) {
+	if (sink == NULL) {
 		LOG_DBG("sink is NULL");
 		return -EINVAL;
 	}
@@ -1446,4 +1451,4 @@ static int broadcast_sink_init(void)
 	return 0;
 }
 
-STACK_INIT(broadcast_sink_init, STACK_SVC_INIT, CONFIG_APPLICATION_INIT_PRIORITY);
+SYS_INIT(broadcast_sink_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);

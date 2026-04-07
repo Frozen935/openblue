@@ -12,6 +12,8 @@
 
 #include <stdint.h>
 
+#include <base/utils.h>
+#include <utils/bt_slist.h>
 
 /**
  * @brief Heartbeat

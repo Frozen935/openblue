@@ -19,6 +19,9 @@
 #include <bluetooth/audio/micp.h>
 #include <bluetooth/audio/aics.h>
 #include <bluetooth/uuid.h>
+#include "osdep/os.h"
+#include <bluetooth/byteorder.h>
+#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 
@@ -168,7 +171,7 @@ static int prepare_aics_inst(struct bt_micp_mic_dev_register_param *param)
 		}
 	}
 
-	__ASSERT_MSG(j == CONFIG_BT_MICP_MIC_DEV_AICS_INSTANCE_COUNT,
+	__ASSERT(j == CONFIG_BT_MICP_MIC_DEV_AICS_INSTANCE_COUNT,
 		 "Invalid AICS instance count");
 
 	return 0;
@@ -185,7 +188,7 @@ int bt_micp_mic_dev_register(struct bt_micp_mic_dev_register_param *param)
 		return -EALREADY;
 	}
 
-	__ASSERT_MSG(param, "MICS register parameter cannot be NULL");
+	__ASSERT(param, "MICS register parameter cannot be NULL");
 
 #if defined(CONFIG_BT_MICP_MIC_DEV_AICS)
 	err = prepare_aics_inst(param);
@@ -225,7 +228,7 @@ int bt_micp_mic_dev_mute_disable(void)
 
 int bt_micp_mic_dev_included_get(struct bt_micp_included *included)
 {
-	CHECKIF(included == NULL) {
+	if (included == NULL) {
 		LOG_DBG("NULL service pointer");
 		return -EINVAL;
 	}

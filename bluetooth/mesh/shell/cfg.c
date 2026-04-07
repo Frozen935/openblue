@@ -1813,7 +1813,7 @@ static int cmd_hb_pub(const struct bt_shell *sh, size_t argc, char *argv[])
 	}
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(model_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(model_cmds,
 	BT_SHELL_CMD_ARG(app-bind, NULL, "<Addr> <AppKeyIdx> <MID> [CID]",
 		      cmd_mod_app_bind, 4, 1),
 	BT_SHELL_CMD_ARG(app-get, NULL, "<ElemAddr> <MID> [CID]", cmd_mod_app_get,
@@ -1848,14 +1848,14 @@ BT_SHELL_SUBCMD_SET_CREATE(model_cmds,
 		      3, 1),
 	BT_SHELL_SUBCMD_SET_END);
 
-BT_SHELL_SUBCMD_SET_CREATE(netkey_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(netkey_cmds,
 	BT_SHELL_CMD_ARG(add, NULL, "<NetKeyIdx> [Key(1-16 hex)]", cmd_net_key_add, 2, 1),
 	BT_SHELL_CMD_ARG(upd, NULL, "<NetKeyIdx> [Key(1-16 hex)]", cmd_net_key_update, 2, 1),
 	BT_SHELL_CMD_ARG(get, NULL, NULL, cmd_net_key_get, 1, 0),
 	BT_SHELL_CMD_ARG(del, NULL, "<NetKeyIdx>", cmd_net_key_del, 2, 0),
 	BT_SHELL_SUBCMD_SET_END);
 
-BT_SHELL_SUBCMD_SET_CREATE(appkey_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(appkey_cmds,
 	BT_SHELL_CMD_ARG(add, NULL, "<NetKeyIdx> <AppKeyIdx> [Key(1-16 hex)]", cmd_app_key_add,
 		      3, 1),
 	BT_SHELL_CMD_ARG(upd, NULL, "<NetKeyIdx> <AppKeyIdx> [Key(1-16 hex)]", cmd_app_key_upd,
@@ -1865,7 +1865,7 @@ BT_SHELL_SUBCMD_SET_CREATE(appkey_cmds,
 	BT_SHELL_SUBCMD_SET_END);
 
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	cfg_cli_cmds,
 	/* Configuration Client Model operations */
 	BT_SHELL_CMD_ARG(reset, NULL, NULL, cmd_reset, 1, 0),

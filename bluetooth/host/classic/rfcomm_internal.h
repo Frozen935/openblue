@@ -9,7 +9,6 @@
  */
 
 #include <bluetooth/classic/rfcomm.h>
-#include "osdep/os.h"
 
 typedef enum {
 	BT_RFCOMM_CFC_UNKNOWN,

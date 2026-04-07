@@ -215,6 +215,7 @@ endif # BT_DIS_UDI
 
 config BT_DIS_SYSTEM_ID
 	bool "DIS System ID characteristic [experimental]"
+	select EXPERIMENTAL
 	help
 	  Enable System ID characteristic in Device Information Service.
 	  The System ID characteristic is used to represent an extended unique identifier (EUI) of the system

@@ -26,6 +26,8 @@
  * Profile specifications.
  */
 
+#include <utils/bt_utils.h>
+#include <utils/bt_utils.h>
 
 #ifdef __cplusplus
 extern "C" {

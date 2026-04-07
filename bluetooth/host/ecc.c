@@ -171,7 +171,7 @@ done:
 	bt_atomic_clear_bit(flags, PENDING_PUB_KEY);
 
 	/* Change to cooperative priority while we do the callbacks */
-	os_sched_lock();
+	k_sched_lock();
 
 	BT_SLIST_FOR_EACH_CONTAINER(&pub_key_cb_slist, cb, node) {
 		if (cb->func) {
@@ -181,7 +181,7 @@ done:
 
 	bt_slist_init(&pub_key_cb_slist);
 
-	os_sched_unlock();
+	k_sched_unlock();
 }
 
 static void generate_dh_key(struct bt_work *work)
@@ -229,7 +229,7 @@ static void generate_dh_key(struct bt_work *work)
 
 exit:
 	/* Change to cooperative priority while we do the callback */
-	os_sched_lock();
+	k_sched_lock();
 
 	if (dh_key_cb) {
 		bt_dh_key_cb_t cb = dh_key_cb;
@@ -247,7 +247,7 @@ exit:
 		}
 	}
 
-	os_sched_unlock();
+	k_sched_unlock();
 }
 
 int bt_pub_key_gen(struct bt_pub_key_cb *new_cb)

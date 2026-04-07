@@ -129,7 +129,7 @@ void bt_cap_handover_unicast_proc_complete(void)
 	} else if (proc_type == BT_CAP_COMMON_PROC_TYPE_START) {
 		bt_cap_handover_complete();
 	} else {
-		__ASSERT_MSG(false, "invalid proc_type %d", proc_type);
+		__ASSERT(false, "invalid proc_type %d", proc_type);
 	}
 }
 
@@ -246,7 +246,7 @@ void bt_cap_handover_unicast_to_broadcast_reception_start(void)
 			 * bt_cap_handover_unicast_to_broadcast while we still had the ACL
 			 * references
 			 */
-			__ASSERT_MSG(subgroup->bis_sync != 0U, "BIS sync was not properly setup");
+			__ASSERT(subgroup->bis_sync != 0U, "BIS sync was not properly setup");
 		}
 
 		param.count++;

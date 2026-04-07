@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_BLOB_IO_FLASH_H___
-#define __INCLUDE_BLUETOOTH_MESH_BLOB_IO_FLASH_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_BLOB_IO_FLASH_H___H__
+#define __INCLUDE_BLUETOOTH_MESH_BLOB_IO_FLASH_H___H__
 
 #include <stdint.h>
 
@@ -52,4 +52,4 @@ int bt_mesh_blob_io_flash_init(struct bt_mesh_blob_io_flash *flash,
 }
 #endif
 
-#endif /* __INCLUDE_BLUETOOTH_MESH_BLOB_IO_FLASH_H__ */
+#endif /* __INCLUDE_BLUETOOTH_MESH_BLOB_IO_FLASH_H___H__ */

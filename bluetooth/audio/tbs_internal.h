@@ -288,6 +288,11 @@ struct bt_tbs_in_uri {
 	char uri[CONFIG_BT_TBS_MAX_URI_LENGTH + 1];
 } __packed;
 
+struct bt_tbs_friendly_name {
+	uint8_t call_index;
+	char name[CONFIG_BT_TBS_MAX_FRIENDLY_NAME_LENGTH + 1];
+} __packed;
+
 #if defined(CONFIG_BT_TBS_CLIENT)
 
 /* Features which may require long string reads */

@@ -8,8 +8,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_AUDIO_BAP_
-#define __INCLUDE_BLUETOOTH_AUDIO_BAP_
+#ifndef __INCLUDE_BLUETOOTH_AUDIO_BAP__H__
+#define __INCLUDE_BLUETOOTH_AUDIO_BAP__H__
 
 /**
  * @brief Bluetooth Basic Audio Profile (BAP)
@@ -28,6 +28,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <bluetooth/assigned_numbers.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/addr.h>
 #include <bluetooth/bluetooth.h>
@@ -35,6 +36,8 @@
 #include <bluetooth/gap.h>
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -624,16 +627,28 @@ struct bt_bap_ascs_rsp {
  */
 #define BT_BAP_ASCS_RSP(c, r) (struct bt_bap_ascs_rsp) { .code = c, .reason = r }
 
-/** @brief Abstract Audio Broadcast Source structure. */
+/**
+ * @struct bt_bap_broadcast_source
+ * @brief Abstract Audio Broadcast Source structure.
+ */
 struct bt_bap_broadcast_source;
 
-/** @brief Abstract Audio Broadcast Sink structure. */
+/**
+ * @struct bt_bap_broadcast_sink
+ * @brief Abstract Audio Broadcast Sink structure.
+ */
 struct bt_bap_broadcast_sink;
 
-/** @brief Abstract Audio Unicast Group structure. */
+/**
+ * @struct bt_bap_unicast_group
+ * @brief Abstract Audio Unicast Group structure.
+ */
 struct bt_bap_unicast_group;
 
-/** @brief Abstract Audio Endpoint structure. */
+/**
+ * @struct bt_bap_ep
+ * @brief Abstract Audio Endpoint structure.
+ */
 struct bt_bap_ep;
 
 /** Struct to hold subgroup specific information for the receive state */
@@ -877,6 +892,22 @@ struct bt_bap_ep_info {
  * @retval -EINVAL if @p ep or @p info are NULL
  */
 int bt_bap_ep_get_info(const struct bt_bap_ep *ep, struct bt_bap_ep_info *info);
+
+/**
+ * @brief Get the pointer to the ACL connection of an endpoint
+ *
+ * The caller gets a new reference to the connection object, if not NULL, which must be
+ * released with bt_conn_unref() once done using the object.
+ *
+ * @param ep The endpoint to get the ACL connection of
+ *
+ * @return The ACL connection pointer, or NULL if:
+ *         - @p ep is NULL
+ *         - @p ep is a broadcast endpoint
+ *         - @p ep is a Unicast Server endpoint not yet configured by a remote client
+ *         - @p ep is a Unicast Client endpoint not yet discovered on a remote server
+ */
+struct bt_conn *bt_bap_ep_get_conn(const struct bt_bap_ep *ep);
 
 /**
  * @brief Basic Audio Profile stream structure.
@@ -1201,7 +1232,7 @@ int bt_bap_stream_disable(struct bt_bap_stream *stream);
  * @retval 0 in case of success
  * @retval -EINVAL if the stream, endpoint, ISO channel or connection is NULL
  * @retval -EBADMSG if the stream or ISO channel is in an invalid state for connection
- * @retval -EOPNOTSUPP if the role of the stream is not @ref BT_HCI_ROLE_CENTRAL
+ * @retval -EOPNOTSUPP if the role of the stream is not @ref BT_CONN_ROLE_CENTRAL
  * @retval -EALREADY if the ISO channel is already connecting or connected
  * @retval -EBUSY if another ISO channel is connecting
  * @retval -ENOEXEC if otherwise rejected by the ISO layer
@@ -1245,7 +1276,7 @@ int bt_bap_stream_start(struct bt_bap_stream *stream);
  *
  * @retval 0 Success
  * @retval -EINVAL The @p stream does not have an endpoint or a connection, of the stream's
- *                 connection's role is not @p BT_HCI_ROLE_CENTRAL
+ *                 connection's role is not @p BT_CONN_ROLE_CENTRAL
  * @retval -EBADMSG The state of the @p stream endpoint is not @ref BT_BAP_EP_STATE_DISABLING
  * @retval -EALREADY The CIS state of the @p is not in a connected state, and thus is already
  *                   stopping
@@ -1542,8 +1573,11 @@ int bt_bap_unicast_server_unregister_cb(const struct bt_bap_unicast_server_cb *c
  *
  * @param ep The structure object with endpoint info.
  * @param user_data Data to pass to the function.
+ *
+ * @retval true Continue iterating.
+ * @retval false Stop iterating.
  */
-typedef void (*bt_bap_ep_func_t)(struct bt_bap_ep *ep, void *user_data);
+typedef bool (*bt_bap_ep_func_t)(struct bt_bap_ep *ep, void *user_data);
 
 /**
  * @brief Iterate through all endpoints of the given connection.
@@ -1551,8 +1585,12 @@ typedef void (*bt_bap_ep_func_t)(struct bt_bap_ep *ep, void *user_data);
  * @param conn Connection object
  * @param func Function to call for each endpoint.
  * @param user_data Data to pass to the callback function.
+ *
+ * @retval 0 Success
+ * @retval -ECANCELED Iteration was stopped by the callback function before complete.
+ * @retval -EINVAL @p conn or @p func were NULL.
  */
-void bt_bap_unicast_server_foreach_ep(struct bt_conn *conn, bt_bap_ep_func_t func, void *user_data);
+int bt_bap_unicast_server_foreach_ep(struct bt_conn *conn, bt_bap_ep_func_t func, void *user_data);
 
 /**
  * @brief Initialize and configure a new ASE.
@@ -1722,8 +1760,8 @@ int bt_bap_unicast_group_delete(struct bt_bap_unicast_group *unicast_group);
  * @param stream     The audio stream
  * @param user_data  User data
  *
- * @retval true Stop iterating.
- * @retval false Continue iterating.
+ * @retval true Continue iterating.
+ * @retval false Stop iterating.
  */
 typedef bool (*bt_bap_unicast_group_foreach_stream_func_t)(struct bt_bap_stream *stream,
 							   void *user_data);
@@ -1781,10 +1819,21 @@ struct bt_bap_unicast_client_cb {
 	 * @param conn  Connection to the remote unicast server.
 	 * @param dir   Direction of the location.
 	 * @param loc   The location bitfield value.
-	 *
-	 * @return 0 in case of success or negative value in case of error.
 	 */
 	void (*location)(struct bt_conn *conn, enum bt_audio_dir dir, enum bt_audio_location loc);
+
+	/**
+	 * @brief Remote Unicast Server Supported Contexts
+	 *
+	 * This callback is called whenever the supported contexts are read
+	 * from the server or otherwise notified to the client.
+	 *
+	 * @param conn     Connection to the remote unicast server.
+	 * @param snk_ctx  The sink context bitfield value.
+	 * @param src_ctx  The source context bitfield value.
+	 */
+	void (*supported_contexts)(struct bt_conn *conn, enum bt_audio_context snk_ctx,
+				   enum bt_audio_context src_ctx);
 
 	/**
 	 * @brief Remote Unicast Server Available Contexts
@@ -1795,8 +1844,6 @@ struct bt_bap_unicast_client_cb {
 	 * @param conn     Connection to the remote unicast server.
 	 * @param snk_ctx  The sink context bitfield value.
 	 * @param src_ctx  The source context bitfield value.
-	 *
-	 * @return 0 in case of success or negative value in case of error.
 	 */
 	void (*available_contexts)(struct bt_conn *conn, enum bt_audio_context snk_ctx,
 				   enum bt_audio_context src_ctx);
@@ -1963,16 +2010,23 @@ struct bt_bap_unicast_client_cb {
 /**
  * @brief Register unicast client callbacks.
  *
- * Only one callback structure can be registered, and attempting to
- * registering more than one will result in an error.
- *
- * @param cb  Unicast client callback structure.
+ * @param cb  Unicast client callback structure to register.
  *
  * @retval 0 Success
  * @retval -EINVAL @p cb is NULL.
  * @retval -EEXIST @p cb is already registered.
  */
 int bt_bap_unicast_client_register_cb(struct bt_bap_unicast_client_cb *cb);
+
+/**
+ * @brief Unregister unicast client callbacks.
+ *
+ * @param cb  Unicast client callback structure to unregister.
+ *
+ * @retval 0 Success
+ * @retval -EINVAL @p cb is NULL or @p cb was not registered
+ */
+int bt_bap_unicast_client_unregister_cb(struct bt_bap_unicast_client_cb *cb);
 
 /**
  * @brief Discover remote capabilities and endpoints
@@ -2458,8 +2512,8 @@ int bt_bap_broadcast_source_get_base(struct bt_bap_broadcast_source *source,
  * @param stream     The audio stream
  * @param user_data  User data
  *
- * @retval true  Stop iterating.
- * @retval false Continue iterating.
+ * @retval true  Continue iterating.
+ * @retval false Stop iterating.
  */
 typedef bool (*bt_bap_broadcast_source_foreach_stream_func_t)(struct bt_bap_stream *stream,
 							      void *user_data);
@@ -2472,7 +2526,7 @@ typedef bool (*bt_bap_broadcast_source_foreach_stream_func_t)(struct bt_bap_stre
  * @param user_data      User specified data that is sent to the callback function
  *
  * @retval 0          Success (even if no streams exists in the broadcast source).
- * @retval -ECANCELED The @p func returned true.
+ * @retval -ECANCELED The @p func returned false and stopped the iteration.
  * @retval -EINVAL    @p source or @p func were NULL.
  */
 int bt_bap_broadcast_source_foreach_stream(struct bt_bap_broadcast_source *source,
@@ -3142,4 +3196,4 @@ int bt_bap_broadcast_assistant_read_recv_state(struct bt_conn *conn, uint8_t idx
 }
 #endif
 
-#endif /* __INCLUDE_BLUETOOTH_AUDIO_BAP_ */
+#endif /* __INCLUDE_BLUETOOTH_AUDIO_BAP__H__ */

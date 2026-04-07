@@ -9,10 +9,10 @@
  */
 #ifndef __INCLUDE_BLUETOOTH_MESH_MAIN_H__
 #define __INCLUDE_BLUETOOTH_MESH_MAIN_H__
-
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <base/utils.h>
 
 /**
  * @brief Provisioning
@@ -171,6 +171,7 @@ struct bt_mesh_prov {
 	 */
 	void         (*capabilities)(const struct bt_mesh_dev_capabilities *cap);
 
+#if defined CONFIG_BT_MESH_PROV_OOB_API_LEGACY
 	/** @brief Output of a number is requested.
 	 *
 	 *  This callback notifies the application that it should
@@ -181,7 +182,21 @@ struct bt_mesh_prov {
 	 *
 	 *  @return Zero on success or negative error code otherwise
 	 */
-	int         (*output_number)(bt_mesh_output_action_t act, uint32_t num);
+	int         (*output_number)(bt_mesh_output_action_t act, uint32_t num) __deprecated;
+#else
+	/** @brief Output of a numeric value is requested.
+	 *
+	 *  This callback notifies the application that it should
+	 *  output the given numeric value using the given action.
+	 *
+	 *  @param act Action for outputting the numeric value.
+	 *  @param numeric memory with numeric value in the little endian format to be outputted.
+	 *  @param size size of the numeric value in bytes.
+	 *
+	 *  @return Zero on success or negative error code otherwise
+	 */
+	int         (*output_numeric)(bt_mesh_output_action_t act, uint8_t *numeric, size_t size);
+#endif
 
 	/** @brief Output of a string is requested.
 	 *
@@ -200,7 +215,7 @@ struct bt_mesh_prov {
 	 *  request input from the user using the given action. The
 	 *  requested input will either be a string or a number, and
 	 *  the application needs to consequently call the
-	 *  bt_mesh_input_string() or bt_mesh_input_number() functions
+	 *  bt_mesh_input_string() or bt_mesh_input_numeric() functions
 	 *  once the data has been acquired from the user.
 	 *
 	 *  @param act Action for inputting data.
@@ -311,7 +326,7 @@ struct bt_mesh_rpr_node;
 
 /** @brief Provide provisioning input OOB string.
  *
- *  This is intended to be called after the bt_mesh_prov input callback
+ *  This is intended to be called after the @ref bt_mesh_prov::input callback
  *  has been called with BT_MESH_ENTER_STRING as the action.
  *
  *  @param str String.
@@ -320,16 +335,30 @@ struct bt_mesh_rpr_node;
  */
 int bt_mesh_input_string(const char *str);
 
+#if defined CONFIG_BT_MESH_PROV_OOB_API_LEGACY
 /** @brief Provide provisioning input OOB number.
  *
- *  This is intended to be called after the bt_mesh_prov input callback
- *  has been called with BT_MESH_ENTER_NUMBER as the action.
+ *  This is intended to be called after the @ref bt_mesh_prov::input callback
+ *  has been called with @ref BT_MESH_ENTER_NUMBER as the action.
  *
  *  @param num Number.
  *
  *  @return Zero on success or (negative) error code otherwise.
  */
-int bt_mesh_input_number(uint32_t num);
+__deprecated int bt_mesh_input_number(uint32_t num);
+#endif
+
+/** @brief Provide provisioning input OOB numeric value.
+ *
+ *  This is intended to be called after the @ref bt_mesh_prov::input callback
+ *  has been called with @ref BT_MESH_ENTER_NUMBER as the action.
+ *
+ *  @param numeric Pointer to the numeric value in little endian.
+ *  @param size Size of the numeric value in bytes (this is not OOB size).
+ *
+ *  @return Zero on success or (negative) error code otherwise.
+ */
+int bt_mesh_input_numeric(uint8_t *numeric, size_t size);
 
 /** @brief Provide Device public key.
  *
@@ -345,7 +374,7 @@ int bt_mesh_prov_remote_pub_key_set(const uint8_t public_key[64]);
  *
  *  Instruct the unprovisioned device to use the specified Input OOB
  *  authentication action. When using @ref BT_MESH_PUSH, @ref BT_MESH_TWIST or
- *  @ref BT_MESH_ENTER_NUMBER, the @ref bt_mesh_prov::output_number callback is
+ *  @ref BT_MESH_ENTER_NUMBER, the @ref bt_mesh_prov::output_numeric callback is
  *  called with a random number that has to be entered on the unprovisioned
  *  device.
  *
@@ -370,7 +399,7 @@ int bt_mesh_auth_method_set_input(bt_mesh_input_action_t action, uint8_t size);
  *
  *  When using @ref BT_MESH_BLINK, @ref BT_MESH_BEEP, @ref BT_MESH_VIBRATE
  *  or @ref BT_MESH_DISPLAY_NUMBER, and the application has to call
- *  @ref bt_mesh_input_number with the random number indicated by
+ *  @ref bt_mesh_input_numeric with the random number indicated by
  *  the unprovisioned device.
  *
  *  When using @ref BT_MESH_DISPLAY_STRING, the application has to call
@@ -537,7 +566,7 @@ int bt_mesh_reprovision_remote(struct bt_mesh_rpr_cli *cli,
  *  This API can be used to check if the local node has been provisioned
  *  or not. It can e.g. be helpful to determine if there was a stored
  *  network in flash, i.e. if the network was restored after calling
- *  bt_storage_load().
+ *  settings_load().
  *
  *  @return True if the node is provisioned. False otherwise.
  */
@@ -605,7 +634,13 @@ void bt_mesh_reset(void);
  *  If at all possible, the Friendship feature should be used instead, to
  *  make the node into a Low Power Node.
  *
- *  @return 0 on success, or (negative) error code on failure.
+ *  @note Provisioning has not been designed to be suspended. If this API is
+ *  called while provisioning is in progress, suspension is not possible and
+ *  the function returns an error.
+ *
+ *  @retval 0 Success.
+ *  @retval -EBUSY Provisioning is active.
+ *  @retval Other negative errno code on failure.
  */
 int bt_mesh_suspend(void);
 
@@ -708,7 +743,7 @@ struct bt_mesh_lpn_cb {
  */
 #define BT_MESH_LPN_CB_DEFINE(_name)                                  \
 	static const STRUCT_SECTION_ITERABLE(bt_mesh_lpn_cb,          \
-					     UTIL_CONCAT(bt_mesh_lpn_cb_, \
+					     _CONCAT(bt_mesh_lpn_cb_, \
 						     _name))
 
 /** Friend Node callback functions. */
@@ -760,7 +795,7 @@ struct bt_mesh_friend_cb {
  */
 #define BT_MESH_FRIEND_CB_DEFINE(_name)                                  \
 	static const STRUCT_SECTION_ITERABLE(bt_mesh_friend_cb,          \
-					     UTIL_CONCAT(bt_mesh_friend_cb_, \
+					     _CONCAT(bt_mesh_friend_cb_, \
 						     _name))
 #if defined(CONFIG_BT_TESTING)
 struct bt_mesh_snb {
@@ -822,7 +857,7 @@ struct bt_mesh_beacon_cb {
  */
 #define BT_MESH_BEACON_CB_DEFINE(_name)                                  \
 	static const STRUCT_SECTION_ITERABLE(bt_mesh_beacon_cb,          \
-					     UTIL_CONCAT(bt_mesh_beacon_cb_, \
+					     _CONCAT(bt_mesh_beacon_cb_, \
 						     _name))
 #endif
 

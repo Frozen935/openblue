@@ -186,6 +186,12 @@ struct bt_buf *bt_l2cap_create_pdu_timeout(struct bt_buf_pool *pool,
 /* Send L2CAP PDU over a connection
  *
  * Buffer ownership is transferred to stack in case of success.
+ *
+ * The callback will always be invoked exactly once: After the
+ * Controller gives a Number of Completed Packets Event for the
+ * last L2CAP PDU of the buffer or after the channel is
+ * disconnected and the buffer may or may not have been sent in
+ * full, in which case the error code will be -ESHUTDOWN.
  */
 int bt_l2cap_send_pdu(struct bt_l2cap_le_chan *le_chan, struct bt_buf *pdu,
 		      bt_conn_tx_cb_t cb, void *user_data);
@@ -199,12 +205,6 @@ int bt_l2cap_update_conn_param(struct bt_conn *conn,
 
 /* Initialize L2CAP and supported channels */
 void bt_l2cap_init(void);
-
-/* Register a fixed channel */
-int bt_l2cap_chan_register(struct bt_l2cap_fixed_chan *chan);
-
-/* Unregister a fixed channel */
-void bt_l2cap_chan_unregister(struct bt_l2cap_fixed_chan *chan);
 
 /* Lookup channel by Transmission CID */
 struct bt_l2cap_chan *bt_l2cap_le_lookup_tx_cid(struct bt_conn *conn,

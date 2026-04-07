@@ -50,8 +50,12 @@ static int brg_en_set(const char *name, size_t len_rd, bt_storage_read_cb read_c
 {
 	int err;
 
+	if (!IS_ENABLED(CONFIG_BT_SETTINGS)) {
+		return 0;
+	}
+
 	if (len_rd == 0) {
-		brg_enabled = 0;
+		brg_enabled = false;
 		LOG_DBG("Cleared bridge enable state");
 		return 0;
 	}
@@ -74,6 +78,10 @@ BT_MESH_SETTINGS_DEFINE(brg_en, "brg_en", brg_en_set);
 static int brg_tbl_set(const char *name, size_t len_rd, bt_storage_read_cb read_cb, void *cb_arg)
 {
 	ssize_t len;
+
+	if (!IS_ENABLED(CONFIG_BT_SETTINGS)) {
+		return 0;
+	}
 
 	if (len_rd == 0) {
 		memset(brg_tbl, 0, sizeof(brg_tbl));

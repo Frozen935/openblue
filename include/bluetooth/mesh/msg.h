@@ -9,9 +9,6 @@
  */
 #ifndef __INCLUDE_BLUETOOTH_MESH_MSG_H__
 #define __INCLUDE_BLUETOOTH_MESH_MSG_H__
-
-#include "osdep/os.h"
-
 /**
  * @brief Message
  * @defgroup bt_mesh_msg Message
@@ -19,6 +16,8 @@
  * @{
  */
 
+#include <osdep/os.h>
+#include <bluetooth/buf.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -170,7 +169,7 @@ void bt_mesh_model_msg_init(struct bt_buf_simple *msg, uint32_t opcode);
  * Acknowledged message context for tracking the status of model messages pending a response.
  */
 struct bt_mesh_msg_ack_ctx {
-	os_sem_t          sem;       /**< Sync semaphore. */
+	os_sem_t              sem;       /**< Sync semaphore. */
 	uint32_t              op;        /**< Opcode we're waiting for. */
 	uint16_t              dst;       /**< Address of the node that should respond. */
 	void                 *user_data; /**< User specific parameter. */

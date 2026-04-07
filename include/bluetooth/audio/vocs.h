@@ -11,7 +11,6 @@
 
 #ifndef __INCLUDE_BLUETOOTH_SERVICES_VOCS_H__
 #define __INCLUDE_BLUETOOTH_SERVICES_VOCS_H__
-
 /**
  * @brief Volume Offset Control Service (VOCS)
  *
@@ -66,7 +65,10 @@ extern "C" {
 #define BT_VOCS_MAX_OFFSET                         255
 /** @} */
 
-/** @brief Opaque Volume Offset Control Service instance. */
+/**
+ * @struct bt_vocs
+ * @brief Opaque Volume Offset Control Service instance.
+ */
 struct bt_vocs;
 
 /** @brief Structure for registering a Volume Offset Control Service instance. */

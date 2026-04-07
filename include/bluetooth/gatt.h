@@ -30,6 +30,10 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/att.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+#include <utils/bt_utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -455,9 +459,11 @@ struct bt_gatt_authorization_cb {
 /**
  *  @brief Characteristic Authenticated Signed Writes property.
  *
+ *  @deprecated  This API is deprecated.
+ *
  *  If set, permits signed writes to the Characteristic Value.
  */
-#define BT_GATT_CHRC_AUTH			0x40
+#define BT_GATT_CHRC_AUTH			0x40 __DEPRECATED_MACRO
 /**
  *  @brief Characteristic Extended Properties property.
  *
@@ -614,6 +620,17 @@ static inline const char *bt_gatt_err_to_str(int gatt_err)
  *  @param cb Callback struct.
  */
 void bt_gatt_cb_register(struct bt_gatt_cb *cb);
+
+/** @brief Unregister GATT callbacks.
+ *
+ *  Unregister callbacks for monitoring the state of GATT. The callback
+ *  struct should be one that was previously registered.
+ *
+ *  @param cb Callback struct.
+ *
+ *  @return 0 in case of success or negative value in case of error.
+ */
+int bt_gatt_cb_unregister(struct bt_gatt_cb *cb);
 
 /** @brief Register GATT authorization callbacks.
  *
@@ -1035,6 +1052,9 @@ struct bt_gatt_ccc_cfg {
 	uint16_t value;
 };
 
+/** Macro to keep old name for deprecation period. */
+#define _bt_gatt_ccc bt_gatt_ccc_managed_user_data __DEPRECATED_MACRO
+
 /** @brief Internal representation of CCC value.
  *
  * @note Only use this as an argument for @ref BT_GATT_CCC_MANAGED
@@ -1125,6 +1145,9 @@ ssize_t bt_gatt_attr_read_ccc(struct bt_conn *conn,
 ssize_t bt_gatt_attr_write_ccc(struct bt_conn *conn,
 			       const struct bt_gatt_attr *attr, const void *buf,
 			       uint16_t len, uint16_t offset, uint8_t flags);
+
+/** Macro to keep old name for deprecation period. */
+#define BT_GATT_CCC_INITIALIZER BT_GATT_CCC_MANAGED_USER_DATA_INIT __DEPRECATED_MACRO
 
 /**
  *  @brief Initialize Client Characteristic Configuration Declaration Macro.

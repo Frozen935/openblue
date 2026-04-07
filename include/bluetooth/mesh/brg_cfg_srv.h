@@ -7,8 +7,8 @@
 /** @file
  *  @brief Bluetooth Mesh Bridge Configuration Server Model APIs.
  */
-#ifndef __INCLUDE_BLUETOOTH_MESH_BRG_CFG_SRV_H___
-#define __INCLUDE_BLUETOOTH_MESH_BRG_CFG_SRV_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_BRG_CFG_SRV_H___H__
+#define __INCLUDE_BLUETOOTH_MESH_BRG_CFG_SRV_H___H__
 
 #include <bluetooth/mesh/brg_cfg.h>
 
@@ -44,4 +44,4 @@ extern const struct bt_mesh_model_cb _bt_mesh_brg_cfg_srv_cb;
 }
 #endif
 
-#endif /* __INCLUDE_BLUETOOTH_MESH_BRG_CFG_SRV_H__ */
+#endif /* __INCLUDE_BLUETOOTH_MESH_BRG_CFG_SRV_H___H__ */

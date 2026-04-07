@@ -18,6 +18,7 @@
 #include "mesh/rpl.h"
 #include "mesh/transport.h"
 #include "mesh/foundation.h"
+#include "mesh/prov.h"
 #include "mesh/settings.h"
 #include "mesh/access.h"
 #include "common/bt_shell_private.h"
@@ -394,23 +395,79 @@ static int cmd_proxy_solicit(const struct bt_shell *sh, size_t argc,
 #endif /* CONFIG_BT_MESH_SHELL_GATT_PROXY */
 
 #if defined(CONFIG_BT_MESH_SHELL_PROV)
+static int ascii_decimal_to_le_bytes(const char *ascii_str, uint8_t *out, size_t *out_len)
+{
+	size_t len = 0;
+
+	for (const char *p = ascii_str; *p; ++p) {
+		if (!isdigit((unsigned char)*p)) {
+			return -EINVAL;
+		}
+
+		uint16_t carry = *p - '0';
+
+		if (len == 0) {
+			out[0] = carry;
+			len = 1;
+			continue;
+		}
+
+		for (size_t i = 0; i < len; ++i) {
+			uint16_t value = out[i] * 10 + carry;
+
+			out[i] = value & 0xFF;
+			carry = value >> 8;
+		}
+
+		if (carry != 0) {
+			if (len >= PROV_IO_OOB_SIZE_MAX) {
+				return -EOVERFLOW;
+			}
+			out[len++] = carry;
+		}
+	}
+
+	*out_len = len;
+	return 0;
+}
+
 static int cmd_input_num(const struct bt_shell *sh, size_t argc, char *argv[])
 {
+#if defined(CONFIG_BT_MESH_PROV_OOB_API_LEGACY)
 	int err = 0;
-	uint32_t val;
+	uint32_t num;
 
-	val = bt_shell_strtoul(argv[1], 10, &err);
+	num = bt_shell_strtoul(argv[1], 10, &err);
 	if (err) {
 		bt_shell_warn("Unable to parse input string argument");
 		return err;
 	}
 
-	err = bt_mesh_input_number(val);
+	err = bt_mesh_input_number(num);
 	if (err) {
 		bt_shell_error("Numeric input failed (err %d)", err);
 	}
 
 	return 0;
+#else
+	int err = 0;
+	uint8_t result[PROV_IO_OOB_SIZE_MAX] = {0};
+	size_t result_len;
+
+	err = ascii_decimal_to_le_bytes(argv[1], result, &result_len);
+	if (err) {
+		bt_shell_warn(err == -EINVAL ? "The input string symbol is not a digit"
+					     : "Overflow in input string argument");
+		return err;
+	}
+
+	err = bt_mesh_input_numeric(result, result_len);
+	if (err) {
+		bt_shell_error("Numeric input failed (err %d)", err);
+	}
+
+	return 0;
+#endif
 }
 
 static int cmd_input_str(const struct bt_shell *sh, size_t argc, char *argv[])
@@ -1612,7 +1669,7 @@ static int cmd_stat_clear(const struct bt_shell *sh, size_t argc, char *argv[])
 #endif
 
 #if defined(CONFIG_BT_MESH_SHELL_CDB)
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	cdb_cmds,
 	/* Mesh Configuration Database Operations */
 	BT_SHELL_CMD_ARG(create, NULL, "[NetKey(1-16 hex)]", cmd_cdb_create, 1, 1),
@@ -1633,7 +1690,7 @@ BT_SHELL_SUBCMD_SET_CREATE(
 
 #if defined(CONFIG_BT_MESH_SHELL_PROV)
 #if defined(CONFIG_BT_MESH_PROVISIONER)
-BT_SHELL_SUBCMD_SET_CREATE(auth_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(auth_cmds,
 	BT_SHELL_CMD_ARG(input, NULL, "<Action> <Size>",
 		      cmd_auth_method_set_input, 3, 0),
 	BT_SHELL_CMD_ARG(output, NULL, "<Action> <Size>",
@@ -1644,7 +1701,7 @@ BT_SHELL_SUBCMD_SET_CREATE(auth_cmds,
 	BT_SHELL_SUBCMD_SET_END);
 #endif
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	prov_cmds, BT_SHELL_CMD_ARG(input-num, NULL, "<Number>", cmd_input_num, 2, 0),
 	BT_SHELL_CMD_ARG(input-str, NULL, "<String>", cmd_input_str, 2, 0),
 	BT_SHELL_CMD_ARG(local, NULL, "<NetKeyIdx> <Addr> [IVI]", cmd_provision_local, 3, 1),
@@ -1686,14 +1743,14 @@ BT_SHELL_SUBCMD_SET_CREATE(
 
 #if defined(CONFIG_BT_MESH_SHELL_TEST)
 #if defined(CONFIG_BT_MESH_SHELL_HEALTH_SRV_INSTANCE)
-BT_SHELL_SUBCMD_SET_CREATE(health_srv_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(health_srv_cmds,
 	/* Health Server Model Operations */
 	BT_SHELL_CMD_ARG(add-fault, NULL, "<FaultID>", cmd_add_fault, 2, 0),
 	BT_SHELL_CMD_ARG(del-fault, NULL, "[FaultID]", cmd_del_fault, 1, 1),
 	BT_SHELL_SUBCMD_SET_END);
 #endif
 
-BT_SHELL_SUBCMD_SET_CREATE(test_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(test_cmds,
 	/* Commands which access internal APIs, for testing only */
 	BT_SHELL_CMD_ARG(net-send, NULL, "<HexString>", cmd_net_send,
 		      2, 0),
@@ -1709,7 +1766,7 @@ BT_SHELL_SUBCMD_SET_CREATE(test_cmds,
 #endif /* CONFIG_BT_MESH_SHELL_TEST */
 
 #if defined(CONFIG_BT_MESH_SHELL_GATT_PROXY)
-BT_SHELL_SUBCMD_SET_CREATE(proxy_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(proxy_cmds,
 #if defined(CONFIG_BT_MESH_GATT_PROXY)
 	BT_SHELL_CMD_ARG(identity-enable, NULL, NULL, cmd_ident, 1, 0),
 #endif
@@ -1727,20 +1784,20 @@ BT_SHELL_SUBCMD_SET_CREATE(proxy_cmds,
 #endif /* CONFIG_BT_MESH_SHELL_GATT_PROXY */
 
 #if defined(CONFIG_BT_MESH_SHELL_LOW_POWER)
-BT_SHELL_SUBCMD_SET_CREATE(low_pwr_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(low_pwr_cmds,
 	BT_SHELL_CMD_ARG(set, NULL, "<Val(off, on)>", cmd_lpn, 2, 0),
 	BT_SHELL_CMD_ARG(poll, NULL, NULL, cmd_poll, 1, 0),
 	BT_SHELL_SUBCMD_SET_END);
 #endif
 
-BT_SHELL_SUBCMD_SET_CREATE(target_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(target_cmds,
 	BT_SHELL_CMD_ARG(dst, NULL, "[DstAddr]", cmd_dst, 1, 1),
 	BT_SHELL_CMD_ARG(net, NULL, "[NetKeyIdx]", cmd_netidx, 1, 1),
 	BT_SHELL_CMD_ARG(app, NULL, "[AppKeyIdx]", cmd_appidx, 1, 1),
 	BT_SHELL_SUBCMD_SET_END);
 
 #if defined(CONFIG_BT_MESH_STATISTIC)
-BT_SHELL_SUBCMD_SET_CREATE(stat_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(stat_cmds,
 	BT_SHELL_CMD_ARG(get, NULL, NULL, cmd_stat_get, 1, 0),
 	BT_SHELL_CMD_ARG(clear, NULL, NULL, cmd_stat_clear, 1, 0),
 	BT_SHELL_SUBCMD_SET_END);
@@ -1756,7 +1813,7 @@ SHELL_SUBCMD_SET_CREATE(model_cmds, (mesh, models));
  * Please keep the documentation up to date by adding any new commands to the
  * list.
  */
-BT_SHELL_SUBCMD_SET_CREATE(mesh_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(mesh_cmds,
 	BT_SHELL_CMD_ARG(init, NULL, NULL, cmd_init, 1, 0),
 	BT_SHELL_CMD_ARG(reset-local, NULL, NULL, cmd_reset, 1, 0),
 

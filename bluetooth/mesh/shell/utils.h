@@ -26,7 +26,7 @@
 		return bt_mesh_shell_mdl_instance_set(sh, &(mod_ptr), (mod_id), elem_idx); \
 	} \
 	\
-	BT_SHELL_SUBCMD_SET_CREATE(cmd_set_name, \
+	BT_SHELL_STATIC_SUBCMD_SET_CREATE(cmd_set_name, \
 			       BT_SHELL_CMD_ARG(set, NULL, "<ElemIdx>", cmd_##cmd_set_name##_set, 2,\
 					     0), \
 			       BT_SHELL_CMD_ARG(get-all, NULL, NULL, cmd_##cmd_set_name##_get_all, 1,\

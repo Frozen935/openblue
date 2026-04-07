@@ -20,6 +20,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <base/queue/bt_fifo.h>
+#include <bluetooth/buf.h>
 
 #ifdef __cplusplus
 extern "C" {

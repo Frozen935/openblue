@@ -14,6 +14,7 @@
 #include <bluetooth/audio/csip.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
+#include <utils/bt_utils.h>
 
 #include "cap_internal.h"
 
@@ -31,13 +32,25 @@ int bt_cap_acceptor_register(const struct bt_csip_set_member_register_param *par
 	static struct bt_gatt_service cas;
 	int err;
 
-	CHECKIF(param->set_size == 0U) {
+	if (param == NULL) {
+		LOG_DBG("param is NULL");
+
+		return -EINVAL;
+	}
+
+	if (param->set_size == 0U) {
 		LOG_DBG("param->set_size shall be non-zero");
 		return -EINVAL;
 	}
 
-	CHECKIF(param->rank == 0U) {
+	if (param->rank == 0U) {
 		LOG_DBG("param->rank shall be non-zero");
+		return -EINVAL;
+	}
+
+	if (svc_inst == NULL) {
+		LOG_DBG("svc_inst is NULL");
+
 		return -EINVAL;
 	}
 

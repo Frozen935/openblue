@@ -7,8 +7,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#ifndef __INCLUDE_BLUETOOTH_MESH_HEALTH_FAULTS_H___
-#define __INCLUDE_BLUETOOTH_MESH_HEALTH_FAULTS_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_HEALTH_FAULTS_H___H__
+#define __INCLUDE_BLUETOOTH_MESH_HEALTH_FAULTS_H___H__
 
 /**
  * @brief List of specification defined Health fault values.
@@ -132,4 +132,4 @@
  * @}
  */
 
-#endif /* __INCLUDE_BLUETOOTH_MESH_HEALTH_FAULTS_H__ */
+#endif /* __INCLUDE_BLUETOOTH_MESH_HEALTH_FAULTS_H___H__ */

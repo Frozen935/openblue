@@ -442,6 +442,10 @@ int bt_mesh_suspend(void)
 		return -EINVAL;
 	}
 
+	if (IS_ENABLED(CONFIG_BT_MESH_PROV) && bt_mesh_prov_active()) {
+		return -EBUSY;
+	}
+
 	if (bt_atomic_test_and_set_bit(bt_mesh.flags, BT_MESH_SUSPENDED)) {
 		return -EALREADY;
 	}
@@ -465,13 +469,14 @@ int bt_mesh_suspend(void)
 
 	bt_mesh_access_suspend();
 
-	if (IS_ENABLED(CONFIG_BT_MESH_PB_GATT)) {
-		err = bt_mesh_pb_gatt_srv_disable();
-		if (err && err != -EALREADY) {
-			LOG_WRN("Disabling PB-GATT failed (err %d)", err);
-			return err;
-		}
+#if defined(CONFIG_BT_MESH_PROVISIONEE)
+	err = bt_mesh_provisionee_suspend();
+	if (err && err != -EALREADY) {
+		LOG_WRN("Suspending provisioning bearers failed (err %d)", err);
+		bt_atomic_clear_bit(bt_mesh.flags, BT_MESH_SUSPENDED);
+		return err;
 	}
+#endif
 
 	if (IS_ENABLED(CONFIG_BT_MESH_GATT_PROXY)) {
 		err = bt_mesh_proxy_gatt_disable();
@@ -542,13 +547,14 @@ int bt_mesh_resume(void)
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_BT_MESH_PB_GATT) && !bt_mesh_is_provisioned()) {
-		err = bt_mesh_pb_gatt_srv_enable();
-		if (err) {
-			LOG_WRN("Re-enabling PB-GATT failed (err %d)", err);
-			return err;
-		}
+#if defined(CONFIG_BT_MESH_PROVISIONEE)
+	err = bt_mesh_provisionee_resume();
+	if (err) {
+		LOG_WRN("Resuming provisioning bearers failed (err %d)", err);
+		bt_atomic_set_bit(bt_mesh.flags, BT_MESH_SUSPENDED);
+		return err;
 	}
+#endif
 
 	bt_mesh_hb_resume();
 

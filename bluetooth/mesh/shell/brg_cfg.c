@@ -229,7 +229,7 @@ static int cmd_bridging_table_get(const struct bt_shell *sh, size_t argc, char *
 	return 0;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	brg_cfg_cmds, BT_SHELL_CMD_ARG(get, NULL, NULL, cmd_subnet_bridge_get, 1, 0),
 	BT_SHELL_CMD_ARG(set, NULL, "<State(disable, enable)>", cmd_subnet_bridge_set, 2, 0),
 	BT_SHELL_CMD_ARG(table-size-get, NULL, NULL, cmd_bridging_table_size_get, 1, 0),

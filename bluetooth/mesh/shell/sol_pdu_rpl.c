@@ -58,7 +58,7 @@ static int cmd_srpl_clear(const struct bt_shell *sh, size_t argc,
 	return err;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	sol_pdu_rpl_cmds,
 	BT_SHELL_CMD_ARG(clear, NULL, "<RngStart> <Ackd> [RngLen]",
 		      cmd_srpl_clear, 3, 1),

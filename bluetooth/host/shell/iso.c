@@ -22,6 +22,8 @@
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
 
+#include <osdep/os.h>
+
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
@@ -60,11 +62,11 @@ static uint32_t get_next_sn(uint32_t last_sn, int64_t *last_ticks, uint32_t inte
 	/* Note: This does not handle wrapping of ticks when they go above
 	 * 2^(62-1)
 	 */
-	uptime_ticks = k_uptime_ticks();
+	uptime_ticks = os_time_get_ms();
 	delta_ticks = uptime_ticks - *last_ticks;
 	*last_ticks = uptime_ticks;
 
-	delta_us = k_ticks_to_us_near64((uint64_t)delta_ticks);
+	delta_us = (uint64_t)delta_ticks * 1000ULL;
 	sn_incr = delta_us / interval_us;
 	next_sn = (sn_incr + last_sn);
 
@@ -104,10 +106,10 @@ static void iso_connected(struct bt_iso_chan *chan)
 	if (iso_info.type == BT_ISO_CHAN_TYPE_CENTRAL ||
 	    iso_info.type == BT_ISO_CHAN_TYPE_PERIPHERAL) {
 		cis_sn_last = 0U;
-		cis_sn_last_updated_ticks = k_uptime_ticks();
+		cis_sn_last_updated_ticks = os_time_get_ms();
 	} else {
 		bis_sn_last = 0U;
-		bis_sn_last_updated_ticks = k_uptime_ticks();
+		bis_sn_last_updated_ticks = os_time_get_ms();
 	}
 #endif /* CONFIG_BT_ISO_TX */
 
@@ -482,12 +484,6 @@ static int cmd_connect(const struct bt_shell *sh, size_t argc, char *argv[])
 		return 0;
 	}
 
-#if defined(CONFIG_BT_SMP)
-	if (argc > 1) {
-		iso_chan.required_sec_level = *argv[1] - '0';
-	}
-#endif /* CONFIG_BT_SMP */
-
 	err = bt_iso_chan_connect(&connect_param, 1);
 	if (err) {
 		bt_shell_error("Unable to connect (err %d)", err);
@@ -528,9 +524,6 @@ static int iso_accept(const struct bt_iso_accept_info *info, struct bt_iso_chan 
 }
 
 struct bt_iso_server iso_server = {
-#if defined(CONFIG_BT_SMP)
-	.sec_level = BT_SECURITY_L1,
-#endif /* CONFIG_BT_SMP */
 	.accept = iso_accept,
 };
 
@@ -552,12 +545,6 @@ static int cmd_listen(const struct bt_shell *sh, size_t argc, char *argv[])
 		bt_shell_error("Invalid argument - use tx, rx or txrx");
 		return -ENOEXEC;
 	}
-
-#if defined(CONFIG_BT_SMP)
-	if (argc > 2) {
-		iso_server.sec_level = *argv[2] - '0';
-	}
-#endif /* CONFIG_BT_SMP */
 
 	err = bt_iso_server_register(&iso_server);
 	if (err) {
@@ -786,7 +773,7 @@ static int cmd_big_create(const struct bt_shell *sh, size_t argc, char *argv[])
 			}
 			param.encryption = true;
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	} else {
@@ -871,7 +858,7 @@ static int cmd_big_sync(const struct bt_shell *sh, size_t argc, char *argv[])
 
 			i++;
 			if (i == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
@@ -895,7 +882,7 @@ static int cmd_big_sync(const struct bt_shell *sh, size_t argc, char *argv[])
 
 			i++;
 			if (i == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
@@ -919,7 +906,7 @@ static int cmd_big_sync(const struct bt_shell *sh, size_t argc, char *argv[])
 
 			i++;
 			if (i == argc) {
-				bt_shell_help(sh);
+				shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
@@ -935,7 +922,7 @@ static int cmd_big_sync(const struct bt_shell *sh, size_t argc, char *argv[])
 
 			param.encryption = true;
 		} else {
-			bt_shell_help(sh);
+			shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	}
@@ -968,7 +955,7 @@ static int cmd_big_term(const struct bt_shell *sh, size_t argc, char *argv[])
 }
 #endif /* CONFIG_BT_ISO_BROADCAST*/
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	iso_cmds,
 #if defined(CONFIG_BT_ISO_UNICAST)
 #if defined(CONFIG_BT_ISO_CENTRAL)
@@ -977,18 +964,10 @@ BT_SHELL_SUBCMD_SET_CREATE(
 		      "[packing] [framing] [C to P latency] [P to C latency] [sdu] [phy] [rtn]",
 		      cmd_cig_create, 1, 10),
 	BT_SHELL_CMD_ARG(cig_term, NULL, "Terminate the CIG", cmd_cig_term, 1, 0),
-#if defined(CONFIG_BT_SMP)
-	BT_SHELL_CMD_ARG(connect, NULL, "Connect ISO Channel [security level]", cmd_connect, 1, 1),
-#else  /* !CONFIG_BT_SMP */
 	BT_SHELL_CMD_ARG(connect, NULL, "Connect ISO Channel", cmd_connect, 1, 0),
-#endif /* CONFIG_BT_SMP */
 #endif /* CONFIG_BT_ISO_CENTRAL */
 #if defined(CONFIG_BT_ISO_PERIPHERAL)
-#if defined(CONFIG_BT_SMP)
-	BT_SHELL_CMD_ARG(listen, NULL, "<dir=tx,rx,txrx> [security level]", cmd_listen, 2, 1),
-#else  /* !CONFIG_BT_SMP */
 	BT_SHELL_CMD_ARG(listen, NULL, "<dir=tx,rx,txrx>", cmd_listen, 2, 0),
-#endif /* CONFIG_BT_SMP */
 #endif /* CONFIG_BT_ISO_PERIPHERAL */
 #if defined(CONFIG_BT_ISO_TX)
 	BT_SHELL_CMD_ARG(send, NULL, "Send to ISO Channel [count]", cmd_send, 1, 1),
@@ -1016,7 +995,7 @@ BT_SHELL_SUBCMD_SET_CREATE(
 static int cmd_iso(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		bt_shell_help(sh);
+		shell_help(sh);
 
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
@@ -1026,9 +1005,4 @@ static int cmd_iso(const struct bt_shell *sh, size_t argc, char **argv)
 	return -EINVAL;
 }
 
-BT_SHELL_CMD_ARG_DEFINE(iso, &iso_cmds, "Bluetooth ISO shell commands", cmd_iso, 1, 1);
-
-int bt_shell_cmd_iso_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &iso);
-}
+BT_SHELL_CMD_ARG_REGISTER(iso, &iso_cmds, "Bluetooth ISO shell commands", cmd_iso, 1, 1);

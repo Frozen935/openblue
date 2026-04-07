@@ -21,9 +21,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <base/bt_work.h>
+#include <base/queue/bt_fifo.h>
 #include <bluetooth/buf.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/hci.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+#include <osdep/os.h>
 #include <sys/types.h>
 
 #ifdef __cplusplus
@@ -230,7 +236,7 @@ struct bt_l2cap_le_endpoint {
 	/** Endpoint Maximum PDU payload Size */
 	uint16_t				mps;
 	/** Endpoint credits */
-	bt_atomic_t			credits;
+	bt_atomic_t				credits;
 };
 
 /** @brief LE L2CAP Channel structure. */
@@ -262,7 +268,30 @@ struct bt_l2cap_le_chan {
 	 * L2CAP_LE_CREDIT_BASED_CONNECTION_REQ/RSP or L2CAP_CONFIGURATION_REQ.
 	 */
 	struct bt_l2cap_le_endpoint	tx;
-	/** Channel Transmission queue (for SDUs) */
+	/** Channel Transmission queue
+	 *
+	 * Internal
+	 *
+	 * SDUs/PDUs given to @ref bt_l2cap_chan_send and @c bt_l2cap_send_pdu
+	 * are stored here until they are sent to the Controller.
+	 *
+	 * The SDU header is prepended to SDUs before they are stored here. The
+	 * head of this list (the next data to be sent) may be just the
+	 * remaining part of an already partially transmitted SDU/PDU due to
+	 * L2CAP segmentation and fragmentation.
+	 *
+	 * This is the outbox for a single channel. Channels may be serviced in
+	 * any order. The transmission order does not follow the sequence of
+	 * @ref bt_l2cap_chan_send calls across channels.
+	 *
+	 * There may be more data here than the channel currently has credits
+	 * for. The transmission will wait until credits are available.
+	 *
+	 * Callbacks given to @ref bt_l2cap_chan_send are stored in the
+	 * user_data of the buffer. These callbacks must be invoked when the
+	 * Controller gives a Number of Buffers Complete Event for the last
+	 * L2CAP PDU of the buffer or when the channel is disconnected.
+	 */
 	struct bt_fifo                   tx_queue;
 #if defined(CONFIG_BT_L2CAP_DYNAMIC_CHANNEL)
 	/** Segment SDU packet from upper layer */
@@ -310,9 +339,6 @@ struct bt_l2cap_le_chan {
  *  @ref BT_L2CAP_FIXED_CHANNEL_DEFINE macro.
  */
 struct bt_l2cap_fixed_chan {
-	/** @brief L2CAP channel node */
-	bt_snode_t node;
-
 	/** @brief Channel Identifier (CID)
 	 *
 	 *  @note Shall be in the range 0x0001 to 0x003F (Core 3.A.2.1 v6.0). The CIDs in this range
@@ -472,6 +498,8 @@ struct bt_l2cap_br_window {
 	uint8_t sar;
 	/** srej flag */
 	bool srej;
+	/** retransmit flag */
+	bool retransmit;
 	/* Save PDU state */
 	struct bt_buf_simple_state sdu_state;
 	/** @internal Holds the sending buffer. */
@@ -646,6 +674,11 @@ struct bt_l2cap_chan_ops {
 	 *  must set this callback.
 	 *  If the application has not set a callback the L2CAP SDU MTU will be
 	 *  truncated to @ref BT_L2CAP_SDU_RX_MTU.
+	 *
+	 *  @note The stack stores the number of received segments in the first
+	 *        two bytes of the buffer user data. The buffer returned by this
+	 *        callback must have a user data size of at least
+	 *        @c sizeof(uint16_t).
 	 *
 	 *  @param chan The channel requesting a buffer.
 	 *
@@ -1019,6 +1052,12 @@ int bt_l2cap_chan_disconnect(struct bt_l2cap_chan *chan);
  *
  *  @note Buffer ownership is transferred to the stack in case of success, in
  *  case of an error the caller retains the ownership of the buffer.
+ *
+ *  @warning If the buffer's pool has a destroy callback defined, that callback
+ *  may be invoked from the ISR context when the HCI driver releases the buffer.
+ *  Thus, the destroy callback must not call any synchronization primitives
+ *  that are unsafe in the ISR context, i. e. blocking calls or locking the
+ *  scheduler.
  *
  *  @param chan The channel to send the data to. See @ref bt_l2cap_chan_connect
  *              for more details.

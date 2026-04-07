@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 2016 Intel Corporation
+ * Copyright 2024-2025 NXP
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -15,8 +16,6 @@
 #include <bluetooth/l2cap.h>
 
 #include <bluetooth/classic/rfcomm.h>
-
-#include "osdep/os.h"
 
 #include "host/hci_core.h"
 #include "host/conn_internal.h"
@@ -35,16 +34,16 @@
 #define RFCOMM_CREDITS_THRESHOLD	(RFCOMM_MAX_CREDITS / 2)
 #define RFCOMM_DEFAULT_CREDIT		RFCOMM_MAX_CREDITS
 
-#define RFCOMM_CONN_TIMEOUT     OS_SECONDS(60)
-#define RFCOMM_DISC_TIMEOUT     OS_SECONDS(20)
-#define RFCOMM_IDLE_TIMEOUT     OS_SECONDS(2)
+#define RFCOMM_CONN_TIMEOUT     K_SECONDS(60)
+#define RFCOMM_DISC_TIMEOUT     K_SECONDS(20)
+#define RFCOMM_IDLE_TIMEOUT     K_SECONDS(2)
 
 #define DLC_RTX(_w) CONTAINER_OF(bt_work_delayable_from_work(_w), \
 				 struct bt_rfcomm_dlc, rtx_work)
 #define SESSION_RTX(_w) CONTAINER_OF(bt_work_delayable_from_work(_w), \
 				     struct bt_rfcomm_session, rtx_work)
 
-static struct bt_rfcomm_server *servers;
+static bt_slist_t servers = BT_SLIST_STATIC_INIT(&servers);
 
 #define RFCOMM_SESSION(_ch) CONTAINER_OF(_ch, \
 					 struct bt_rfcomm_session, br_chan.chan)
@@ -163,8 +162,9 @@ static struct bt_rfcomm_dlc *rfcomm_dlcs_remove_dlci(struct bt_rfcomm_dlc *dlcs,
 static struct bt_rfcomm_server *rfcomm_server_lookup_channel(uint8_t channel)
 {
 	struct bt_rfcomm_server *server;
+	struct bt_rfcomm_server *next;
 
-	for (server = servers; server; server = server->_next) {
+	BT_SLIST_FOR_EACH_CONTAINER_SAFE(&servers, server, next, node) {
 		if (server->channel == channel) {
 			return server;
 		}
@@ -221,8 +221,16 @@ int bt_rfcomm_server_register(struct bt_rfcomm_server *server)
 
 	LOG_DBG("Channel 0x%02x", server->channel);
 
-	server->_next = servers;
-	servers = server;
+	bt_slist_prepend(&servers, &server->node);
+
+	return 0;
+}
+
+int bt_rfcomm_server_unregister(struct bt_rfcomm_server *server)
+{
+	if (!bt_slist_find_and_remove(&servers, &server->node)) {
+		return -ENOENT;
+	}
 
 	return 0;
 }
@@ -1370,8 +1378,7 @@ static void rfcomm_handle_disc(struct bt_rfcomm_session *session, uint8_t dlci)
 
 		if (!session->dlcs) {
 			/* Start a session idle timer */
-			bt_work_reschedule(&dlc->session->rtx_work,
-					  RFCOMM_IDLE_TIMEOUT);
+			bt_work_reschedule(&session->rtx_work, RFCOMM_IDLE_TIMEOUT);
 		}
 	} else {
 		/* Cancel idle timer */
@@ -1385,7 +1392,7 @@ static void rfcomm_handle_msg(struct bt_rfcomm_session *session,
 			      struct bt_buf *buf)
 {
 	struct bt_rfcomm_msg_hdr *hdr;
-	uint8_t msg_type, cr;
+	uint8_t msg_type, len, cr;
 
 	if (buf->len < sizeof(*hdr)) {
 		LOG_ERR("Too small RFCOMM message");
@@ -1395,6 +1402,7 @@ static void rfcomm_handle_msg(struct bt_rfcomm_session *session,
 	hdr = bt_buf_pull_mem(buf, sizeof(*hdr));
 	msg_type = BT_RFCOMM_GET_MSG_TYPE(hdr->type);
 	cr = BT_RFCOMM_GET_MSG_CR(hdr->type);
+	len = BT_RFCOMM_GET_LEN(hdr->len);
 
 	LOG_DBG("msg type %x cr %x", msg_type, cr);
 
@@ -1431,11 +1439,10 @@ static void rfcomm_handle_msg(struct bt_rfcomm_session *session,
 		/* Give the sem so that it will unblock the waiting dlc threads
 		 * of this session in sem_take().
 		 */
- 	os_sem_give(&session->fc);
- 	rfcomm_send_fcon(session, BT_RFCOMM_MSG_RESP_CR);
- 	rfcomm_dlcs_tx_trigger(session->dlcs);
- 	break;
-
+		os_sem_give(&session->fc);
+		rfcomm_send_fcon(session, BT_RFCOMM_MSG_RESP_CR);
+		rfcomm_dlcs_tx_trigger(session->dlcs);
+		break;
 	case BT_RFCOMM_FCOFF:
 		if (session->cfc == BT_RFCOMM_CFC_SUPPORTED) {
 			LOG_ERR("FCOFF received when CFC is supported ");
@@ -1857,11 +1864,24 @@ static int rfcomm_accept(struct bt_conn *conn, struct bt_l2cap_server *server,
 
 void bt_rfcomm_init(void)
 {
+	__maybe_unused int err;
+
+	static bool initialized;
 	static struct bt_l2cap_server server = {
 		.psm       = BT_L2CAP_PSM_RFCOMM,
 		.accept    = rfcomm_accept,
 		.sec_level = BT_SECURITY_L1,
 	};
 
-	bt_l2cap_br_server_register(&server);
+	if (initialized) {
+		return;
+	}
+
+	err = bt_l2cap_br_server_register(&server);
+	if ((err != 0) && (err != -EEXIST)) {
+		LOG_ERR("Failed to register L2CAP server for RFCOMM (err %d)", err);
+		return;
+	}
+
+	initialized = true;
 }

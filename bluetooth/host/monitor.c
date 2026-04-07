@@ -16,6 +16,10 @@
 #include <bluetooth/addr.h>
 #include <bluetooth/buf.h>
 
+#include <base/bt_atomic.h>
+#include <bt_stack_init.h>
+#include <osdep/os.h>
+
 #include "monitor.h"
 
 /* This is the same default priority as for other console handlers,
@@ -136,19 +140,16 @@ static void poll_out(char c)
 {
 	monitor_send(&c, sizeof(c));
 }
-
+#elif defined(CONFIG_BT_DEBUG_MONITOR_UART)
 static void poll_out(char c)
 {
-	uart_poll_out(monitor_dev, c);
+	ARG_UNUSED(c);
 }
 
 static void monitor_send(const void *data, size_t len)
 {
-	const uint8_t *buf = data;
-
-	while (len--) {
-		poll_out(*buf++);
-	}
+	ARG_UNUSED(data);
+	ARG_UNUSED(len);
 }
 #endif /* CONFIG_BT_DEBUG_MONITOR_UART */
 
@@ -164,20 +165,12 @@ static void encode_drops(struct bt_monitor_hdr *hdr, uint8_t type,
 	}
 }
 
-static uint32_t monitor_ts_get(void)
+static log_timestamp_t monitor_ts_get(void)
 {
-	uint64_t cycle;
-
-	if (IS_ENABLED(CONFIG_TIMER_HAS_64BIT_CYCLE_COUNTER)) {
-		cycle = k_cycle_get_64();
-	} else {
-		cycle = k_cycle_get_32();
-	}
-
-	return (cycle / (sys_clock_hw_cycles_per_sec() / MONITOR_TS_FREQ));
+	return (log_timestamp_t)(os_time_get_ms() * (MONITOR_TS_FREQ / 1000));
 }
 
-static inline void encode_hdr(struct bt_monitor_hdr *hdr, uint32_t timestamp,
+static inline void encode_hdr(struct bt_monitor_hdr *hdr, log_timestamp_t timestamp,
 			      uint16_t opcode, uint16_t len)
 {
 	struct bt_monitor_ts32 *ts;
@@ -187,7 +180,12 @@ static inline void encode_hdr(struct bt_monitor_hdr *hdr, uint32_t timestamp,
 
 	ts = (void *)hdr->ext;
 	ts->type = BT_MONITOR_TS32;
-	ts->ts32 = timestamp;
+	/* The btsnoop protocol only supports 32-bit timestamps (in 1/10th ms).
+	 * This overflows after 4.97 days, which is acceptable as it only affects
+	 * rendering in btmon/wireshark. Recordings are usually not that long
+	 * anyway, and packet ordering is still preserved.
+	 */
+	ts->ts32 = (uint32_t)timestamp;
 	hdr->hdr_len = sizeof(*ts);
 
 	encode_drops(hdr, BT_MONITOR_COMMAND_DROPS, &drops.cmd);
@@ -327,7 +325,7 @@ static void monitor_log_process(const struct log_backend *const backend,
 		return;
 	}
 
-	encode_hdr(&hdr, (uint32_t)log_msg_get_timestamp(&msg->log),
+	encode_hdr(&hdr, log_msg_get_timestamp(&msg->log),
 		   BT_MONITOR_USER_LOGGING,
 		   sizeof(user_log) + sizeof(id) + ctx.total_len + 1);
 
@@ -376,12 +374,6 @@ static int bt_monitor_init(void)
 				  RTT_BUFFER_NAME, rtt_up_buf, RTT_BUF_SIZE,
 				  SEGGER_RTT_MODE_NO_BLOCK_SKIP);
 #elif defined(CONFIG_BT_DEBUG_MONITOR_UART)
-	__ASSERT_NO_MSG(bt_hci_is_ready(monitor_dev));
-
-#if defined(CONFIG_UART_INTERRUPT_DRIVEN)
-	uart_irq_rx_disable(monitor_dev);
-	uart_irq_tx_disable(monitor_dev);
-#endif /* CONFIG_UART_INTERRUPT_DRIVEN */
 #endif /* CONFIG_BT_DEBUG_MONITOR_UART */
 
 #if !defined(CONFIG_UART_CONSOLE) && !defined(CONFIG_RTT_CONSOLE) && !defined(CONFIG_LOG_PRINTK)

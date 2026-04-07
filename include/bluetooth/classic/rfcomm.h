@@ -20,8 +20,8 @@
 #include <bluetooth/buf.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/l2cap.h>
+#include <utils/bt_slist.h>
 
-#include "osdep/os.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -99,10 +99,10 @@ typedef enum bt_rfcomm_role {
 /** @brief RFCOMM DLC structure. */
 struct bt_rfcomm_dlc {
 	/* Response Timeout eXpired (RTX) timer */
-	struct bt_work_delayable    rtx_work;
+	struct k_work_delayable    rtx_work;
 
 	/* Queue for outgoing data */
-	struct bt_fifo              tx_queue;
+	struct k_fifo              tx_queue;
 
 	/* TX credits, Reuse as a binary sem for MSC FC if CFC is not enabled */
 	os_sem_t               tx_credits;
@@ -150,7 +150,9 @@ struct bt_rfcomm_server {
 	int (*accept)(struct bt_conn *conn, struct bt_rfcomm_server *server,
 		      struct bt_rfcomm_dlc **dlc);
 
-	struct bt_rfcomm_server	*_next;
+	/** @cond INTERNAL_HIDDEN */
+	bt_snode_t node;
+	/** @endcond */
 };
 
 /** @brief RFCOMM RPN baud rate values */
@@ -230,6 +232,16 @@ struct bt_rfcomm_rpn {
  *  @return 0 in case of success or negative value in case of error.
  */
 int bt_rfcomm_server_register(struct bt_rfcomm_server *server);
+
+/** @brief Unregister RFCOMM server
+ *
+ *  Unregister RFCOMM server for a channel.
+ *
+ *  @param server Server structure.
+ *
+ *  @return 0 in case of success or negative value in case of error.
+ */
+int bt_rfcomm_server_unregister(struct bt_rfcomm_server *server);
 
 /** @brief Connect RFCOMM channel
  *

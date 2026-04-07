@@ -42,7 +42,7 @@ static int cmd_od_priv_gatt_proxy_set(const struct bt_shell *sh, size_t argc,
 	return 0;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	od_priv_proxy_cmds,
 	BT_SHELL_CMD_ARG(gatt-proxy, NULL, "[Dur(s)]", cmd_od_priv_gatt_proxy_set, 1, 1),
 	BT_SHELL_SUBCMD_SET_END);

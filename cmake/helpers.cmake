@@ -104,7 +104,7 @@ endfunction()
 function(openblue_load_kconfig config_path)
   # Auto-create a minimal .config if not present
   if(NOT EXISTS "${config_path}")
-    message(STATUS "Stack: .config not found at ${config_path}. Please run 'make genconfig' to generate it.")
+    message(STATUS "Stack: .config not found at ${config_path}. Please run 'cmake --build <builddir> --target genconfig' to generate it.")
   endif()
 
   file(STRINGS "${config_path}" _lines)

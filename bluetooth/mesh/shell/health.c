@@ -318,7 +318,7 @@ static int cmd_attention_set_unack(const struct bt_shell *sh, size_t argc, char 
 
 BT_MESH_SHELL_MDL_INSTANCE_CMDS(instance_cmds, BT_MESH_MODEL_ID_HEALTH_CLI, mod);
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	health_cli_cmds,
 	/* Health Client Model Operations */
 	BT_SHELL_CMD_ARG(fault-get, NULL, "<CID>", cmd_fault_get, 2, 0),

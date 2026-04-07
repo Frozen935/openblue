@@ -149,16 +149,38 @@ static inline void group_zero(bt_atomic_t *target)
 #endif
 }
 
+static inline void bt_atomic_or_update(bt_atomic_t *target, bt_atomic_val_t value)
+{
+	bt_atomic_val_t old_val;
+	bt_atomic_val_t new_val;
+
+	do {
+		old_val = bt_atomic_get(target);
+		new_val = old_val | value;
+	} while (!bt_atomic_cas(target, old_val, new_val));
+}
+
+static inline void bt_atomic_and_update(bt_atomic_t *target, bt_atomic_val_t value)
+{
+	bt_atomic_val_t old_val;
+	bt_atomic_val_t new_val;
+
+	do {
+		old_val = bt_atomic_get(target);
+		new_val = old_val & value;
+	} while (!bt_atomic_cas(target, old_val, new_val));
+}
+
 static inline void group_set(bt_atomic_t *target, bt_atomic_t *source)
 {
 #if CONFIG_BT_MESH_LPN_GROUPS > 32
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(bt_mesh.lpn.added); i++) {
-		(void)atomic_or(&target[i], bt_atomic_get(&source[i]));
+		bt_atomic_or_update(&target[i], bt_atomic_get(&source[i]));
 	}
 #else
-	(void)atomic_or(target, bt_atomic_get(source));
+	bt_atomic_or_update(target, bt_atomic_get(source));
 #endif
 }
 
@@ -168,10 +190,10 @@ static inline void group_clear(bt_atomic_t *target, bt_atomic_t *source)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(bt_mesh.lpn.added); i++) {
-		(void)atomic_and(&target[i], ~bt_atomic_get(&source[i]));
+		bt_atomic_and_update(&target[i], ~bt_atomic_get(&source[i]));
 	}
 #else
-	(void)atomic_and(target, ~bt_atomic_get(source));
+	bt_atomic_and_update(target, ~bt_atomic_get(source));
 #endif
 }
 
@@ -319,7 +341,7 @@ static void friend_req_send_end(int err, void *user_data)
 		return;
 	}
 
-	lpn->adv_duration = k_uptime_get_32() - lpn->adv_start_time;
+	lpn->adv_duration = os_time_get_32() - lpn->adv_start_time;
 
 	if (IS_ENABLED(CONFIG_BT_MESH_LPN_ESTABLISHMENT)) {
 		bt_work_reschedule(&lpn->timer,
@@ -335,7 +357,7 @@ static void friend_req_send_start(uint16_t duration, int err, void *user_data)
 {
 	struct bt_mesh_lpn *lpn = &bt_mesh.lpn;
 
-	lpn->adv_start_time = k_uptime_get_32();
+	lpn->adv_start_time = os_time_get_32();
 
 	if (err) {
 		friend_req_send_end(err, user_data);
@@ -396,7 +418,7 @@ static void req_send_end(int err, void *user_data)
 		return;
 	}
 
-	lpn->adv_duration = k_uptime_get_32() - lpn->adv_start_time;
+	lpn->adv_duration = os_time_get_32() - lpn->adv_start_time;
 
 #if defined(CONFIG_BT_MESH_LOW_POWER_LOG_LEVEL_DBG)
 	LOG_DBG("req 0x%02x duration %u err %d state %s", lpn->sent_req, lpn->adv_duration, err,
@@ -437,7 +459,7 @@ static void req_send_start(uint16_t duration, int err, void *user_data)
 {
 	struct bt_mesh_lpn *lpn = &bt_mesh.lpn;
 
-	lpn->adv_start_time = k_uptime_get_32();
+	lpn->adv_start_time = os_time_get_32();
 
 	if (err) {
 		req_send_end(err, user_data);
@@ -940,7 +962,7 @@ static void lpn_timeout(struct bt_work *work)
 		update_timeout(lpn);
 		break;
 	default:
-		__ASSERT_MSG(0, "Unhandled LPN state");
+		__ASSERT(0, "Unhandled LPN state");
 		break;
 	}
 }

@@ -10,6 +10,27 @@
 #include <bluetooth/mesh.h>
 #include "subnet.h"
 
+struct bt_mesh_app_key {
+	uint16_t net_idx;
+	uint16_t app_idx;
+	bool updated;
+	struct bt_mesh_app_cred {
+		uint8_t id;
+		struct bt_mesh_key val;
+	} keys[2];
+};
+
+struct bt_mesh_app_key_cb {
+	void (*evt_handler)(struct bt_mesh_app_key *app, enum bt_mesh_key_evt evt);
+};
+
+#define BT_MESH_APP_KEY_CB_DEFINE(_handler)                                    \
+	static const STRUCT_SECTION_ITERABLE(bt_mesh_app_key_cb,               \
+					     _CONCAT(bt_mesh_app_key_cb_,      \
+						       _handler)) = {          \
+		.evt_handler = (_handler),                                     \
+	}
+
 /** @brief Reset the app keys module. */
 void bt_mesh_app_keys_reset(void);
 

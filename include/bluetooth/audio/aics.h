@@ -11,7 +11,6 @@
 
 #ifndef __INCLUDE_BLUETOOTH_SERVICES_AICS_H__
 #define __INCLUDE_BLUETOOTH_SERVICES_AICS_H__
-
 /**
  * @brief Audio Input Control Service (AICS)
  *
@@ -124,7 +123,10 @@ extern "C" {
 #define BT_AICS_ERR_GAIN_MODE_NOT_ALLOWED          0x84
 /** @} */
 
-/** @brief Opaque Audio Input Control Service instance. */
+/**
+ * @struct bt_aics
+ * @brief Opaque Audio Input Control Service instance.
+ */
 struct bt_aics;
 
 /** @brief Structure for initializing a Audio Input Control Service instance. */

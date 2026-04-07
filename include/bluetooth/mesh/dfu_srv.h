@@ -12,8 +12,8 @@
  * @brief API for the Bluetooth Mesh Firmware Update Server model
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_DFU_SRV_H___
-#define __INCLUDE_BLUETOOTH_MESH_DFU_SRV_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_DFU_SRV_H__
+#define __INCLUDE_BLUETOOTH_MESH_DFU_SRV_H__
 
 #include <bluetooth/mesh/dfu.h>
 #include <bluetooth/mesh/blob_srv.h>
@@ -24,6 +24,7 @@ extern "C" {
 #endif
 
 struct bt_mesh_dfu_srv;
+struct bt_buf_simple;
 
 /**
  *

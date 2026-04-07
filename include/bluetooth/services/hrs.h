@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 
+#include <utils/bt_slist.h>
 
 #ifdef __cplusplus
 extern "C" {

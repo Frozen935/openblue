@@ -46,6 +46,7 @@
 #include <stdbool.h>
 
 #include <bluetooth/bluetooth.h>
+#include <utils/bt_utils.h>
 
 /* TODO: Remove dependency on mcs.h */
 #include "mcs.h"

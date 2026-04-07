@@ -402,7 +402,7 @@ static int cmd_reprovision_remote(const struct bt_shell *sh, size_t argc, char *
 
 BT_MESH_SHELL_MDL_INSTANCE_CMDS(instance_cmds, BT_MESH_MODEL_ID_REMOTE_PROV_CLI, mod);
 
-BT_SHELL_SUBCMD_SET_CREATE(
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	rpr_cli_cmds,
 	BT_SHELL_CMD_ARG(scan, NULL, "<Timeout(s)> [<UUID(1-16 hex)>]", cmd_scan, 2, 1),
 	BT_SHELL_CMD_ARG(scan-ext, NULL, "<Timeout(s)> <UUID(1-16 hex)> [<ADType> ... ]",

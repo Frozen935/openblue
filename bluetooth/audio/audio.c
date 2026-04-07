@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+#include <bluetooth/assigned_numbers.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
 #include <bluetooth/att.h>
@@ -21,6 +22,7 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_types.h>
+#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 
@@ -28,13 +30,13 @@
 int bt_audio_data_parse(const uint8_t ltv[], size_t size,
 			bool (*func)(struct bt_data *data, void *user_data), void *user_data)
 {
-	CHECKIF(ltv == NULL) {
+	if (ltv == NULL) {
 		LOG_DBG("ltv is NULL");
 
 		return -EINVAL;
 	}
 
-	CHECKIF(func == NULL) {
+	if (func == NULL) {
 		LOG_DBG("func is NULL");
 
 		return -EINVAL;
@@ -106,12 +108,12 @@ int bt_audio_data_get_val(const uint8_t ltv_data[], size_t size, uint8_t type, c
 	};
 	int err;
 
-	CHECKIF(ltv_data == NULL) {
+	if (ltv_data == NULL) {
 		LOG_DBG("ltv_data is NULL");
 		return -EINVAL;
 	}
 
-	CHECKIF(data == NULL) {
+	if (data == NULL) {
 		LOG_DBG("data is NULL");
 		return -EINVAL;
 	}

@@ -12,10 +12,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <bluetooth/audio/tbs.h>
-#include <bluetooth/audio/ccp.h>
-#include <bluetooth/conn.h>
-
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 
@@ -27,7 +23,8 @@ static struct bt_ccp_call_control_client *get_client_by_conn(const struct bt_con
 }
 
 static void ccp_call_control_client_discover_cb(struct bt_ccp_call_control_client *client, int err,
-						struct bt_ccp_call_control_client_bearers *bearers)
+						struct bt_ccp_call_control_client_bearers *bearers,
+						void *user_data)
 {
 	struct bt_ccp_call_control_client_bearer *gtbs_bearer = NULL;
 	uint8_t tbs_count = 0U;
@@ -50,7 +47,7 @@ static void ccp_call_control_client_discover_cb(struct bt_ccp_call_control_clien
 #if defined(CONFIG_BT_TBS_CLIENT_BEARER_PROVIDER_NAME)
 static void
 ccp_call_control_client_bearer_provider_name_cb(struct bt_ccp_call_control_client_bearer *bearer,
-						int err, const char *name)
+						int err, const char *name, void *user_data)
 {
 	if (err != 0) {
 		bt_shell_error("Failed to read bearer %p name: %d", (void *)bearer, err);
@@ -74,14 +71,14 @@ static int cmd_ccp_call_control_client_discover(const struct bt_shell *sh, size_
 	int err;
 
 	if (default_conn == NULL) {
-		bt_shell_error("Not connected");
+		bt_shell_error(sh, "Not connected");
 		return -ENOEXEC;
 	}
 
 	if (!cb_registered) {
 		err = bt_ccp_call_control_client_register_cb(&ccp_call_control_client_cbs);
 		if (err != 0) {
-			bt_shell_error("Failed to register CCP Call Control Client cbs (err %d)",
+			bt_shell_error(sh, "Failed to register CCP Call Control Client cbs (err %d)",
 				    err);
 			return -ENOEXEC;
 		}
@@ -92,7 +89,7 @@ static int cmd_ccp_call_control_client_discover(const struct bt_shell *sh, size_
 	err = bt_ccp_call_control_client_discover(default_conn,
 						  &clients[bt_conn_index(default_conn)]);
 	if (err != 0) {
-		bt_shell_error("Failed to discover GTBS: %d", err);
+		bt_shell_error(sh, "Failed to discover GTBS: %d", err);
 
 		return -ENOEXEC;
 	}
@@ -107,13 +104,13 @@ static int validate_and_get_index(const struct bt_shell *sh, const char *index_a
 
 	index = bt_shell_strtoul(index_arg, 0, &err);
 	if (err != 0) {
-		bt_shell_error("Could not parse index: %d", err);
+		bt_shell_error(sh, "Could not parse index: %d", err);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= CONFIG_BT_CCP_CALL_CONTROL_CLIENT_BEARER_COUNT) {
-		bt_shell_error("Invalid index: %lu", index);
+		bt_shell_error(sh, "Invalid index: %lu", index);
 
 		return -ENOEXEC;
 	}
@@ -168,14 +165,14 @@ static int cmd_ccp_call_control_client_read_bearer_name(const struct bt_shell *s
 
 	bearer = get_bearer_by_index(index);
 	if (bearer == NULL) {
-		bt_shell_error("Failed to get bearer for index %d", index);
+		bt_shell_error(sh, "Failed to get bearer for index %d", index);
 
 		return -ENOEXEC;
 	}
 
 	err = bt_ccp_call_control_client_read_bearer_provider_name(bearer);
 	if (err != 0) {
-		bt_shell_error("Failed to read bearer[%d] provider name: %d", index, err);
+		bt_shell_error(sh, "Failed to read bearer[%d] provider name: %d", index, err);
 
 		return -ENOEXEC;
 	}
@@ -186,15 +183,15 @@ static int cmd_ccp_call_control_client_read_bearer_name(const struct bt_shell *s
 static int cmd_ccp_call_control_client(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
+		bt_shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
 	} else {
-		bt_shell_error("%s Missing subcommand", argv[0]);
+		bt_shell_error(sh, "%s Missing subcommand", argv[0]);
 	}
 
 	return -ENOEXEC;
 }
 
-BT_SHELL_SUBCMD_SET_CREATE(ccp_call_control_client_cmds,
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(ccp_call_control_client_cmds,
 			       BT_SHELL_CMD_ARG(discover, NULL,
 					     "Discover GTBS and TBS on remote device",
 					     cmd_ccp_call_control_client_discover, 1, 0),
@@ -202,11 +199,6 @@ BT_SHELL_SUBCMD_SET_CREATE(ccp_call_control_client_cmds,
 					     cmd_ccp_call_control_client_read_bearer_name, 1, 1),
 			       BT_SHELL_SUBCMD_SET_END);
 
-BT_SHELL_CMD_ARG_DEFINE(ccp_call_control_client, &ccp_call_control_client_cmds,
+BT_SHELL_CMD_ARG_REGISTER(ccp_call_control_client, &ccp_call_control_client_cmds,
 		       "Bluetooth CCP Call Control Client shell commands",
 		       cmd_ccp_call_control_client, 1, 1);
-
-int bt_shell_cmd_ccp_call_control_client_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &ccp_call_control_client);
-}

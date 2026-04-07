@@ -11,10 +11,14 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <autoconf.h>
+
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/iso.h>
+
+#include <utils/bt_slist.h>
 
 #include "ascs_internal.h"
 #include "bap_stream.h"

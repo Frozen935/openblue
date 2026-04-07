@@ -23,6 +23,10 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/services/ots.h>
+#include "osdep/os.h"
+#include <base/bt_atomic.h>
+#include <bluetooth/byteorder.h>
+#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 #include "media_proxy_internal.h"
@@ -35,9 +39,11 @@ static struct media_proxy_sctrl_cbs cbs;
 
 enum {
 	FLAG_PLAYER_NAME_CHANGED,
-	FLAG_ICON_URL_CHANGED,
+	FLAG_PLAYER_NAME_DIRTY,
+	FLAG_ICON_URL_DIRTY,
 	FLAG_TRACK_CHANGED,
 	FLAG_TRACK_TITLE_CHANGED,
+	FLAG_TRACK_TITLE_DIRTY,
 	FLAG_TRACK_DURATION_CHANGED,
 	FLAG_TRACK_POSITION_CHANGED,
 	FLAG_PLAYBACK_SPEED_CHANGED,
@@ -92,11 +98,11 @@ static ssize_t read_player_name(struct bt_conn *conn,
 	if (conn != NULL) {
 		struct client_state *client = &clients[bt_conn_index(conn)];
 
-		if (offset == 0) {
-			bt_atomic_clear_bit(client->flags, FLAG_PLAYER_NAME_CHANGED);
-		} else if (bt_atomic_test_bit(client->flags, FLAG_PLAYER_NAME_CHANGED)) {
+		if (bt_atomic_test_bit(client->flags, FLAG_PLAYER_NAME_DIRTY) && offset != 0U) {
 			return BT_GATT_ERR(BT_MCS_ERR_LONG_VAL_CHANGED);
 		}
+
+		bt_atomic_clear_bit(client->flags, FLAG_PLAYER_NAME_DIRTY);
 	}
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, name,
@@ -137,11 +143,11 @@ static ssize_t read_icon_url(struct bt_conn *conn,
 	if (conn != NULL) {
 		struct client_state *client = &clients[bt_conn_index(conn)];
 
-		if (offset == 0) {
-			bt_atomic_clear_bit(client->flags, FLAG_ICON_URL_CHANGED);
-		} else if (bt_atomic_test_bit(client->flags, FLAG_ICON_URL_CHANGED)) {
+		if (bt_atomic_test_bit(client->flags, FLAG_ICON_URL_DIRTY) && offset != 0U) {
 			return BT_GATT_ERR(BT_MCS_ERR_LONG_VAL_CHANGED);
 		}
+
+		bt_atomic_clear_bit(client->flags, FLAG_ICON_URL_DIRTY);
 	}
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, url,
@@ -164,11 +170,11 @@ static ssize_t read_track_title(struct bt_conn *conn,
 	if (conn != NULL) {
 		struct client_state *client = &clients[bt_conn_index(conn)];
 
-		if (offset == 0) {
-			bt_atomic_clear_bit(client->flags, FLAG_TRACK_TITLE_CHANGED);
-		} else if (bt_atomic_test_bit(client->flags, FLAG_TRACK_TITLE_CHANGED)) {
+		if (bt_atomic_test_bit(client->flags, FLAG_TRACK_TITLE_DIRTY) && offset != 0U) {
 			return BT_GATT_ERR(BT_MCS_ERR_LONG_VAL_CHANGED);
 		}
+
+		bt_atomic_clear_bit(client->flags, FLAG_TRACK_TITLE_DIRTY);
 	}
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, title,
@@ -190,12 +196,6 @@ static ssize_t read_track_duration(struct bt_conn *conn,
 
 	LOG_DBG("Track duration read: %d (0x%08x)", duration, duration);
 
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_TRACK_DURATION_CHANGED);
-	}
-
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &duration_le, sizeof(duration_le));
 }
 
@@ -211,12 +211,6 @@ static ssize_t read_track_position(struct bt_conn *conn, const struct bt_gatt_at
 	int32_t position_le = sys_cpu_to_le32(position);
 
 	LOG_DBG("Track position read: %d (0x%08x)", position, position);
-
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_TRACK_POSITION_CHANGED);
-	}
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &position_le,
 				 sizeof(position_le));
@@ -260,12 +254,6 @@ static ssize_t read_playback_speed(struct bt_conn *conn,
 
 	LOG_DBG("Playback speed read: %d", speed);
 
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_PLAYBACK_SPEED_CHANGED);
-	}
-
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &speed, sizeof(speed));
 }
 
@@ -301,12 +289,6 @@ static ssize_t read_seeking_speed(struct bt_conn *conn, const struct bt_gatt_att
 	int8_t speed = media_proxy_sctrl_get_seeking_speed();
 
 	LOG_DBG("Seeking speed read: %d", speed);
-
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_SEEKING_SPEED_CHANGED);
-	}
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &speed,
 				 sizeof(speed));
@@ -344,12 +326,6 @@ static ssize_t read_current_track_id(struct bt_conn *conn,
 	sys_put_le48(track_id, track_id_le);
 
 	LOG_DBG_OBJ_ID("Current track ID read: ", track_id);
-
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_CURRENT_TRACK_OBJ_ID_CHANGED);
-	}
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, track_id_le,
 				 sizeof(track_id_le));
@@ -399,12 +375,6 @@ static ssize_t read_next_track_id(struct bt_conn *conn,
 	uint8_t track_id_le[BT_OTS_OBJ_ID_SIZE];
 
 	sys_put_le48(track_id, track_id_le);
-
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_NEXT_TRACK_OBJ_ID_CHANGED);
-	}
 
 	if (track_id == MPL_NO_TRACK_ID) {
 		LOG_DBG("Next track read, but it is empty");
@@ -465,12 +435,6 @@ static ssize_t read_parent_group_id(struct bt_conn *conn,
 
 	LOG_DBG_OBJ_ID("Parent group read: ", group_id);
 
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_PARENT_GROUP_OBJ_ID_CHANGED);
-	}
-
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, group_id_le,
 				 sizeof(group_id_le));
 }
@@ -491,12 +455,6 @@ static ssize_t read_current_group_id(struct bt_conn *conn,
 	sys_put_le48(group_id, group_id_le);
 
 	LOG_DBG_OBJ_ID("Current group read: ", group_id);
-
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_CURRENT_GROUP_OBJ_ID_CHANGED);
-	}
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, group_id_le,
 				 sizeof(group_id_le));
@@ -547,12 +505,6 @@ static ssize_t read_playing_order(struct bt_conn *conn,
 
 	LOG_DBG("Playing order read: %d (0x%02x)", order, order);
 
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_PLAYING_ORDER_CHANGED);
-	}
-
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &order, sizeof(order));
 }
 
@@ -601,12 +553,6 @@ static ssize_t read_media_state(struct bt_conn *conn, const struct bt_gatt_attr 
 	uint8_t state = media_proxy_sctrl_get_media_state();
 
 	LOG_DBG("Media state read: %d", state);
-
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_MEDIA_STATE_CHANGED);
-	}
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &state,
 				 sizeof(state));
@@ -696,12 +642,6 @@ static ssize_t read_opcodes_supported(struct bt_conn *conn,
 
 	LOG_DBG("Opcodes_supported read: %d (0x%08x)", opcodes, opcodes);
 
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_MEDIA_CONTROL_OPCODES_CHANGED);
-	}
-
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &opcodes_le, sizeof(opcodes_le));
 }
 
@@ -762,12 +702,6 @@ static ssize_t read_search_results_id(struct bt_conn *conn,
 	uint64_t search_id = media_proxy_sctrl_get_search_results_id();
 
 	LOG_DBG_OBJ_ID("Search results id read: ", search_id);
-
-	if (conn != NULL) {
-		struct client_state *client = &clients[bt_conn_index(conn)];
-
-		bt_atomic_clear_bit(client->flags, FLAG_SEARCH_RESULTS_OBJ_ID_CHANGED);
-	}
 
 	/* TODO: The permanent solution here should be that the call to */
 	/* mpl should fill the UUID in a pointed-to value, and return a */
@@ -856,17 +790,19 @@ static ssize_t read_content_ctrl_id(struct bt_conn *conn,
 		      BT_GATT_PERM_READ_ENCRYPT, \
 		      read_search_results_id, NULL, NULL), \
 	BT_AUDIO_CCC(search_results_id_cfg_changed),
+#define INCLUDE_SERVICE_IF_OTS BT_GATT_INCLUDE_SERVICE(NULL), /* To be overwritten */
 
 #else
 #define ICON_OBJ_ID_CHARACTERISTIC_IF_OTS
 #define SEGMENTS_TRACK_GROUP_ID_CHARACTERISTICS_IF_OTS
 #define SEARCH_CHARACTERISTICS_IF_OTS
+#define INCLUDE_SERVICE_IF_OTS
 #endif /* CONFIG_BT_OTS */
 
 /* Media control service attributes */
 #define BT_MCS_SERVICE_DEFINITION \
 	BT_GATT_PRIMARY_SERVICE(BT_UUID_GMCS), \
-	BT_GATT_INCLUDE_SERVICE(NULL), /* To be overwritten */ \
+	INCLUDE_SERVICE_IF_OTS \
 	BT_AUDIO_CHRC(BT_UUID_MCS_PLAYER_NAME, \
 		      BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY, \
 		      BT_GATT_PERM_READ_ENCRYPT, \
@@ -984,7 +920,7 @@ static void notify_string(struct bt_conn *conn, const struct bt_uuid *uuid, cons
 	}
 }
 
-static void mark_icon_url_changed_cb(struct bt_conn *conn, void *data)
+static void mark_dirty(struct bt_conn *conn, void *data)
 {
 	struct client_state *client = &clients[bt_conn_index(conn)];
 	struct bt_conn_info info;
@@ -1001,7 +937,7 @@ static void mark_icon_url_changed_cb(struct bt_conn *conn, void *data)
 		return;
 	}
 
-	bt_atomic_set_bit(client->flags, FLAG_ICON_URL_CHANGED);
+	bt_atomic_set_bit(client->flags, POINTER_TO_UINT(data));
 }
 
 static void notify_cb(struct bt_conn *conn, void *data)
@@ -1201,11 +1137,12 @@ static void media_proxy_sctrl_player_name_cb(const char *name)
 {
 	bt_conn_foreach(BT_CONN_TYPE_LE, defer_value_ntf,
 			UINT_TO_POINTER(FLAG_PLAYER_NAME_CHANGED));
+	bt_conn_foreach(BT_CONN_TYPE_LE, mark_dirty, UINT_TO_POINTER(FLAG_PLAYER_NAME_DIRTY));
 }
 
 void media_proxy_sctrl_icon_url_cb(const char *name)
 {
-	bt_conn_foreach(BT_CONN_TYPE_LE, mark_icon_url_changed_cb, NULL);
+	bt_conn_foreach(BT_CONN_TYPE_LE, mark_dirty, UINT_TO_POINTER(FLAG_ICON_URL_DIRTY));
 }
 
 void media_proxy_sctrl_track_changed_cb(void)
@@ -1218,6 +1155,7 @@ void media_proxy_sctrl_track_title_cb(const char *title)
 {
 	bt_conn_foreach(BT_CONN_TYPE_LE, defer_value_ntf,
 			UINT_TO_POINTER(FLAG_TRACK_TITLE_CHANGED));
+	bt_conn_foreach(BT_CONN_TYPE_LE, mark_dirty, UINT_TO_POINTER(FLAG_TRACK_TITLE_DIRTY));
 }
 
 void media_proxy_sctrl_track_position_cb(int32_t position)

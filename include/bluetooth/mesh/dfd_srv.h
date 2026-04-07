@@ -12,8 +12,8 @@
  * @brief API for the Firmware Distribution Server model
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_DFD_SRV_H___
-#define __INCLUDE_BLUETOOTH_MESH_DFD_SRV_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_DFD_SRV_H___H__
+#define __INCLUDE_BLUETOOTH_MESH_DFD_SRV_H___H__
 
 #include <bluetooth/mesh/access.h>
 #include <bluetooth/mesh/dfd.h>
@@ -308,6 +308,6 @@ extern const struct bt_mesh_blob_srv_cb _bt_mesh_dfd_srv_blob_cb;
 }
 #endif
 
-#endif /* __INCLUDE_BLUETOOTH_MESH_DFD_SRV_H__ */
+#endif /* __INCLUDE_BLUETOOTH_MESH_DFD_SRV_H___H__ */
 
 /** @} */

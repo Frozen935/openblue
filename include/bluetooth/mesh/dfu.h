@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_DFU_H___
-#define __INCLUDE_BLUETOOTH_MESH_DFU_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_DFU_H___H__
+#define __INCLUDE_BLUETOOTH_MESH_DFU_H___H__
 
 #include <sys/types.h>
 
@@ -167,4 +167,4 @@ struct bt_mesh_dfu_slot {
 }
 #endif
 
-#endif /* __INCLUDE_BLUETOOTH_MESH_DFU_H__ */
+#endif /* __INCLUDE_BLUETOOTH_MESH_DFU_H___H__ */

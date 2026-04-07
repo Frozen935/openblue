@@ -12,13 +12,15 @@
  * @brief Common types and functions for the Bluetooth Mesh DFU metadata.
  */
 
-#ifndef __INCLUDE_BLUETOOTH_MESH_DFU_METADATA_H___
-#define __INCLUDE_BLUETOOTH_MESH_DFU_METADATA_H___
+#ifndef __INCLUDE_BLUETOOTH_MESH_DFU_METADATA_H__
+#define __INCLUDE_BLUETOOTH_MESH_DFU_METADATA_H__
 
 #include <stdint.h>
 
 #include <sys/types.h>
 
+#include <base/bt_buf.h>
+#include <utils/bt_utils.h>
 
 #ifdef __cplusplus
 extern "C" {

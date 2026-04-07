@@ -10,6 +10,7 @@
 #ifndef __INCLUDE_BLUETOOTH_MESH_ACCESS_H__
 #define __INCLUDE_BLUETOOTH_MESH_ACCESS_H__
 
+#include <utils/bt_utils.h>
 #include <bluetooth/assigned_numbers.h>
 #include <bluetooth/mesh/msg.h>
 
@@ -577,7 +578,7 @@ struct bt_mesh_model_pub {
 	int (*update)(const struct bt_mesh_model *mod);
 
 	/** Publish Period Timer. Only for stack-internal use. */
-	struct bt_work_delayable timer;
+	struct k_work_delayable timer;
 };
 
 /**
@@ -873,7 +874,7 @@ static inline bool bt_mesh_model_in_primary(const struct bt_mesh_model *mod)
  *  @param mod      Mesh model.
  *  @param vnd      This is a vendor model.
  *  @param name     Name/key of the settings item. Only
- *                  @ref SETTINGS_MAX_DIR_DEPTH bytes will be used at most.
+ *                  a limited number of bytes will be used at most.
  *  @param data     Model data to store, or NULL to delete any model data.
  *  @param data_len Length of the model data.
  *

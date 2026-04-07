@@ -1,6 +1,6 @@
 # OpenBlue 协议栈本地构建指南
 
-该项目是从 Zephyr 蓝牙子系统中提取的独立模块，使用 GNU Make 构建。目前默认启用 mbed TLS (CONFIG_OPENBLUE_CRYPTO_USE_MBEDTLS=y)，并支持“系统优先，本地回退”的依赖处理方式，以确保即使在干净的环境中也能稳定编译演示程序。
+该项目是从 Zephyr 蓝牙子系统中提取的独立模块，使用 CMake 构建。目前默认启用 mbed TLS (CONFIG_OPENBLUE_CRYPTO_USE_MBEDTLS=y)，并支持“系统优先，本地回退”的依赖处理方式，以确保即使在干净的环境中也能稳定编译演示程序。
 
 ## 环境依赖
 - gcc (推荐) 或 clang
@@ -73,7 +73,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j
 
 ### 注意事项
 
-- 如果在首次运行时在仓库根目录中找不到 `.config` 文件，需要运行 `make --build build --target genconfig` 来生成默认配置。
+- 如果在首次运行时在仓库根目录中找不到 `.config` 文件，需要运行 `cmake --build build --target genconfig` 来生成默认配置。
 - 构建产物将位于 `build/` 目录中:
   - `build/libopenblue.a`
   - `build/samples/demo/demo`
@@ -89,64 +89,6 @@ sudo ./build/samples/demo/demo
 ```bash
 sudo ./build/samples/cmds/btcmd
 ```
-
-## 使用 Make 构建 (Linux 可选)
-在仓库根目录中执行:
-
-### Kconfig 配置
-如果找不到 `.config`，需要运行 `genconfig` 来生成 `include/generated/autoconf.h`
-```bash
-make genconfig
-```
-### 打开 Kconfig 菜单
-启动 Kconfig menuconfig 界面，编辑配置并保存。
-```bash
-make menuconfig
-```
-
-### 构建项目
-```bash
-make clean; make all -j4
-```
-
-这将生成:
-- `libopenblue.a`
-- `samples/demo/demo`
-- `samples/cmds/btcmd`
-
-首次执行将自动安装 `kconfiglib` 并生成 `include/generated/autoconf.h`。当系统中未安装 mbed TLS 时，它将自动获取并构建本地的 `third_party/mbedtls` (固定版本)。
-
-### 常用目标
-- `make all`: 构建所有内容 (默认目标)
-- `make demo`: 仅构建示例程序
-- `make test`: 构建并运行单元测试
-- `make clean`: 清理构建产物 (不清理 `third_party/mbedtls` 源代码和库)
-- `make menuconfig`: 打开 Kconfig 菜单并更新 `.config`
-
-### 运行示例程序
-构建后，运行演示程序:
-```bash
-sudo ./samples/demo/demo
-```
-
-运行 btcmd 启动命令行界面:
-```bash
-sudo ./samples/cmds/btcmd
-```
-
-### 交叉编译
-可以通过环境变量覆盖工具链:
-`CROSS_COMPILE=aarch64-linux-gnu- make`
-
-### 使用 make 为外部项目构建蓝牙模块
-蓝牙模块已被分离到 `bluetooth/module.mk` 和 `bluetooth/Makefile` 中。它可以被外部项目直接包含，也可以在此仓库中作为独立的静态库构建。
-
-- 关键变量:
-  - `BT_PLATFORM`: 选择平台 (支持 `linux`, `nuttx`; `freertos` 为保留项)。
-    - `linux`: 使用 `osdep/posix/os.c` 和 `drivers/hci_sock.c`。
-    - `nuttx`: 使用 `drivers/h4.c` (目前仍使用 `osdep/posix/os.c` 以确保最小可行性)。
-  - `BT_AUTOCONF_H`: 自动生成的配置头文件的路径 (默认为 `$(BT_ROOT)/include/generated/autoconf.h`)。该模块不负责生成此文件；它必须由父项目使用 Kconfig 工具链生成。
-  - `BT_SRCS` / `BT_CPPFLAGS`: 模块公开的源文件列表和编译包含路径。它已经包含了 `-include $(BT_AUTOCONF_H)` 和 `-include shim/include/shim.h`。
 
 ## 故障排除
 - 无法从网络获取 `third_party/mbedtls`:

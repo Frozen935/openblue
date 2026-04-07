@@ -2,14 +2,12 @@
  * avdtp_internal.h - avdtp handling
 
  * Copyright (c) 2015-2016 Intel Corporation
- * Copyright 2021,2024 NXP
+ * Copyright 2021,2024-2025 NXP
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <bluetooth/classic/avdtp.h>
-
-#include "osdep/os.h"
 
 /* @brief A2DP ROLE's */
 #define A2DP_SRC_ROLE 0x00
@@ -101,6 +99,7 @@ typedef int (*bt_avdtp_func_t)(struct bt_avdtp_req *req, struct bt_buf *buf);
 struct bt_avdtp_req {
 	uint8_t sig;
 	uint8_t tid;
+	/* set it as 0 (BT_AVDTP_SUCCESS) before giving the req to avdtp */
 	uint8_t status;
 	bt_avdtp_func_t func;
 };
@@ -280,7 +279,7 @@ struct bt_avdtp_event_cb {
 };
 
 /* Initialize AVDTP layer*/
-int bt_avdtp_init(void);
+void bt_avdtp_init(void);
 
 /* Application register with AVDTP layer */
 int bt_avdtp_register(struct bt_avdtp_event_cb *cb);

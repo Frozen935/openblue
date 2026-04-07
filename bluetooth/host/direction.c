@@ -1028,10 +1028,10 @@ bt_df_set_per_adv_sync_cte_rx_enable(struct bt_le_per_adv_sync *sync, bool enabl
 int bt_df_per_adv_sync_cte_rx_enable(struct bt_le_per_adv_sync *sync,
 				     const struct bt_df_per_adv_sync_cte_rx_param *params)
 {
-	CHECKIF(!sync) {
+	if (!sync) {
 		return -EINVAL;
 	}
-	CHECKIF(!params) {
+	if (!params) {
 		return -EINVAL;
 	}
 
@@ -1040,7 +1040,7 @@ int bt_df_per_adv_sync_cte_rx_enable(struct bt_le_per_adv_sync *sync,
 
 int bt_df_per_adv_sync_cte_rx_disable(struct bt_le_per_adv_sync *sync)
 {
-	CHECKIF(!sync) {
+	if (!sync) {
 		return -EINVAL;
 	}
 
@@ -1067,11 +1067,11 @@ static int bt_df_set_conn_cte_rx_enable(struct bt_conn *conn, bool enable,
 
 int bt_df_conn_cte_rx_enable(struct bt_conn *conn, const struct bt_df_conn_cte_rx_param *params)
 {
-	CHECKIF(!conn) {
+	if (!conn) {
 		return -EINVAL;
 	}
 
-	CHECKIF(!params) {
+	if (!params) {
 		return -EINVAL;
 	}
 
@@ -1080,7 +1080,7 @@ int bt_df_conn_cte_rx_enable(struct bt_conn *conn, const struct bt_df_conn_cte_r
 
 int bt_df_conn_cte_rx_disable(struct bt_conn *conn)
 {
-	CHECKIF(!conn) {
+	if (!conn) {
 		return -EINVAL;
 	}
 
@@ -1091,11 +1091,11 @@ int bt_df_conn_cte_rx_disable(struct bt_conn *conn)
 #if defined(CONFIG_BT_DF_CONNECTION_CTE_TX)
 int bt_df_set_conn_cte_tx_param(struct bt_conn *conn, const struct bt_df_conn_cte_tx_param *params)
 {
-	CHECKIF(!conn) {
+	if (!conn) {
 		return -EINVAL;
 	}
 
-	CHECKIF(!params) {
+	if (!params) {
 		return -EINVAL;
 	}
 
@@ -1138,11 +1138,11 @@ static int bt_df_set_conn_cte_req_enable(struct bt_conn *conn, bool enable,
 
 int bt_df_conn_cte_req_enable(struct bt_conn *conn, const struct bt_df_conn_cte_req_params *params)
 {
-	CHECKIF(!conn) {
+	if (!conn) {
 		return -EINVAL;
 	}
 
-	CHECKIF(!params) {
+	if (!params) {
 		return -EINVAL;
 	}
 
@@ -1151,7 +1151,7 @@ int bt_df_conn_cte_req_enable(struct bt_conn *conn, const struct bt_df_conn_cte_
 
 int bt_df_conn_cte_req_disable(struct bt_conn *conn)
 {
-	CHECKIF(!conn) {
+	if (!conn) {
 		return -EINVAL;
 	}
 
@@ -1162,7 +1162,7 @@ int bt_df_conn_cte_req_disable(struct bt_conn *conn)
 #if defined(CONFIG_BT_DF_CONNECTION_CTE_RSP)
 static int bt_df_set_conn_cte_rsp_enable(struct bt_conn *conn, bool enable)
 {
-	CHECKIF(!conn) {
+	if (!conn) {
 		return -EINVAL;
 	}
 

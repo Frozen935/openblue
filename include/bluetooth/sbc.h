@@ -10,9 +10,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+
+#if defined(CONFIG_LIBSBC)
 #include "sbc_encoder.h"
 #include "oi_codec_sbc.h"
 #include "oi_status.h"
+#endif
 
 /** @brief SBC channel mode */
 enum __packed sbc_ch_mode {
@@ -35,12 +38,16 @@ enum __packed sbc_alloc_mthd {
 };
 
 /** @brief SBC encoder */
+#if defined(CONFIG_LIBSBC)
 struct sbc_encoder {
 	/** @cond INTERNAL_HIDDEN */
 	/** Internally used field for encoder */
 	SBC_ENC_PARAMS sbc_encoder_params;
 	/** @endcond */
 };
+#else
+struct sbc_encoder;
+#endif
 
 /** @brief Encoder initialization parameters */
 struct sbc_encoder_init_param {
@@ -108,6 +115,7 @@ int sbc_frame_bytes(struct sbc_encoder *encoder);
 int sbc_frame_encoded_bytes(struct sbc_encoder *encoder);
 
 /** @brief SBC decoder */
+#if defined(CONFIG_LIBSBC)
 struct sbc_decoder {
 	/** @cond INTERNAL_HIDDEN */
 	/** Internally used fields for decoder */
@@ -115,6 +123,9 @@ struct sbc_decoder {
 	uint32_t context_data[CODEC_DATA_WORDS(2, SBC_CODEC_FAST_FILTER_BUFFERS)];
 	/** @endcond */
 };
+#else
+struct sbc_decoder;
+#endif
 
 /** @brief Setup the SBC decoder.
  *

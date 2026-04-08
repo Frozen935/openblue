@@ -33,11 +33,8 @@ static bt_atomic_ptr_t buf_rx_freed_cb;
 static void buf_rx_freed_notify(enum bt_buf_type mask)
 {
 	bt_buf_rx_freed_cb_t cb;
-	bool in_isr = k_is_in_isr();
 
-	if (!in_isr) {
-		k_sched_lock();
-	}
+	os_sched_lock();
 
 	cb = (bt_buf_rx_freed_cb_t)bt_atomic_ptr_get(&buf_rx_freed_cb);
 
@@ -45,9 +42,7 @@ static void buf_rx_freed_notify(enum bt_buf_type mask)
 		cb(mask);
 	}
 
-	if (!in_isr) {
-		k_sched_unlock();
-	}
+	os_sched_unlock();
 }
 
 #if defined(CONFIG_BT_ISO_RX)
@@ -110,8 +105,8 @@ struct bt_buf *bt_buf_get_rx(enum bt_buf_type type, os_timeout_t timeout)
 {
 	struct bt_buf *buf;
 
-	__ASSERT(type == BT_BUF_EVT || type == BT_BUF_ACL_IN ||
-		 type == BT_BUF_ISO_IN, "Invalid buffer type requested");
+	__ASSERT_MSG(type == BT_BUF_EVT || type == BT_BUF_ACL_IN ||
+		     type == BT_BUF_ISO_IN, "Invalid buffer type requested");
 
 	if (IS_ENABLED(CONFIG_BT_ISO_RX) && type == BT_BUF_ISO_IN) {
 		return bt_iso_get_rx(timeout);
@@ -135,11 +130,15 @@ struct bt_buf *bt_buf_get_rx(enum bt_buf_type type, os_timeout_t timeout)
 
 void bt_buf_rx_freed_cb_set(bt_buf_rx_freed_cb_t cb)
 {
+	os_sched_lock();
+
 	bt_atomic_ptr_set(&buf_rx_freed_cb, (void *)cb);
 
 #if defined(CONFIG_BT_ISO_RX)
 	bt_iso_buf_rx_freed_cb_set(cb != NULL ? iso_rx_freed_cb : NULL);
 #endif
+
+	os_sched_unlock();
 }
 
 struct bt_buf *bt_buf_get_evt(uint8_t evt, bool discardable,

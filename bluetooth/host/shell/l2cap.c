@@ -480,7 +480,7 @@ static int cmd_metrics(const struct bt_shell *sh, size_t argc, char *argv[])
 	} else if (!strcmp(action, "off")) {
 		metrics = false;
 	} else {
-		shell_help(sh);
+		bt_shell_help(sh);
 		return 0;
 	}
 
@@ -521,13 +521,13 @@ static int cmd_allowlist_remove(const struct bt_shell *sh, size_t argc, char *ar
 
 #define HELP_NONE "[none]"
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(allowlist_cmds,
+BT_SHELL_SUBCMD_SET_CREATE(allowlist_cmds,
 	BT_SHELL_CMD_ARG(add, NULL, HELP_NONE, cmd_allowlist_add, 1, 0),
 	BT_SHELL_CMD_ARG(remove, NULL, HELP_NONE, cmd_allowlist_remove, 1, 0),
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(l2cap_cmds,
+BT_SHELL_SUBCMD_SET_CREATE(l2cap_cmds,
 	BT_SHELL_CMD_ARG(connect, NULL, "<psm> [sec_level]", cmd_connect, 2, 1),
 	BT_SHELL_CMD_ARG(disconnect, NULL, HELP_NONE, cmd_disconnect, 1, 0),
 	BT_SHELL_CMD_ARG(metrics, NULL, "<value on, off>", cmd_metrics, 2, 0),
@@ -549,7 +549,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(l2cap_cmds,
 static int cmd_l2cap(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		shell_help(sh);
+		bt_shell_help(sh);
 		/* shell returns 1 when help is printed */
 		return 1;
 	}
@@ -559,5 +559,10 @@ static int cmd_l2cap(const struct bt_shell *sh, size_t argc, char **argv)
 	return -ENOEXEC;
 }
 
-BT_SHELL_CMD_ARG_REGISTER(l2cap, &l2cap_cmds, "Bluetooth L2CAP shell commands",
-		       cmd_l2cap, 1, 1);
+BT_SHELL_CMD_ARG_DEFINE(l2cap, &l2cap_cmds, "Bluetooth L2CAP shell commands",
+			 cmd_l2cap, 1, 1);
+
+int bt_shell_cmd_l2cap_register(struct bt_shell *sh)
+{
+	return bt_shell_cmd_register(sh, &l2cap);
+}

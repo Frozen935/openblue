@@ -25,8 +25,6 @@
 #include <bluetooth/hci_types.h>
 #include <bluetooth/hci_vs.h>
 #include <bluetooth/testing.h>
-#include <soc.h>
-
 #include "addr_internal.h"
 #include "adv.h"
 #include "classic/br.h"
@@ -390,7 +388,7 @@ int bt_hci_cmd_send_sync(uint16_t opcode, struct bt_buf *buf,
 		}
 	} else {
 		/* `cmd(buf)` depends on this  */
-		if (bt_buf_pool_get(buf->pool_id) != &hci_cmd_pool) {
+		if (buf->pool != &hci_cmd_pool) {
 			__ASSERT_NO_MSG(false);
 			return -EINVAL;
 		}

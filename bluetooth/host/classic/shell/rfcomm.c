@@ -266,7 +266,7 @@ static int cmd_send_rpn(const struct bt_shell *sh, size_t argc, char *argv[])
 #define HELP_NONE "[none]"
 #define HELP_ADDR_LE "<address: XX:XX:XX:XX:XX:XX> <type: (public|random)>"
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(rfcomm_cmds,
+BT_SHELL_SUBCMD_SET_CREATE(rfcomm_cmds,
 	BT_SHELL_CMD_ARG(register, NULL, HELP_NONE, cmd_register, 1, 0),
 	BT_SHELL_CMD_ARG(connect, NULL, "<channel>", cmd_connect, 2, 0),
 	BT_SHELL_CMD_ARG(disconnect, NULL, HELP_NONE, cmd_disconnect, 1, 0),
@@ -278,7 +278,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(rfcomm_cmds,
 static int cmd_rfcomm(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		shell_help(sh);
+		bt_shell_help(sh);
 		/* shell returns 1 when help is printed */
 		return 1;
 	}
@@ -288,5 +288,10 @@ static int cmd_rfcomm(const struct bt_shell *sh, size_t argc, char **argv)
 	return -ENOEXEC;
 }
 
-BT_SHELL_CMD_ARG_REGISTER(rfcomm, &rfcomm_cmds, "Bluetooth RFCOMM shell commands",
-		       cmd_rfcomm, 1, 1);
+BT_SHELL_CMD_ARG_DEFINE(rfcomm, &rfcomm_cmds, "Bluetooth RFCOMM shell commands",
+			 cmd_rfcomm, 1, 1);
+
+int bt_shell_cmd_rfcomm_register(struct bt_shell *sh)
+{
+	return bt_shell_cmd_register(sh, &rfcomm);
+}

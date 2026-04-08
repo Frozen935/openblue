@@ -1268,7 +1268,7 @@ static uint8_t set_cb(const struct bt_gatt_attr *attr, uint16_t handle,
 	ssize_t ret;
 
 	if (!attr->write) {
-		shell_error(data->sh, "Write not supported");
+		bt_shell_error("Write not supported");
 		data->err = -ENOENT;
 		return BT_GATT_ITER_CONTINUE;
 	}
@@ -1280,7 +1280,7 @@ static uint8_t set_cb(const struct bt_gatt_attr *attr, uint16_t handle,
 	ret = attr->write(NULL, attr, (void *)buf, i, 0, 0);
 	if (ret < 0) {
 		data->err = ret;
-		shell_error(data->sh, "Failed to write: %zd", ret);
+		bt_shell_error("Failed to write: %zd", ret);
 		return BT_GATT_ITER_STOP;
 	}
 
@@ -1327,7 +1327,7 @@ int cmd_att_mtu(const struct bt_shell *sh, size_t argc, char *argv[])
 #define HELP_NONE "[none]"
 #define HELP_ADDR_LE "<address: XX:XX:XX:XX:XX:XX> <type: (public|random)>"
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(gatt_cmds,
+BT_SHELL_SUBCMD_SET_CREATE(gatt_cmds,
 #if defined(CONFIG_BT_GATT_CLIENT)
 	BT_SHELL_CMD_ARG(discover, NULL,
 		      "[UUID] [start handle] [end handle]", cmd_discover, 1, 3),
@@ -1385,7 +1385,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(gatt_cmds,
 static int cmd_gatt(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		shell_help(sh);
+		bt_shell_help(sh);
 		/* shell returns 1 when help is printed */
 		return 1;
 	}
@@ -1395,5 +1395,10 @@ static int cmd_gatt(const struct bt_shell *sh, size_t argc, char **argv)
 	return -EINVAL;
 }
 
-BT_SHELL_CMD_ARG_REGISTER(gatt, &gatt_cmds, "Bluetooth GATT shell commands",
-		       cmd_gatt, 1, 1);
+BT_SHELL_CMD_ARG_DEFINE(gatt, &gatt_cmds, "Bluetooth GATT shell commands",
+			 cmd_gatt, 1, 1);
+
+int bt_shell_cmd_gatt_register(struct bt_shell *sh)
+{
+	return bt_shell_cmd_register(sh, &gatt);
+}

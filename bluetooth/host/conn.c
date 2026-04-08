@@ -285,17 +285,16 @@ static void tx_notify_process(struct bt_conn *conn)
 
 	while (1) {
 		struct bt_conn_tx *tx = NULL;
-		unsigned int key;
 		bt_conn_tx_cb_t cb;
 		void *user_data;
 
-		key = irq_lock();
+		os_sched_lock();
 		if (!bt_slist_is_empty(&conn->tx_complete)) {
 			const bt_snode_t *node = bt_slist_get_not_empty(&conn->tx_complete);
 
 			tx = CONTAINER_OF(node, struct bt_conn_tx, node);
 		}
-		irq_unlock(key);
+		os_sched_unlock();
 
 		if (!tx) {
 			return;
@@ -335,7 +334,7 @@ void bt_conn_tx_notify(struct bt_conn *conn, bool wait_for_completion)
 		int err;
 
 		err = bt_work_submit_to_queue(tx_notify_workqueue_get(), &conn->tx_complete_work);
-		__ASSERT(err >= 0, "couldn't submit (err %d)", err);
+		__ASSERT_MSG(err >= 0, "couldn't submit (err %d)", err);
 
 		if (wait_for_completion) {
 			(void)bt_work_flush(&conn->tx_complete_work, &sync);
@@ -494,7 +493,7 @@ void bt_conn_recv(struct bt_conn *conn, struct bt_buf *buf, uint8_t flags)
 	} else if (IS_ENABLED(CONFIG_BT_CONN)) {
 		bt_acl_recv(conn, buf, flags);
 	} else {
-		__ASSERT(false, "Invalid connection type %u", conn->type);
+		__ASSERT_MSG(false, "Invalid connection type %u", conn->type);
 	}
 }
 
@@ -665,7 +664,7 @@ static int send_buf(struct bt_conn *conn, struct bt_buf *buf,
 		 * "acquire" as `tx_processor()` is not re-entrant and the
 		 * thread is non-preemptible. So the sem value shouldn't change.
 		 */
-		__ASSERT(0, "No controller bufs");
+		__ASSERT_MSG(0, "No controller bufs");
 
 		err = -ENOMEM;
 		goto error_return;
@@ -676,7 +675,7 @@ static int send_buf(struct bt_conn *conn, struct bt_buf *buf,
 
 	/* See big comment above */
 	if (!tx) {
-		__ASSERT(0, "No TX context");
+		__ASSERT_MSG(0, "No TX context");
 		(void)os_sem_give(pkts);
 		err = -ENOMEM;
 		goto error_return;
@@ -736,7 +735,7 @@ static int send_buf(struct bt_conn *conn, struct bt_buf *buf,
 		err = send_acl(conn, frag, flags);
 	} else {
 		err = -EINVAL; /* asserts may be disabled */
-		__ASSERT(false, "Invalid connection type %u", conn->type);
+		__ASSERT_MSG(false, "Invalid connection type %u", conn->type);
 	}
 
 	if (!err) {
@@ -760,7 +759,6 @@ static int send_buf(struct bt_conn *conn, struct bt_buf *buf,
 	 * destroyed context later.
 	 */
 	conn_tx_destroy(conn, tx);
-	os_sem_t *pkts = bt_conn_get_pkts(conn);
 	if (pkts) {
 		(void)os_sem_give(pkts);
 	}
@@ -1479,7 +1477,7 @@ void bt_conn_unref(struct bt_conn *conn)
 	/* Used only if CONFIG_ASSERT and CONFIG_BT_CONN_TX. */
 	__maybe_unused bool conn_tx_is_pending;
 
-	__ASSERT(conn, "Invalid connection reference");
+	__ASSERT_MSG(conn, "Invalid connection reference");
 
 	/* If we're removing the last reference, the connection object will be
 	 * considered freed and possibly re-allocated by the Bluetooth Host stack
@@ -1496,7 +1494,7 @@ void bt_conn_unref(struct bt_conn *conn)
 
 	LOG_DBG("handle %u ref %ld -> %ld", conn_handle, old, (old - 1));
 
-	__ASSERT(old > 0, "Conn reference counter is 0");
+	__ASSERT_MSG(old > 0, "Conn reference counter is 0");
 
 	/* Whether we removed the last reference. */
 	deallocated = (old == 1);
@@ -1505,7 +1503,7 @@ void bt_conn_unref(struct bt_conn *conn)
 	}
 
 	IF_ENABLED(CONFIG_BT_CONN_TX,
-		   (__ASSERT(!conn_tx_is_pending,
+		   (__ASSERT_MSG(!conn_tx_is_pending,
 			     "tx_complete_work is pending when conn is deallocated");))
 
 #if defined(CONFIG_BT_CONN)
@@ -1527,22 +1525,22 @@ uint8_t bt_conn_index(const struct bt_conn *conn)
 	switch (conn->type) {
 #if defined(CONFIG_BT_ISO)
 	case BT_CONN_TYPE_ISO:
-		__ASSERT(IS_ARRAY_ELEMENT(iso_conns, conn), "Invalid bt_conn pointer");
+		__ASSERT_MSG(IS_ARRAY_ELEMENT(iso_conns, conn), "Invalid bt_conn pointer");
 		index = ARRAY_INDEX(iso_conns, conn);
 		break;
 #endif
 #if defined(CONFIG_BT_CLASSIC)
 	case BT_CONN_TYPE_SCO:
-		__ASSERT(IS_ARRAY_ELEMENT(sco_conns, conn), "Invalid bt_conn pointer");
+		__ASSERT_MSG(IS_ARRAY_ELEMENT(sco_conns, conn), "Invalid bt_conn pointer");
 		index = ARRAY_INDEX(sco_conns, conn);
 		break;
 #endif
 	default:
 #if defined(CONFIG_BT_CONN)
-		__ASSERT(IS_ARRAY_ELEMENT(acl_conns, conn), "Invalid bt_conn pointer");
+		__ASSERT_MSG(IS_ARRAY_ELEMENT(acl_conns, conn), "Invalid bt_conn pointer");
 		index = ARRAY_INDEX(acl_conns, conn);
 #else
-		__ASSERT(false, "Invalid connection type %u", conn->type);
+		__ASSERT_MSG(false, "Invalid connection type %u", conn->type);
 #endif /* CONFIG_BT_CONN */
 		break;
 	}
@@ -1926,7 +1924,7 @@ int bt_conn_disconnect(struct bt_conn *conn, uint8_t reason)
 		}
 #endif /* CONFIG_BT_CLASSIC */
 		else {
-			__ASSERT(false, "Invalid conn type %u", conn->type);
+			__ASSERT_MSG(false, "Invalid conn type %u", conn->type);
 		}
 
 		return 0;
@@ -2838,7 +2836,7 @@ static enum bt_conn_state conn_internal_to_public_state(bt_conn_state_t state)
 	case BT_CONN_DISCONNECTING:
 		return BT_CONN_STATE_DISCONNECTING;
 	default:
-		__ASSERT(false, "Invalid conn state %u", state);
+		__ASSERT_MSG(false, "Invalid conn state %u", state);
 		return 0;
 	}
 }

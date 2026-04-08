@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
+
+#include <base/utils.h>
 
 static int hexval(int c)
 {
@@ -44,6 +47,61 @@ int hex2char(uint8_t x, char *c)
 	}
 
 	return 0;
+}
+
+int uuid_from_string(const char data[UUID_STR_LEN], struct uuid *out)
+{
+	static const size_t hyphen_pos[] = { 8U, 13U, 18U, 23U };
+	size_t byte_idx = 0U;
+
+	if (data == NULL || out == NULL || strlen(data) != (UUID_STR_LEN - 1U)) {
+		return -EINVAL;
+	}
+
+	for (size_t i = 0; i < ARRAY_SIZE(hyphen_pos); i++) {
+		if (data[hyphen_pos[i]] != '-') {
+			return -EINVAL;
+		}
+	}
+
+	for (size_t i = 0; i < (UUID_STR_LEN - 1U);) {
+		uint8_t hi, lo;
+
+		if (data[i] == '-') {
+			i++;
+			continue;
+		}
+
+		if ((i + 1U) >= (UUID_STR_LEN - 1U) || byte_idx >= UUID_SIZE) {
+			return -EINVAL;
+		}
+
+		if (char2hex(data[i], &hi) != 0 || char2hex(data[i + 1U], &lo) != 0) {
+			return -EINVAL;
+		}
+
+		out->val[byte_idx++] = (uint8_t)((hi << 4) | lo);
+		i += 2U;
+	}
+
+	return (byte_idx == UUID_SIZE) ? 0 : -EINVAL;
+}
+
+int uuid_to_string(const struct uuid *data, char out[UUID_STR_LEN])
+{
+	if (data == NULL || out == NULL) {
+		return -EINVAL;
+	}
+
+	int ret = snprintf(out, UUID_STR_LEN,
+				   "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
+				   "%02x%02x%02x%02x%02x%02x",
+				   data->val[0], data->val[1], data->val[2], data->val[3],
+				   data->val[4], data->val[5], data->val[6], data->val[7],
+				   data->val[8], data->val[9], data->val[10], data->val[11],
+				   data->val[12], data->val[13], data->val[14], data->val[15]);
+
+	return (ret == (UUID_STR_LEN - 1)) ? 0 : -EINVAL;
 }
 
 size_t bin2hex(const uint8_t *buf, size_t buflen, char *hex, size_t hexlen)

@@ -56,7 +56,7 @@ static bt_slist_t seps;
 #define SET_CONF_REQ(_req) CONTAINER_OF(_req, struct bt_avdtp_set_configuration_params, req)
 #define CTRL_REQ(_req)     CONTAINER_OF(_req, struct bt_avdtp_ctrl_params, req)
 
-#define AVDTP_TIMEOUT K_SECONDS(6)
+#define AVDTP_TIMEOUT OS_SECONDS(6)
 
 static os_sem_t avdtp_sem_lock;
 
@@ -216,7 +216,7 @@ static void avdtp_schedule_media_disconnect_work(struct bt_avdtp_sep *sep, uint8
 		timeout = CHECK_MEDIA_DISCONNECT_TIMEOUT;
 	}
 
-	bt_work_schedule(&sep->_delay_work, K_MSEC(timeout));
+	bt_work_schedule(&sep->_delay_work, OS_MSEC(timeout));
 }
 
 static void avdtp_cancel_media_disconnect_work(struct bt_avdtp_sep *sep)

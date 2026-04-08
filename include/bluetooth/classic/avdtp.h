@@ -179,7 +179,7 @@ struct bt_avdtp_sep {
 	/** sep ops */
 	const struct bt_avdtp_sep_ops *ops;
 	/** delay worker for disconnecting l2cap media channel */
-	struct k_work_delayable _delay_work;
+	struct bt_work_delayable _delay_work;
 	/** delay_work_state */
 	uint8_t _delay_work_state;
 	/** SEP state */

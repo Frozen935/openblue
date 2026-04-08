@@ -408,11 +408,11 @@ void bt_l2cap_connected(struct bt_conn *conn)
 	STRUCT_SECTION_FOREACH(bt_l2cap_fixed_chan, fchan) {
 		struct bt_l2cap_le_chan *le_chan;
 
-		__ASSERT(L2CAP_LE_CID_IS_FIXED(fchan->cid),
+		__ASSERT_MSG(L2CAP_LE_CID_IS_FIXED(fchan->cid),
 			 "CID %u is not in the fixed channel range", fchan->cid);
 
 		chan = bt_l2cap_le_lookup_tx_cid(conn, fchan->cid);
-		__ASSERT(chan == NULL, "Fixed channel with CID %u already exists", fchan->cid);
+		__ASSERT_MSG(chan == NULL, "Fixed channel with CID %u already exists", fchan->cid);
 
 		if (fchan->accept(conn, &chan) < 0) {
 			continue;
@@ -600,9 +600,9 @@ static int l2cap_ecred_conn_req(struct bt_l2cap_chan **chan, int channels)
 	for (i = 0; i < channels; i++) {
 		ch = BT_L2CAP_LE_CHAN(chan[i]);
 
-		__ASSERT(ch->psm == req_psm,
+		__ASSERT_MSG(ch->psm == req_psm,
 			 "The PSM shall be the same for channels in the same request.");
-		__ASSERT(ch->tx.mtu == req_mtu,
+		__ASSERT_MSG(ch->tx.mtu == req_mtu,
 			 "The MTU shall be the same for channels in the same request.");
 
 		ch->ident = ident;
@@ -640,7 +640,7 @@ static void l2cap_le_encrypt_change(struct bt_l2cap_chan *chan, uint8_t status)
 
 		BT_SLIST_FOR_EACH_CONTAINER(&chan->conn->channels, ch, node) {
 			if (le->ident == BT_L2CAP_LE_CHAN(ch)->ident) {
-				__ASSERT(i < BT_L2CAP_ECRED_CHAN_MAX_PER_REQ,
+				__ASSERT_MSG(i < BT_L2CAP_ECRED_CHAN_MAX_PER_REQ,
 					 "There can only be BT_L2CAP_ECRED_CHAN_MAX_PER_REQ "
 					 "channels from the same request.");
 				bt_atomic_clear_bit(ch->status, BT_L2CAP_STATUS_ENCRYPT_PENDING);

@@ -110,6 +110,18 @@
 	(((unsigned long)(x) / (unsigned long)(align)) * (unsigned long)(align))
 #endif
 
+#ifndef UUID_SIZE
+#define UUID_SIZE 16U
+#endif
+
+#ifndef UUID_STR_LEN
+#define UUID_STR_LEN 37U
+#endif
+
+struct uuid {
+	uint8_t val[UUID_SIZE];
+};
+
 #define WB_UP(x) ROUND_UP(x, sizeof(void *))
 
 /* TODO: deprecated, use dynamic register instead */
@@ -124,6 +136,8 @@
 
 int char2hex(char c, uint8_t *x);
 int hex2char(uint8_t x, char *c);
+int uuid_from_string(const char data[UUID_STR_LEN], struct uuid *out);
+int uuid_to_string(const struct uuid *data, char out[UUID_STR_LEN]);
 size_t bin2hex(const uint8_t *buf, size_t buflen, char *hex, size_t hexlen);
 size_t hex2bin(const char *hex, size_t hex_len, uint8_t *out, size_t out_size);
 uint16_t crc16_reflect(uint16_t poly, uint16_t seed, const uint8_t *src, size_t len);

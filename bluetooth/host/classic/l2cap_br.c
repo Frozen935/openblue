@@ -58,11 +58,11 @@
 #define L2CAP_BR_IS_ZERO_LEN_I_FRAME(flag)                                       \
 	((POINTER_TO_UINT(flag) & L2CAP_BR_ZL_I_FRAME_FLAG_MASK) == L2CAP_BR_ZL_I_FRAME_UD_FLAG)
 
-#define L2CAP_BR_INFO_TIMEOUT    K_SECONDS(4)
-#define L2CAP_BR_CFG_TIMEOUT     K_SECONDS(4)
-#define L2CAP_BR_DISCONN_TIMEOUT K_SECONDS(1)
-#define L2CAP_BR_CONN_TIMEOUT    K_SECONDS(40)
-#define L2CAP_BR_ECHO_TIMEOUT    K_SECONDS(30)
+#define L2CAP_BR_INFO_TIMEOUT    OS_SECONDS(4)
+#define L2CAP_BR_CFG_TIMEOUT     OS_SECONDS(4)
+#define L2CAP_BR_DISCONN_TIMEOUT OS_SECONDS(1)
+#define L2CAP_BR_CONN_TIMEOUT    OS_SECONDS(40)
+#define L2CAP_BR_ECHO_TIMEOUT    OS_SECONDS(30)
 
 #define L2CAP_FEAT_FC_MASK           BIT(0)
 #define L2CAP_FEAT_RET_MASK          BIT(1)
@@ -418,21 +418,21 @@ static void l2cap_br_start_timer(struct bt_l2cap_br_chan *br_chan, enum l2cap_br
 	if (type == BT_L2CAP_BR_TIMER_RET) {
 		if (!bt_atomic_test_and_set_bit(br_chan->flags, L2CAP_FLAG_RET_TIMER)) {
 			bt_work_cancel_delayable(&br_chan->monitor_work);
-			bt_work_schedule(&br_chan->ret_work, K_MSEC(br_chan->tx.ret_timeout));
+			bt_work_schedule(&br_chan->ret_work, OS_MSEC(br_chan->tx.ret_timeout));
 			LOG_DBG("Start ret timer");
 		} else {
 			if (!restart) {
 				return;
 			}
 
-			bt_work_reschedule(&br_chan->ret_work, K_MSEC(br_chan->tx.ret_timeout));
+			bt_work_reschedule(&br_chan->ret_work, OS_MSEC(br_chan->tx.ret_timeout));
 			LOG_DBG("Restart ret timer");
 		}
 	} else {
 		if (bt_atomic_test_and_clear_bit(br_chan->flags, L2CAP_FLAG_RET_TIMER)) {
 			bt_work_cancel_delayable(&br_chan->ret_work);
 			bt_work_schedule(&br_chan->monitor_work,
-					K_MSEC(br_chan->tx.monitor_timeout));
+					OS_MSEC(br_chan->tx.monitor_timeout));
 			LOG_DBG("Start monitor timer");
 		} else {
 			if (!restart) {
@@ -440,7 +440,7 @@ static void l2cap_br_start_timer(struct bt_l2cap_br_chan *br_chan, enum l2cap_br
 			}
 
 			bt_work_reschedule(&br_chan->monitor_work,
-					  K_MSEC(br_chan->tx.monitor_timeout));
+					  OS_MSEC(br_chan->tx.monitor_timeout));
 			LOG_DBG("Restart monitor timer");
 		}
 	}
@@ -540,9 +540,9 @@ static bool bt_l2cap_br_check_req_seq_valid(struct bt_l2cap_br_chan *br_chan, ui
 	}
 
 	outstanding_count = bt_l2cap_br_get_outstanding_count(br_chan);
-	__ASSERT(outstanding_count == outstanding_frames,
-		 "Mismatch between window and seq %zu - %zu", outstanding_count,
-		 outstanding_frames);
+	__ASSERT_MSG(outstanding_count == outstanding_frames,
+		     "Mismatch between window and seq %zu - %zu", outstanding_count,
+		     outstanding_frames);
 
 	if (ack_frames <= outstanding_frames) {
 		return true;
@@ -555,7 +555,7 @@ static void l2cap_br_sdu_is_done(struct bt_l2cap_br_chan *br_chan, struct bt_buf
 {
 	bt_conn_tx_cb_t cb;
 
-	__ASSERT(sdu, "Invalid sdu buffer on chan %p", br_chan);
+	__ASSERT_MSG(sdu, "Invalid sdu buffer on chan %p", br_chan);
 
 	/* The SDU is done */
 	LOG_DBG("SDU is done, removing %p", sdu);
@@ -604,7 +604,7 @@ static int bt_l2cap_br_update_req_seq_direct(struct bt_l2cap_br_chan *br_chan, u
 		tx_win = (void *)bt_slist_peek_head(&br_chan->_pdu_outstanding);
 		if (tx_win) {
 			sdu = tx_win->sdu;
-			__ASSERT(sdu, "Invalid sdu buffer on chan %p", br_chan);
+			__ASSERT_MSG(sdu, "Invalid sdu buffer on chan %p", br_chan);
 			bt_buf_simple_restore(&sdu->b, &tx_win->sdu_state);
 			if ((tx_win->sar == BT_L2CAP_CONTROL_SAR_UNSEG) ||
 			    (tx_win->sar == BT_L2CAP_CONTROL_SAR_START)) {
@@ -621,7 +621,7 @@ static int bt_l2cap_br_update_req_seq_direct(struct bt_l2cap_br_chan *br_chan, u
 			tx_win = (void *)bt_slist_peek_head(&br_chan->_pdu_outstanding);
 			if (tx_win) {
 				sdu = tx_win->sdu;
-				__ASSERT(sdu, "Invalid sdu buffer on chan %p", br_chan);
+				__ASSERT_MSG(sdu, "Invalid sdu buffer on chan %p", br_chan);
 				if ((tx_win->sar == BT_L2CAP_CONTROL_SAR_UNSEG) ||
 					(tx_win->sar == BT_L2CAP_CONTROL_SAR_START)) {
 					bt_buf_simple_restore(&sdu->b, &tx_win->sdu_state);
@@ -695,7 +695,7 @@ static void l2cap_br_ret_timeout(struct bt_work *work)
 
 	/* Restart the timer */
 	if (bt_atomic_test_bit(br_chan->flags, L2CAP_FLAG_RET_TIMER)) {
-		bt_work_schedule(&br_chan->ret_work, K_MSEC(br_chan->tx.ret_timeout));
+		bt_work_schedule(&br_chan->ret_work, OS_MSEC(br_chan->tx.ret_timeout));
 	}
 
 	LOG_DBG("chan %p retransmission timeout", br_chan);
@@ -759,7 +759,7 @@ static void l2cap_br_monitor_timeout(struct bt_work *work)
 
 	/* Restart the timer */
 	if (!bt_atomic_test_bit(br_chan->flags, L2CAP_FLAG_RET_TIMER)) {
-		bt_work_schedule(&br_chan->monitor_work, K_MSEC(br_chan->tx.monitor_timeout));
+		bt_work_schedule(&br_chan->monitor_work, OS_MSEC(br_chan->tx.monitor_timeout));
 	}
 
 	LOG_DBG("chan %p monitor timeout", br_chan);
@@ -889,7 +889,7 @@ static inline void l2cap_send(struct bt_conn *conn, uint16_t cid,
 }
 
 static void l2cap_br_chan_send_req(struct bt_l2cap_br_chan *chan,
-				   struct bt_buf *buf, k_timeout_t timeout)
+				   struct bt_buf *buf, os_timeout_t timeout)
 {
 
 	if (bt_l2cap_br_send_cb(chan->chan.conn, BT_L2CAP_CID_BR_SIG, buf,
@@ -1363,8 +1363,8 @@ send_i_frame:
 			if (bt_buf_tailroom(send_buf) < actual_pdu_len) {
 				LOG_ERR("Tailroom of the buffer cannot be filled %zu / %zu",
 					bt_buf_tailroom(send_buf), actual_pdu_len);
-				__ASSERT(false, "Tailroom of the buffer cannot be filled %zu / %zu",
-					 bt_buf_tailroom(send_buf), actual_pdu_len);
+				__ASSERT_MSG(false, "Tailroom of the buffer cannot be filled %zu / %zu",
+					  bt_buf_tailroom(send_buf), actual_pdu_len);
 				bt_buf_unref(send_buf);
 				l2cap_br_free_window(br_chan, tx_win);
 				return NULL;
@@ -1559,7 +1559,7 @@ struct bt_buf *l2cap_br_data_pull(struct bt_conn *conn, size_t amount, size_t *l
 	 */
 	const bt_snode_t *tx_pdu = bt_slist_peek_head(&br_chan->_pdu_tx_queue);
 
-	__ASSERT(tx_pdu, "signaled ready but no PDUs in the TX queue");
+	__ASSERT_MSG(tx_pdu, "signaled ready but no PDUs in the TX queue");
 
 	struct bt_buf *q_pdu = CONTAINER_OF(tx_pdu, struct bt_buf, node);
 
@@ -2013,9 +2013,9 @@ static uint16_t l2cap_br_get_rx_mtu(struct bt_l2cap_br_chan *br_chan)
 	 */
 	rx_mtu -= BT_L2CAP_FCS_SIZE;
 
-	__ASSERT(rx_mtu >= L2CAP_BR_MIN_MTU,
-		 "Invalid MTU (%u < %u). Please increase CONFIG_BT_BUF_ACL_RX_SIZE.", rx_mtu,
-		 L2CAP_BR_MIN_MTU);
+	__ASSERT_MSG(rx_mtu >= L2CAP_BR_MIN_MTU,
+		     "Invalid MTU (%u < %u). Please increase CONFIG_BT_BUF_ACL_RX_SIZE.", rx_mtu,
+		     L2CAP_BR_MIN_MTU);
 
 	return rx_mtu;
 }
@@ -5616,7 +5616,7 @@ failed:
 }
 #endif /* CONFIG_BT_L2CAP_SEG_RECV */
 
-static struct bt_buf *l2cap_br_alloc_frag(k_timeout_t timeout, void *user_data)
+static struct bt_buf *l2cap_br_alloc_frag(os_timeout_t timeout, void *user_data)
 {
 	struct bt_l2cap_br_chan *chan = user_data;
 	struct bt_buf *frag = NULL;
@@ -6513,7 +6513,7 @@ static int l2cap_br_connless_accept(struct bt_conn *conn, struct bt_l2cap_chan *
 	LOG_DBG("conn %p handle %u", conn, conn->handle);
 
 	index = bt_conn_index(conn);
-	__ASSERT(index < ARRAY_SIZE(bt_l2cap_br_pool), "Invalid ACL conn index");
+	__ASSERT_MSG(index < ARRAY_SIZE(bt_l2cap_br_pool), "Invalid ACL conn index");
 
 	br_chan = &bt_l2cap_br_connless_pool[index];
 

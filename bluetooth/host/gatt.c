@@ -1192,7 +1192,7 @@ static void sc_process(struct bt_work *work)
 	struct gatt_sc *sc = CONTAINER_OF(dwork, struct gatt_sc, work);
 	uint16_t sc_range[2];
 
-	__ASSERT(!bt_atomic_test_bit(sc->flags, SC_INDICATE_PENDING),
+	__ASSERT_MSG(!bt_atomic_test_bit(sc->flags, SC_INDICATE_PENDING),
 		 "Indicate already pending");
 
 	LOG_DBG("start 0x%04x end 0x%04x", sc->start, sc->end);
@@ -1304,7 +1304,7 @@ static void gatt_delayed_store_enqueue(uint8_t id, const bt_addr_le_t *peer_addr
 	if (bonded) {
 		if (el == NULL) {
 			el = gatt_delayed_store_alloc(id, peer_addr);
-			__ASSERT(el != NULL, "Can't save CF / CCC to flash");
+			__ASSERT_MSG(el != NULL, "Can't save CF / CCC to flash");
 		}
 
 		bt_atomic_set_bit(el->flags, flag);
@@ -1570,9 +1570,9 @@ int bt_gatt_service_register(struct bt_gatt_service *svc)
 {
 	int err;
 
-	__ASSERT(svc, "invalid parameters\n");
-	__ASSERT(svc->attrs, "invalid parameters\n");
-	__ASSERT(svc->attr_count, "invalid parameters\n");
+	__ASSERT_MSG(svc, "invalid parameters\n");
+	__ASSERT_MSG(svc->attrs, "invalid parameters\n");
+	__ASSERT_MSG(svc->attr_count, "invalid parameters\n");
 
 	if (IS_ENABLED(CONFIG_BT_SETTINGS) &&
 	    bt_atomic_test_bit(gatt_flags, GATT_INITIALIZED) &&
@@ -1620,7 +1620,7 @@ int bt_gatt_service_unregister(struct bt_gatt_service *svc)
 	uint16_t sc_end_handle;
 	int err;
 
-	__ASSERT(svc, "invalid parameters\n");
+	__ASSERT_MSG(svc, "invalid parameters\n");
 
 	/* gatt_unregister() clears handles when those were auto-assigned
 	 * by host
@@ -2752,8 +2752,8 @@ int bt_gatt_notify_cb(struct bt_conn *conn,
 {
 	struct notify_data data;
 
-	__ASSERT(params, "invalid parameters\n");
-	__ASSERT(params->attr || params->uuid, "invalid parameters\n");
+	__ASSERT_MSG(params, "invalid parameters\n");
+	__ASSERT_MSG(params->attr || params->uuid, "invalid parameters\n");
 
 	if (!bt_atomic_test_bit(bt_dev.flags, BT_DEV_READY)) {
 		return -EAGAIN;
@@ -2809,8 +2809,8 @@ static int gatt_notify_multiple_verify_args(struct bt_conn *conn,
 					    struct bt_gatt_notify_params params[],
 					    uint16_t num_params)
 {
-	__ASSERT(params, "invalid parameters\n");
-	__ASSERT(params->attr, "invalid parameters\n");
+	__ASSERT_MSG(params, "invalid parameters\n");
+	__ASSERT_MSG(params->attr, "invalid parameters\n");
 
 	if (num_params < 2) {
 		/* Use the standard notification API when sending only one
@@ -2977,8 +2977,8 @@ int bt_gatt_indicate(struct bt_conn *conn,
 {
 	struct notify_data data;
 
-	__ASSERT(params, "invalid parameters\n");
-	__ASSERT(params->attr || params->uuid, "invalid parameters\n");
+	__ASSERT_MSG(params, "invalid parameters\n");
+	__ASSERT_MSG(params->attr || params->uuid, "invalid parameters\n");
 
 	if (!bt_atomic_test_bit(bt_dev.flags, BT_DEV_READY)) {
 		return -EAGAIN;
@@ -3324,8 +3324,8 @@ bool bt_gatt_is_subscribed(struct bt_conn *conn,
 	uint8_t ccc_bits_encoded[sizeof(ccc_bits)];
 	ssize_t len;
 
-	__ASSERT(conn, "invalid parameter\n");
-	__ASSERT(attr, "invalid parameter\n");
+	__ASSERT_MSG(conn, "invalid parameter\n");
+	__ASSERT_MSG(attr, "invalid parameter\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return false;
@@ -3355,13 +3355,13 @@ bool bt_gatt_is_subscribed(struct bt_conn *conn,
 		}
 
 		attr = bt_gatt_attr_next(attr);
-		__ASSERT(attr, "No more attributes\n");
+		__ASSERT_MSG(attr, "No more attributes\n");
 	}
 
 	/* Check if attribute is a characteristic value */
 	if (bt_uuid_cmp(attr->uuid, BT_UUID_GATT_CCC) != 0) {
 		attr = bt_gatt_attr_next(attr);
-		__ASSERT(attr, "No more attributes\n");
+		__ASSERT_MSG(attr, "No more attributes\n");
 	}
 
 	/* Find the CCC Descriptor */
@@ -3648,8 +3648,8 @@ int bt_gatt_exchange_mtu(struct bt_conn *conn,
 {
 	int err;
 
-	__ASSERT(conn, "invalid parameter\n");
-	__ASSERT(params && params->func, "invalid parameters\n");
+	__ASSERT_MSG(conn, "invalid parameter\n");
+	__ASSERT_MSG(params && params->func, "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -4549,11 +4549,11 @@ static int gatt_find_info(struct bt_conn *conn,
 int bt_gatt_discover(struct bt_conn *conn,
 		     struct bt_gatt_discover_params *params)
 {
-	__ASSERT(conn, "invalid parameters\n");
-	__ASSERT(params && params->func, "invalid parameters\n");
-	__ASSERT((params->start_handle && params->end_handle),
+	__ASSERT_MSG(conn, "invalid parameters\n");
+	__ASSERT_MSG(params && params->func, "invalid parameters\n");
+	__ASSERT_MSG((params->start_handle && params->end_handle),
 		 "invalid parameters\n");
-	__ASSERT((params->start_handle <= params->end_handle),
+	__ASSERT_MSG((params->start_handle <= params->end_handle),
 		 "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
@@ -4907,8 +4907,8 @@ static int gatt_read_encode(struct bt_buf *buf, size_t len, void *user_data)
 
 int bt_gatt_read(struct bt_conn *conn, struct bt_gatt_read_params *params)
 {
-	__ASSERT(conn, "invalid parameters\n");
-	__ASSERT(params && params->func, "invalid parameters\n");
+	__ASSERT_MSG(conn, "invalid parameters\n");
+	__ASSERT_MSG(params && params->func, "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -4956,8 +4956,8 @@ int bt_gatt_write_without_response_cb(struct bt_conn *conn, uint16_t handle,
 	struct bt_att_write_cmd *cmd;
 	__maybe_unused size_t write;
 
-	__ASSERT(conn, "invalid parameters\n");
-	__ASSERT(handle, "invalid parameters\n");
+	__ASSERT_MSG(conn, "invalid parameters\n");
+	__ASSERT_MSG(handle, "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -4985,7 +4985,7 @@ int bt_gatt_write_without_response_cb(struct bt_conn *conn, uint16_t handle,
 	cmd->handle = sys_cpu_to_le16(handle);
 
 	write = bt_buf_append_bytes(buf, length, data, OS_TIMEOUT_NO_WAIT, NULL, NULL);
-	__ASSERT(write == length, "Unable to allocate length %u: only %zu written", length, write);
+	__ASSERT_MSG(write == length, "Unable to allocate length %u: only %zu written", length, write);
 
 	LOG_DBG("handle 0x%04x length %u", handle, length);
 
@@ -5173,9 +5173,9 @@ int bt_gatt_write(struct bt_conn *conn, struct bt_gatt_write_params *params)
 {
 	size_t len;
 
-	__ASSERT(conn, "invalid parameters\n");
-	__ASSERT(params && params->func, "invalid parameters\n");
-	__ASSERT(params->handle, "invalid parameters\n");
+	__ASSERT_MSG(conn, "invalid parameters\n");
+	__ASSERT_MSG(params && params->func, "invalid parameters\n");
+	__ASSERT_MSG(params->handle, "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -5335,15 +5335,15 @@ int bt_gatt_subscribe(struct bt_conn *conn,
 	struct bt_gatt_subscribe_params *tmp;
 	bool has_subscription = false;
 
-	__ASSERT(conn, "invalid parameters\n");
-	__ASSERT(params && params->notify,  "invalid parameters\n");
-	__ASSERT(params->value, "invalid parameters\n");
+	__ASSERT_MSG(conn, "invalid parameters\n");
+	__ASSERT_MSG(params && params->notify,  "invalid parameters\n");
+	__ASSERT_MSG(params->value, "invalid parameters\n");
 #if defined(CONFIG_BT_GATT_AUTO_DISCOVER_CCC)
-	__ASSERT(params->ccc_handle ||
+	__ASSERT_MSG(params->ccc_handle ||
 		 (params->end_handle && params->disc_params),
 		 "invalid parameters\n");
 #else
-	__ASSERT(params->ccc_handle, "invalid parameters\n");
+	__ASSERT_MSG(params->ccc_handle, "invalid parameters\n");
 #endif
 
 	if (conn->state != BT_CONN_CONNECTED) {
@@ -5408,9 +5408,9 @@ int bt_gatt_resubscribe(uint8_t id, const bt_addr_le_t *peer,
 	struct gatt_sub *sub;
 	struct bt_gatt_subscribe_params *tmp;
 
-	__ASSERT(params && params->notify,  "invalid parameters\n");
-	__ASSERT(params->value, "invalid parameters\n");
-	__ASSERT(params->ccc_handle, "invalid parameters\n");
+	__ASSERT_MSG(params && params->notify,  "invalid parameters\n");
+	__ASSERT_MSG(params->value, "invalid parameters\n");
+	__ASSERT_MSG(params->ccc_handle, "invalid parameters\n");
 
 	sub = gatt_sub_add_by_addr(id, peer);
 	if (!sub) {
@@ -5437,8 +5437,8 @@ int bt_gatt_unsubscribe(struct bt_conn *conn,
 	struct bt_gatt_subscribe_params *tmp;
 	bool has_subscription = false, found = false;
 
-	__ASSERT(conn, "invalid parameters\n");
-	__ASSERT(params, "invalid parameters\n");
+	__ASSERT_MSG(conn, "invalid parameters\n");
+	__ASSERT_MSG(params, "invalid parameters\n");
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -5783,7 +5783,7 @@ static int ccc_set_direct(const char *key, size_t len, bt_storage_read_cb read_c
 		LOG_DBG("key: %s", (const char *)param);
 
 		/* Only "bt/ccc" settings should ever come here */
-		if (!settings_name_steq((const char *)param, "bt/ccc", &name)) {
+		if (!bt_storage_name_steq((const char *)param, "bt/ccc", &name)) {
 			LOG_ERR("Invalid key");
 			return -EINVAL;
 		}

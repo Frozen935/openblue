@@ -345,7 +345,7 @@ BT_BUF_POOL_DEFINE(att_pool, CONFIG_BT_ATT_TX_COUNT,
 
 static struct bt_att_tx_meta_data *att_get_tx_meta_data(const struct bt_buf *buf)
 {
-	__ASSERT_NO_MSG(bt_buf_pool_get(buf->pool_id) == &att_pool);
+	__ASSERT_NO_MSG(buf->pool == &att_pool);
 
 	/* Metadata lifetime is implicitly tied to the buffer lifetime.
 	 * Treat it as part of the buffer itself.
@@ -758,7 +758,7 @@ static void att_on_sent_cb(struct bt_att_tx_meta_data *meta)
 		chan_req_notif_sent(meta);
 		return;
 	default:
-		__ASSERT(false, "Unknown op type 0x%02X", op_type);
+		__ASSERT_MSG(false, "Unknown op type 0x%02X", op_type);
 		return;
 	}
 }
@@ -1246,11 +1246,11 @@ static uint8_t find_type_cb(const struct bt_gatt_attr *attr, uint16_t handle,
 
 	frag = bt_buf_frag_last(data->buf);
 
-	len = MIN(bt_att_mtu(chan) - bt_buf_frags_len(data->buf),
-		  bt_buf_tailroom(frag));
-	if (!len) {
-		frag = bt_buf_alloc(bt_buf_pool_get(data->buf->pool_id),
-				     OS_TIMEOUT_NO_WAIT);
+		len = MIN(bt_att_mtu(chan) - bt_buf_frags_len(data->buf),
+			  bt_buf_tailroom(frag));
+		if (!len) {
+			frag = bt_buf_alloc(data->buf->pool,
+					     OS_TIMEOUT_NO_WAIT);
 		/* If not buffer can be allocated immediately stop */
 		if (!frag) {
 			return BT_GATT_ITER_STOP;
@@ -1443,7 +1443,7 @@ static ssize_t att_chan_read(struct bt_att_chan *chan,
 		len = MIN(bt_att_mtu(chan) - bt_buf_frags_len(buf),
 			  bt_buf_tailroom(frag));
 		if (!len) {
-			frag = bt_buf_alloc(bt_buf_pool_get(buf->pool_id),
+			frag = bt_buf_alloc(buf->pool,
 					     OS_TIMEOUT_NO_WAIT);
 			/* If not buffer can be allocated immediately return */
 			if (!frag) {
@@ -3212,7 +3212,7 @@ static struct bt_att_chan *att_get_fixed_chan(struct bt_conn *conn)
 	struct bt_l2cap_chan *chan;
 
 	chan = bt_l2cap_le_lookup_tx_cid(conn, BT_L2CAP_CID_ATT);
-	__ASSERT(chan, "No ATT channel found");
+	__ASSERT_MSG(chan, "No ATT channel found");
 
 	return ATT_CHAN(chan);
 }

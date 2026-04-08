@@ -34,9 +34,9 @@
 #define RFCOMM_CREDITS_THRESHOLD	(RFCOMM_MAX_CREDITS / 2)
 #define RFCOMM_DEFAULT_CREDIT		RFCOMM_MAX_CREDITS
 
-#define RFCOMM_CONN_TIMEOUT     K_SECONDS(60)
-#define RFCOMM_DISC_TIMEOUT     K_SECONDS(20)
-#define RFCOMM_IDLE_TIMEOUT     K_SECONDS(2)
+#define RFCOMM_CONN_TIMEOUT     OS_SECONDS(60)
+#define RFCOMM_DISC_TIMEOUT     OS_SECONDS(20)
+#define RFCOMM_IDLE_TIMEOUT     OS_SECONDS(2)
 
 #define DLC_RTX(_w) CONTAINER_OF(bt_work_delayable_from_work(_w), \
 				 struct bt_rfcomm_dlc, rtx_work)

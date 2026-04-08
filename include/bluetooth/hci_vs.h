@@ -465,7 +465,7 @@ struct bt_hci_evt_mesh_scanning_report {
 	struct bt_hci_evt_mesh_scan_report reports[0];
 } __packed;
 
-struct bt_buf *hci_vs_err_stack_frame(unsigned int reason, const struct arch_esf *esf);
+struct bt_buf *hci_vs_err_stack_frame(unsigned int reason, uint8_t *esf);
 struct bt_buf *hci_vs_err_trace(const char *file, uint32_t line, uint64_t pc);
 struct bt_buf *hci_vs_err_assert(const char *file, uint32_t line);
 

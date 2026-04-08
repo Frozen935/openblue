@@ -20,6 +20,8 @@
 #include <bluetooth/buf.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/l2cap.h>
+#include <base/bt_work.h>
+#include <base/queue/bt_fifo.h>
 #include <utils/bt_slist.h>
 
 #ifdef __cplusplus
@@ -99,10 +101,10 @@ typedef enum bt_rfcomm_role {
 /** @brief RFCOMM DLC structure. */
 struct bt_rfcomm_dlc {
 	/* Response Timeout eXpired (RTX) timer */
-	struct k_work_delayable    rtx_work;
+	struct bt_work_delayable   rtx_work;
 
 	/* Queue for outgoing data */
-	struct k_fifo              tx_queue;
+	struct bt_fifo             tx_queue;
 
 	/* TX credits, Reuse as a binary sem for MSC FC if CFC is not enabled */
 	os_sem_t               tx_credits;

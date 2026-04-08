@@ -177,7 +177,7 @@ static struct bt_le_ext_adv adv_pool[CONFIG_BT_EXT_ADV_MAX_ADV_SET];
 #if defined(CONFIG_BT_EXT_ADV)
 uint8_t bt_le_ext_adv_get_index(struct bt_le_ext_adv *adv)
 {
-	__ASSERT(IS_ARRAY_ELEMENT(adv_pool, adv), "Invalid bt_adv pointer");
+	__ASSERT_MSG(IS_ARRAY_ELEMENT(adv_pool, adv), "Invalid bt_adv pointer");
 
 	return (uint8_t)ARRAY_INDEX(adv_pool, adv);
 }

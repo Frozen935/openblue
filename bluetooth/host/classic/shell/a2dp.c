@@ -586,7 +586,7 @@ static int cmd_register_ep(const struct bt_shell *sh, int32_t argc, char *argv[]
 		err = 0;
 		delay_report = bt_shell_strtobool(argv[3], 10, &err);
 		if (err != 0) {
-			shell_help(sh);
+			bt_shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	}
@@ -627,11 +627,11 @@ static int cmd_register_ep(const struct bt_shell *sh, int32_t argc, char *argv[]
 				registered_sbc_endpoint = &source_sbc_endpoint;
 			}
 		} else {
-			shell_help(sh);
+			bt_shell_help(sh);
 			return 0;
 		}
 	} else {
-		shell_help(sh);
+		bt_shell_help(sh);
 		return 0;
 	}
 
@@ -934,7 +934,7 @@ static int cmd_get_conn(const struct bt_shell *sh, int32_t argc, char *argv[])
 
 #define HELP_NONE "[none]"
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(a2dp_cmds,
+BT_SHELL_SUBCMD_SET_CREATE(a2dp_cmds,
 	BT_SHELL_CMD_ARG(register_cb, NULL, "register a2dp connection callbacks",
 			cmd_register_cb, 1, 0),
 	BT_SHELL_CMD_ARG(register_ep, NULL,
@@ -962,7 +962,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(a2dp_cmds,
 static int cmd_a2dp(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		shell_help(sh);
+		bt_shell_help(sh);
 		/* sh returns 1 when help is printed */
 		return 1;
 	}
@@ -972,5 +972,10 @@ static int cmd_a2dp(const struct bt_shell *sh, size_t argc, char **argv)
 	return -ENOEXEC;
 }
 
-BT_SHELL_CMD_ARG_REGISTER(a2dp, &a2dp_cmds, "Bluetooth A2DP sh commands",
-			   cmd_a2dp, 1, 1);
+BT_SHELL_CMD_ARG_DEFINE(a2dp, &a2dp_cmds, "Bluetooth A2DP sh commands",
+			 cmd_a2dp, 1, 1);
+
+int bt_shell_cmd_a2dp_register(struct bt_shell *sh)
+{
+	return bt_shell_cmd_register(sh, &a2dp);
+}

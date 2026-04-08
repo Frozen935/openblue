@@ -833,7 +833,7 @@ static uint32_t copy_attribute(const struct bt_sdp_data_elem *elem, struct bt_bu
 	total_size = elem->total_size;
 	sub_elem = (const struct bt_sdp_data_elem *)elem->data;
 
-	__ASSERT(!((nest_level == 1) && (*index >= total_size)), "Invalid attr index %u >= %u",
+	__ASSERT_MSG(!((nest_level == 1) && (*index >= total_size)), "Invalid attr index %u >= %u",
 		 *index, total_size);
 
 	/* Copy the header */
@@ -872,7 +872,7 @@ static uint32_t copy_attribute(const struct bt_sdp_data_elem *elem, struct bt_bu
 				goto exit;
 			}
 
-			__ASSERT(seq_size >= sub_elem->total_size, "Invalid sequence size %u < %u",
+			__ASSERT_MSG(seq_size >= sub_elem->total_size, "Invalid sequence size %u < %u",
 				 seq_size, sub_elem->total_size);
 			seq_size -= sub_elem->total_size;
 			sub_elem++;
@@ -889,7 +889,7 @@ static uint32_t copy_attribute(const struct bt_sdp_data_elem *elem, struct bt_bu
 		} else if (seq_size == 8U) {
 			bt_buf_simple_add_be64(&attr_buf, *((const uint64_t *)elem->data));
 		} else {
-			__ASSERT(seq_size == 0x10, "Invalid sequence size");
+			__ASSERT_MSG(seq_size == 0x10, "Invalid sequence size");
 
 			uint8_t val[seq_size];
 
@@ -2826,7 +2826,7 @@ static int sdp_client_discovery_start(struct bt_conn *conn,
 	size_t index;
 
 	index = (size_t)bt_conn_index(conn);
-	__ASSERT(index < ARRAY_SIZE(bt_sdp_client_pool), "ACL CONN index is out of bounds");
+	__ASSERT_MSG(index < ARRAY_SIZE(bt_sdp_client_pool), "ACL CONN index is out of bounds");
 
 	session = &bt_sdp_client_pool[index];
 	os_sem_take(&session->sem_lock, OS_TIMEOUT_FOREVER);

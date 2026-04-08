@@ -414,7 +414,7 @@ void bt_l2cap_br_chan_set_state(struct bt_l2cap_chan *chan,
 /* Prepare an L2CAP PDU to be sent over a connection */
 struct bt_buf *bt_l2cap_create_pdu_timeout(struct bt_buf_pool *pool,
 					    size_t reserve,
-					    k_timeout_t timeout);
+					    os_timeout_t timeout);
 
 #define bt_l2cap_create_pdu(_pool, _reserve) \
 	bt_l2cap_create_pdu_timeout(_pool, _reserve, OS_TIMEOUT_FOREVER)

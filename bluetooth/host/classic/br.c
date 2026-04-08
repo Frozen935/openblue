@@ -1302,8 +1302,8 @@ static void bt_br_limited_discoverable_timeout_handler(struct bt_work *work)
 }
 
 /* Work used for limited discoverable mode time span */
-static K_WORK_DELAYABLE_DEFINE(bt_br_limited_discoverable_timeout,
-			       bt_br_limited_discoverable_timeout_handler);
+static BT_WORK_DELAYABLE_DEFINE(bt_br_limited_discoverable_timeout,
+				bt_br_limited_discoverable_timeout_handler);
 
 int bt_br_set_discoverable(bool enable, bool limited)
 {
@@ -1332,7 +1332,7 @@ int bt_br_set_discoverable(bool enable, bool limited)
 		if (!err && (limited == true)) {
 			bt_atomic_set_bit(bt_dev.flags, BT_DEV_LIMITED_DISCOVERABLE_MODE);
 			bt_work_reschedule(&bt_br_limited_discoverable_timeout,
-					  K_SECONDS(CONFIG_BT_LIMITED_DISCOVERABLE_DURATION));
+					  OS_SECONDS(CONFIG_BT_LIMITED_DISCOVERABLE_DURATION));
 		}
 		return err;
 	}

@@ -20,8 +20,7 @@ static inline bool bt_id_rpa_is_new(void)
 	/* TODO: To get bt_dev we should include "hci_core.h" but that gives redefinitions
 	 * Should we have an API to get the rpa_update value?
 	 */
-	uint32_t remaining_ms = k_ticks_to_ms_floor32(
-		bt_work_delayable_remaining_get(&bt_dev.rpa_update));
+	uint32_t remaining_ms = bt_work_delayable_remaining_get(&bt_dev.rpa_update);
 	/* RPA is considered new if there is less than half a second since the
 	 * timeout was started.
 	 */

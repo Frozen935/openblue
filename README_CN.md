@@ -68,7 +68,7 @@ cmake --build build -j4
 
 **单行:**
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j4
 ```
 
 ### 注意事项

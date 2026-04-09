@@ -1197,7 +1197,7 @@ static int cmd_metrics(const struct bt_shell *sh, size_t argc, char *argv[])
 		err = bt_gatt_service_unregister(&met_svc);
 	} else {
 		bt_shell_error("Incorrect value: %s", argv[1]);
-		shell_help(sh);
+		bt_shell_help(sh);
 		return -ENOEXEC;
 	}
 

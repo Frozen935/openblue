@@ -89,6 +89,17 @@ struct bt_shell {
 
 #define BT_SHELL_STATIC_SUBCMD_SET_CREATE(name, ...) BT_SHELL_SUBCMD_SET_CREATE(name, __VA_ARGS__)
 
+#define BT_SHELL_SUBCMD_SET_CREATE_EXTERN(name, ...)                                        \
+	const struct bt_shell_cmd_entry name[] = {__VA_ARGS__};
+
+/*
+ * Compatibility shim for mesh shell sources carried from Zephyr. Unlike Zephyr's
+ * SHELL_SUBCMD_ADD, openblue does not use section-based subcommand discovery.
+ * Subcommands are aggregated explicitly in parent command tables, so this macro
+ * intentionally emits nothing.
+ */
+#define BT_SHELL_SUBCMD_ADD(_parent, _syntax, _subcmd, _help, _handler, _mand, _opt)
+
 long bt_shell_strtol(const char *str, int base, int *err);
 unsigned long bt_shell_strtoul(const char *str, int base, int *err);
 unsigned long long bt_shell_strtoull(const char *str, int base, int *err);

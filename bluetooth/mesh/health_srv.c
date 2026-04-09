@@ -229,8 +229,7 @@ static int send_attention_status(const struct bt_mesh_model *model,
 	struct bt_mesh_health_srv *srv = model->rt->user_data;
 	uint8_t time;
 
-	time = k_ticks_to_ms_floor32(
-		bt_work_delayable_remaining_get(&srv->attn_timer)) / 1000U;
+	time = bt_work_delayable_remaining_get(&srv->attn_timer) / 1000U;
 	LOG_DBG("%u second%s", time, (time == 1U) ? "" : "s");
 
 	bt_mesh_model_msg_init(&msg, OP_ATTENTION_STATUS);

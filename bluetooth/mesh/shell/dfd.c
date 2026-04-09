@@ -408,7 +408,7 @@ static int cmd_dfd_fw_delete_all(const struct bt_shell *sh, size_t argc, char *a
 
 BT_MESH_SHELL_MDL_INSTANCE_CMDS(instance_cmds, BT_MESH_MODEL_ID_DFD_SRV, mod);
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE_EXTERN(
 	dfd_cmds,
 	BT_SHELL_CMD_ARG(receivers-add, NULL, "<Addr>,<FwIdx>[;<Addr>,<FwIdx>]...",
 		      cmd_dfd_receivers_add, 2, 0),
@@ -430,5 +430,5 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	BT_SHELL_CMD(instance, &instance_cmds, "Instance commands", bt_mesh_shell_mdl_cmds_help),
 	BT_SHELL_SUBCMD_SET_END);
 
-SHELL_SUBCMD_ADD((mesh, models), dfd, &dfd_cmds, "Distributor commands",
+BT_SHELL_SUBCMD_ADD((mesh, models), dfd, &dfd_cmds, "Distributor commands",
 		 bt_mesh_shell_mdl_cmds_help, 1, 1);

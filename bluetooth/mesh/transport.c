@@ -306,7 +306,7 @@ static void seg_send_start(uint16_t duration, int err, void *user_data)
 	}
 
 	tx->seg_send_started = 1U;
-	tx->adv_start_timestamp = os_time_get();
+	tx->adv_start_timestamp = (int64_t)os_time_get_ms();
 
 	/* If there's an error in transmitting the 'sent' callback will never
 	 * be called. Make sure that we kick the retransmit timer also in this
@@ -320,7 +320,7 @@ static void seg_send_start(uint16_t duration, int err, void *user_data)
 static void seg_sent(int err, void *user_data)
 {
 	struct seg_tx *tx = user_data;
-	uint32_t delta_ms = (uint32_t)(os_time_get() - tx->adv_start_timestamp);
+	uint32_t delta_ms = (uint32_t)((int64_t)os_time_get_ms() - tx->adv_start_timestamp);
 
 	if (!tx->seg_send_started) {
 		return;
@@ -449,7 +449,7 @@ end:
 		bt_mesh_lpn_poll();
 	}
 
-	delta_ms = (uint32_t)(os_time_get() - tx->adv_start_timestamp);
+	delta_ms = (uint32_t)((int64_t)os_time_get_ms() - tx->adv_start_timestamp);
 	if (tx->ack_received) {
 		/* Schedule retransmission immediately but keep SAR segment interval time if
 		 * SegAck was received while sending last segment.
@@ -925,7 +925,7 @@ static int trans_ack(struct bt_mesh_net_rx *rx, uint8_t hdr,
 				goto reschedule;
 			}
 
-			uint32_t delta_ms = (uint32_t)(os_time_get() - tx->adv_start_timestamp);
+			uint32_t delta_ms = (uint32_t)((int64_t)os_time_get_ms() - tx->adv_start_timestamp);
 
 			/* According to MshPRTv1.1: 3.5.3.3.2, we should reset the retransmit timer
 			 * and retransmit immediately when receiving a valid ack message while
@@ -1210,7 +1210,7 @@ static void seg_ack(struct bt_work *work)
 	send_ack(rx->sub, rx->dst, rx->src, rx->ttl, &rx->seq_auth,
 		 rx->block, rx->obo);
 
-	rx->last_ack = os_time_get_32();
+	rx->last_ack = (uint32_t)os_time_get_ms();
 
 	if (rx->attempts_left == 0) {
 		LOG_DBG("Ran out of ack retransmit attempts");
@@ -1413,12 +1413,12 @@ static int trans_seg(struct bt_buf_simple *buf, struct bt_mesh_net_rx *net_rx,
 			 * [acknowledgment delay increment * segment transmission interval]
 			 *  milliseconds
 			 */
-			if (os_time_get_32() - rx->last_ack >
+			if ((uint32_t)os_time_get_ms() - rx->last_ack >
 			    SEQAUTH_ALREADY_PROCESSED_TIMEOUT) {
 				send_ack(net_rx->sub, net_rx->ctx.recv_dst,
 					 net_rx->ctx.addr, net_rx->ctx.send_ttl,
 					 seq_auth, rx->block, rx->obo);
-				rx->last_ack = os_time_get_32();
+				rx->last_ack = (uint32_t)os_time_get_ms();
 			}
 
 			if (rpl) {
@@ -1565,7 +1565,7 @@ found_rx:
 
 	send_ack(net_rx->sub, net_rx->ctx.recv_dst, net_rx->ctx.addr,
 		 net_rx->ctx.send_ttl, seq_auth, rx->block, rx->obo);
-	rx->last_ack = os_time_get_32();
+	rx->last_ack = (uint32_t)os_time_get_ms();
 
 	if (net_rx->ctl) {
 		BT_BUF_SIMPLE_DEFINE(sdu, BT_MESH_RX_CTL_MAX);

@@ -59,4 +59,9 @@ int bt_mem_pool_init(struct bt_mem_pool *mpool, void *buffer, size_t block_size,
 int bt_mem_pool_alloc(struct bt_mem_pool *mpool, void **mem, os_timeout_t timeout);
 void bt_mem_pool_free(struct bt_mem_pool *mpool, void *mem);
 
+static inline uint32_t bt_mem_pool_num_free_get(struct bt_mem_pool *mpool)
+{
+	return mpool->info.num_blocks - mpool->info.num_used;
+}
+
 #endif /* __BASE_MEM_POOL_H__ */

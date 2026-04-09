@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <errno.h>
+
 /* Pending storage actions. */
 enum bt_mesh_settings_flag {
 	BT_MESH_SETTINGS_RPL_PENDING,
@@ -40,11 +42,42 @@ enum bt_mesh_settings_flag {
 				       NULL, NULL)
 #else
 #define BT_MESH_SETTINGS_DEFINE(_hname, _subtree, _set) /* no-op */
+
+static inline void bt_mesh_settings_init(void)
+{
+}
+
+static inline void bt_mesh_settings_store_schedule(enum bt_mesh_settings_flag flag)
+{
+	(void)flag;
+}
+
+static inline void bt_mesh_settings_store_cancel(enum bt_mesh_settings_flag flag)
+{
+	(void)flag;
+}
+
+static inline void bt_mesh_settings_store_pending(void)
+{
+}
+
+static inline int bt_mesh_settings_set(bt_storage_read_cb read_cb, void *cb_arg,
+				       void *out, size_t read_len)
+{
+	(void)read_cb;
+	(void)cb_arg;
+	(void)out;
+	(void)read_len;
+
+	return -ENOTSUP;
+}
 #endif
 
+#ifdef CONFIG_BT_SETTINGS
 void bt_mesh_settings_init(void);
 void bt_mesh_settings_store_schedule(enum bt_mesh_settings_flag flag);
 void bt_mesh_settings_store_cancel(enum bt_mesh_settings_flag flag);
 void bt_mesh_settings_store_pending(void);
 int bt_mesh_settings_set(bt_storage_read_cb read_cb, void *cb_arg,
 			 void *out, size_t read_len);
+#endif

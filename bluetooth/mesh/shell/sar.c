@@ -116,7 +116,7 @@ static int cmd_rx_set(const struct bt_shell *sh, size_t argc, char *argv[])
 	return 0;
 }
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE_EXTERN(
 	sar_cfg_cli_cmds, BT_SHELL_CMD_ARG(tx-get, NULL, NULL, cmd_tx_get, 1, 0),
 	BT_SHELL_CMD_ARG(tx-set, NULL,
 		      "<SegIntStep> <UniRetransCnt> <UniRetransWithoutProgCnt> "
@@ -130,5 +130,5 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 		      cmd_rx_set, 6, 0),
 	BT_SHELL_SUBCMD_SET_END);
 
-SHELL_SUBCMD_ADD((mesh, models), sar, &sar_cfg_cli_cmds, "Sar Cfg Cli commands",
+BT_SHELL_SUBCMD_ADD((mesh, models), sar, &sar_cfg_cli_cmds, "Sar Cfg Cli commands",
 		 bt_mesh_shell_mdl_cmds_help, 1, 1);

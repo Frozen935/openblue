@@ -58,12 +58,12 @@ static int cmd_srpl_clear(const struct bt_shell *sh, size_t argc,
 	return err;
 }
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE_EXTERN(
 	sol_pdu_rpl_cmds,
 	BT_SHELL_CMD_ARG(clear, NULL, "<RngStart> <Ackd> [RngLen]",
 		      cmd_srpl_clear, 3, 1),
 	BT_SHELL_SUBCMD_SET_END);
 
-SHELL_SUBCMD_ADD((mesh, models), sol_pdu_rpl, &sol_pdu_rpl_cmds,
+BT_SHELL_SUBCMD_ADD((mesh, models), sol_pdu_rpl, &sol_pdu_rpl_cmds,
 		 "Solicitation PDU RPL Cli commands",
 		 bt_mesh_shell_mdl_cmds_help, 1, 1);

@@ -121,7 +121,7 @@ static void beacon_complete(int err, void *user_data)
 	struct bt_mesh_beacon *beacon = user_data;
 
 	LOG_DBG("err %d", err);
-	beacon->sent = os_time_get_32();
+	beacon->sent = (uint32_t)os_time_get_ms();
 
 	if (beacon_send_sub_curr) {
 		bt_work_reschedule(&beacon_timer, OS_MSEC(20));
@@ -159,7 +159,7 @@ static int secure_beacon_create(struct bt_mesh_subnet *sub,
 static int private_random_update(void)
 {
 	uint8_t interval = bt_mesh_priv_beacon_update_interval_get();
-	uint64_t uptime = os_time_get();
+	uint64_t uptime = os_time_get_ms();
 	int err;
 
 	/* The Private beacon random value should change every N seconds to maintain privacy.
@@ -263,7 +263,7 @@ static int net_beacon_send(struct bt_mesh_subnet *sub, struct bt_mesh_beacon *be
 		.start = beacon_start,
 		.end = beacon_complete,
 	};
-	uint32_t now = os_time_get_32();
+	uint32_t now = (uint32_t)os_time_get_ms();
 	struct bt_mesh_adv *adv;
 	uint32_t time_diff;
 	uint32_t time_since_last_recv;
@@ -608,7 +608,7 @@ static void net_beacon_register(struct bt_mesh_beacon *beacon, bool priv)
 	if (((priv && bt_mesh_priv_beacon_get() == BT_MESH_PRIV_GATT_PROXY_ENABLED) ||
 	     bt_mesh_beacon_enabled()) && beacon->cur < 0xff) {
 		beacon->cur++;
-		beacon->recv = os_time_get_32();
+		beacon->recv = (uint32_t)os_time_get_ms();
 	}
 }
 

@@ -17,6 +17,14 @@ extern "C" {
 #define STACK_SVC_INIT 3
 #endif
 
+#ifndef BT_STACK_KERNEL_INIT_PRIORITY_DEFAULT
+#define BT_STACK_KERNEL_INIT_PRIORITY_DEFAULT 40
+#endif
+
+#ifndef BT_STACK_APPLICATION_INIT_PRIORITY
+#define BT_STACK_APPLICATION_INIT_PRIORITY 90
+#endif
+
 /* Function prototype for init callbacks */
 typedef int (*stack_init_fn_t)(void);
 

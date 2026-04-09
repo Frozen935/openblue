@@ -6,6 +6,8 @@
 
 #include <stdint.h>
 
+#include "common/bt_shell_private.h"
+
 #define BT_MESH_SHELL_MDL_INSTANCE_CMDS(cmd_set_name, mod_id, mod_ptr) \
 	static int cmd_##cmd_set_name##_get_all(const struct bt_shell *sh, size_t argc, char *argv[]) \
 	{ \

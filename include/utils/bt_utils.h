@@ -7,6 +7,9 @@
 #ifndef MSEC_PER_SEC
 #define MSEC_PER_SEC 1000U
 #endif
+#ifndef SEC_PER_MIN
+#define SEC_PER_MIN 60U
+#endif
 #ifndef USEC_PER_SEC
 #define USEC_PER_SEC 1000000U
 #endif

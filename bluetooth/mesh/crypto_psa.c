@@ -7,6 +7,7 @@
 #include <errno.h>
 
 #include <bluetooth/mesh.h>
+#include <psa/key_ids.h>
 
 #define LOG_LEVEL CONFIG_BT_MESH_CRYPTO_LOG_LEVEL
 
@@ -24,11 +25,11 @@
 #define BT_MESH_CDB_KEY_ID_RANGE_SIZE  0
 #endif
 
-#define BT_MESH_PSA_KEY_ID_MIN ZEPHYR_PSA_BT_MESH_KEY_ID_RANGE_BEGIN
+#define BT_MESH_PSA_KEY_ID_MIN OPENBLUE_PSA_BT_MESH_KEY_ID_RANGE_BEGIN
 
 #define BT_MESH_PSA_KEY_ID_RANGE_SIZE (2 * CONFIG_BT_MESH_SUBNET_COUNT + \
 		2 * CONFIG_BT_MESH_APP_KEY_COUNT + 2 + BT_MESH_CDB_KEY_ID_RANGE_SIZE)
-BUILD_ASSERT(BT_MESH_PSA_KEY_ID_RANGE_SIZE <= ZEPHYR_PSA_BT_MESH_KEY_ID_RANGE_SIZE,
+BUILD_ASSERT(BT_MESH_PSA_KEY_ID_RANGE_SIZE <= OPENBLUE_PSA_BT_MESH_KEY_ID_RANGE_SIZE,
 	"PSA key ID range exceeds officially allocated range.");
 
 BUILD_ASSERT(PSA_MAC_LENGTH(PSA_KEY_TYPE_AES, 128, PSA_ALG_CMAC) == 16,
@@ -57,7 +58,7 @@ int bt_mesh_crypto_init(void)
 int bt_mesh_encrypt(const struct bt_mesh_key *key, const uint8_t plaintext[16],
 		    uint8_t enc_data[16])
 {
-	uint32_t output_len;
+	size_t output_len;
 	psa_status_t status;
 	int err = 0;
 
@@ -77,7 +78,7 @@ int bt_mesh_ccm_encrypt(const struct bt_mesh_key *key, uint8_t nonce[13],
 			const uint8_t *plaintext, size_t len, const uint8_t *aad,
 			size_t aad_len, uint8_t *enc_data, size_t mic_size)
 {
-	uint32_t output_len;
+	size_t output_len;
 	psa_status_t status;
 	int err = 0;
 	psa_algorithm_t alg = PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_CCM, mic_size);
@@ -100,7 +101,7 @@ int bt_mesh_ccm_decrypt(const struct bt_mesh_key *key, uint8_t nonce[13],
 			const uint8_t *enc_data, size_t len, const uint8_t *aad,
 			size_t aad_len, uint8_t *plaintext, size_t mic_size)
 {
-	uint32_t output_len;
+	size_t output_len;
 	psa_status_t status;
 	int err = 0;
 	psa_algorithm_t alg = PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_CCM, mic_size);

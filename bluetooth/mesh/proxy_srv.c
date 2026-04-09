@@ -365,7 +365,7 @@ void bt_mesh_proxy_beacon_send(struct bt_mesh_subnet *sub)
 static void identity_enabled(struct bt_mesh_subnet *sub)
 {
 	sub->node_id = BT_MESH_NODE_IDENTITY_RUNNING;
-	sub->node_id_start = os_time_get_32();
+	sub->node_id_start = (uint32_t)os_time_get_ms();
 
 	STRUCT_SECTION_FOREACH(bt_mesh_proxy_cb, cb) {
 		if (cb->identity_enabled) {
@@ -670,7 +670,7 @@ static void proxy_adv_timeout_eval(struct bt_mesh_subnet *sub)
 	int32_t time_passed;
 
 	if (sub->node_id == BT_MESH_NODE_IDENTITY_RUNNING) {
-		time_passed = os_time_get_32() - sub->node_id_start;
+		time_passed = (uint32_t)os_time_get_ms() - sub->node_id_start;
 		if (time_passed > (NODE_ID_TIMEOUT - MSEC_PER_SEC)) {
 			bt_mesh_proxy_identity_stop(sub);
 			LOG_DBG("Node ID stopped for subnet %d after %dms", sub->net_idx,
@@ -680,7 +680,7 @@ static void proxy_adv_timeout_eval(struct bt_mesh_subnet *sub)
 
 #if defined(CONFIG_BT_MESH_OD_PRIV_PROXY_SRV)
 	if (bt_mesh_od_priv_proxy_get() > 0 && sub->solicited && sub->priv_net_id_sent) {
-		time_passed = os_time_get_32() - sub->priv_net_id_sent;
+		time_passed = (uint32_t)os_time_get_ms() - sub->priv_net_id_sent;
 		if (time_passed > ((MSEC_PER_SEC * bt_mesh_od_priv_proxy_get()) - MSEC_PER_SEC)) {
 			sub->priv_net_id_sent = 0;
 			sub->solicited = false;
@@ -729,13 +729,13 @@ static bool proxy_adv_request_get(struct bt_mesh_subnet *sub, struct proxy_adv_r
 		request->evt = OD_PRIV_NET_ID;
 		request->duration = !sub->priv_net_id_sent
 					    ? timeout
-					    : timeout - (os_time_get_32() - sub->priv_net_id_sent);
+				    : timeout - ((uint32_t)os_time_get_ms() - sub->priv_net_id_sent);
 		return true;
 	}
 #endif
 
 	if (sub->node_id == BT_MESH_NODE_IDENTITY_RUNNING) {
-		request->duration = NODE_ID_TIMEOUT - (os_time_get_32() - sub->node_id_start);
+		request->duration = NODE_ID_TIMEOUT - ((uint32_t)os_time_get_ms() - sub->node_id_start);
 		request->evt =
 #if defined(CONFIG_BT_MESH_PRIV_BEACONS)
 			sub->priv_beacon_ctx.node_id ? PRIV_NODE_ID :
@@ -753,7 +753,7 @@ static bool proxy_adv_request_get(struct bt_mesh_subnet *sub, struct proxy_adv_r
 
 	if (bt_mesh_gatt_proxy_get() == BT_MESH_FEATURE_ENABLED) {
 		request->evt = NET_ID;
-		request->duration = SYS_FOREVER_MS;
+		request->duration = OS_TIMEOUT_FOREVER;
 		return true;
 	}
 
@@ -819,10 +819,10 @@ static int gatt_proxy_advertise(void)
 		max_adv_duration = MAX(max_adv_duration, MSEC_PER_SEC + 20);
 
 		/* Check if the previous subnet finished its allocated timeslot */
-		if ((sub_adv.request.duration != SYS_FOREVER_MS) &&
+		if ((sub_adv.request.duration != OS_TIMEOUT_FOREVER) &&
 		    proxy_adv_request_get(sub_adv.sub, &request) &&
 		    (sub_adv.request.evt == request.evt)) {
-			int32_t time_passed = os_time_get_32() - sub_adv.start;
+			int32_t time_passed = (uint32_t)os_time_get_ms() - sub_adv.start;
 
 			if (time_passed < sub_adv.request.duration &&
 			    ((sub_adv.request.duration - time_passed) >= MSEC_PER_SEC)) {
@@ -840,13 +840,13 @@ static int gatt_proxy_advertise(void)
 	}
 end:
 	if (cnt > 1) {
-		request.duration = (request.duration == SYS_FOREVER_MS)
+		request.duration = (request.duration == OS_TIMEOUT_FOREVER)
 					   ? max_adv_duration
 					   : MIN(request.duration, max_adv_duration);
 	}
 
 	/* Save current state for next iteration */
-	sub_adv.start = os_time_get_32();
+	sub_adv.start = (uint32_t)os_time_get_ms();
 	sub_adv.sub = sub;
 	sub_adv.request = request;
 
@@ -857,7 +857,7 @@ end:
 #if defined(CONFIG_BT_MESH_OD_PRIV_PROXY_SRV)
 	case OD_PRIV_NET_ID:
 		if (!sub->priv_net_id_sent) {
-			sub->priv_net_id_sent = os_time_get();
+			sub->priv_net_id_sent = (int64_t)os_time_get_ms();
 		}
 		/* Fall through */
 #endif

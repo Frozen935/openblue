@@ -755,7 +755,7 @@ static void prov_retransmit(struct bt_work *work)
 		return;
 	}
 
-	if (os_time_get() - link.tx.start > link.tx.timeout * MSEC_PER_SEC) {
+	if ((int64_t)os_time_get_ms() - link.tx.start > link.tx.timeout * MSEC_PER_SEC) {
 		LOG_WRN("Giving up transaction");
 		prov_link_close(PROV_BEARER_LINK_STATUS_TIMEOUT);
 		return;
@@ -794,7 +794,7 @@ static int bearer_ctl_send(struct bt_mesh_adv *adv)
 	prov_clear_tx();
 	bt_work_reschedule(&link.prot_timer, bt_mesh_prov_protocol_timeout_get());
 
-	link.tx.start = os_time_get();
+	link.tx.start = (int64_t)os_time_get_ms();
 	link.tx.adv[0] = adv;
 	send_reliable();
 
@@ -803,7 +803,8 @@ static int bearer_ctl_send(struct bt_mesh_adv *adv)
 
 static void buf_sent(int err, void *user_data)
 {
-	enum prov_bearer_link_status reason = (enum prov_bearer_link_status)(int)user_data;
+	enum prov_bearer_link_status reason =
+		(enum prov_bearer_link_status)(intptr_t)user_data;
 
 	bt_atomic_clear_bit(link.flags, ADV_LINK_ACK_SENDING);
 
@@ -857,7 +858,7 @@ static int prov_send_adv(struct bt_buf_simple *msg,
 	link.tx.adv[0] = start;
 	link.tx.cb = cb;
 	link.tx.cb_data = cb_data;
-	link.tx.start = os_time_get();
+	link.tx.start = (int64_t)os_time_get_ms();
 
 	LOG_DBG("xact_id: 0x%x len: %u", link.tx.id, msg->len);
 

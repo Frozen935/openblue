@@ -176,6 +176,23 @@ static inline bool bt_slist_find_and_remove(bt_slist_t *list, bt_snode_t *node)
 	return false;
 }
 
+static inline void bt_slist_merge_slist(bt_slist_t *list, bt_slist_t *list_to_append)
+{
+	if (bt_slist_is_empty(list_to_append)) {
+		return;
+	}
+
+	if (bt_slist_is_empty(list)) {
+		list->head = list_to_append->head;
+		list->tail = list_to_append->tail;
+	} else {
+		list->tail->next = list_to_append->head;
+		list->tail = list_to_append->tail;
+	}
+
+	bt_slist_init(list_to_append);
+}
+
 static inline size_t bt_slist_len(const bt_slist_t *list)
 {
 	size_t len = 0;

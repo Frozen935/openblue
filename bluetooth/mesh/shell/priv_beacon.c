@@ -138,7 +138,7 @@ static int cmd_priv_node_id_set(const struct bt_shell *sh, size_t argc, char *ar
 	return 0;
 }
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE_EXTERN(
 	priv_beacons_cmds,
 	BT_SHELL_CMD_ARG(priv-beacon-get, NULL, NULL, cmd_priv_beacon_get, 1, 0),
 	BT_SHELL_CMD_ARG(priv-beacon-set, NULL, "<Val(off, on)> <RandInt(10s steps)>",
@@ -151,5 +151,5 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 		      0),
 	BT_SHELL_SUBCMD_SET_END);
 
-SHELL_SUBCMD_ADD((mesh, models), prb, &priv_beacons_cmds, "Private Beacon Cli commands",
+BT_SHELL_SUBCMD_ADD((mesh, models), prb, &priv_beacons_cmds, "Private Beacon Cli commands",
 		 bt_mesh_shell_mdl_cmds_help, 1, 1);

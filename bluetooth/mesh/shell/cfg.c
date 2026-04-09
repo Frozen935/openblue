@@ -56,7 +56,7 @@ static int cmd_timeout(const struct bt_shell *sh, size_t argc, char *argv[])
 		}
 
 		if (timeout_s < 0 || timeout_s > (INT32_MAX / 1000)) {
-			timeout_ms = SYS_FOREVER_MS;
+			timeout_ms = OS_TIMEOUT_FOREVER;
 		} else {
 			timeout_ms = timeout_s * MSEC_PER_SEC;
 		}
@@ -65,7 +65,7 @@ static int cmd_timeout(const struct bt_shell *sh, size_t argc, char *argv[])
 	}
 
 	timeout_ms = bt_mesh_cfg_cli_timeout_get();
-	if (timeout_ms == SYS_FOREVER_MS) {
+	if (timeout_ms == OS_TIMEOUT_FOREVER) {
 		bt_shell_print("Message timeout: forever");
 	} else {
 		bt_shell_print("Message timeout: %u seconds", timeout_ms / 1000);
@@ -1865,7 +1865,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(appkey_cmds,
 	BT_SHELL_SUBCMD_SET_END);
 
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE_EXTERN(
 	cfg_cli_cmds,
 	/* Configuration Client Model operations */
 	BT_SHELL_CMD_ARG(reset, NULL, NULL, cmd_reset, 1, 0),
@@ -1890,5 +1890,5 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	BT_SHELL_CMD(model, &model_cmds, "Model config commands", bt_mesh_shell_mdl_cmds_help),
 	BT_SHELL_SUBCMD_SET_END);
 
-SHELL_SUBCMD_ADD((mesh, models), cfg, &cfg_cli_cmds, "Config Cli commands",
+BT_SHELL_SUBCMD_ADD((mesh, models), cfg, &cfg_cli_cmds, "Config Cli commands",
 		 bt_mesh_shell_mdl_cmds_help, 1, 1);

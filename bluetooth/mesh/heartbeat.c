@@ -47,8 +47,7 @@ static int64_t sub_remaining(void)
 		return 0U;
 	}
 
-	uint32_t rem_ms = k_ticks_to_ms_floor32(
-		bt_work_delayable_remaining_get(&sub_timer));
+	uint32_t rem_ms = bt_work_delayable_remaining_get(&sub_timer);
 
 	return rem_ms / MSEC_PER_SEC;
 }

@@ -181,7 +181,7 @@ static int blob_srv_start(struct bt_mesh_blob_srv *srv,
 			  struct bt_mesh_blob_xfer *xfer)
 {
 	bt_shell_print("BLOB start");
-	blob_time = os_time_get();
+	blob_time = (int64_t)os_time_get_ms();
 	return 0;
 }
 
@@ -189,7 +189,7 @@ static void blob_srv_end(struct bt_mesh_blob_srv *srv, uint64_t id,
 			 bool success)
 {
 	if (success) {
-		int64_t duration = os_time_delta(&blob_time);
+		int64_t duration = (int64_t)os_time_get_ms() - blob_time;
 
 		bt_shell_print("BLOB completed in %u.%03u s",
 			       (uint32_t)(duration / MSEC_PER_SEC),
@@ -587,7 +587,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	BT_SHELL_SUBCMD_SET_END);
 #endif
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE_EXTERN(
 	blob_cmds,
 #if defined(CONFIG_BT_MESH_SHELL_BLOB_IO_FLASH)
 	BT_SHELL_CMD_ARG(flash-stream-set, NULL, "<AreaID> [<Offset>]",
@@ -602,5 +602,5 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 #endif
 	BT_SHELL_SUBCMD_SET_END);
 
-SHELL_SUBCMD_ADD((mesh, models), blob, &blob_cmds, "BLOB models commands",
+BT_SHELL_SUBCMD_ADD((mesh, models), blob, &blob_cmds, "BLOB models commands",
 		 bt_mesh_shell_mdl_cmds_help, 1, 1);

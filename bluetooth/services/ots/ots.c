@@ -682,4 +682,4 @@ static int bt_gatt_ots_instances_prepare(void)
 }
 
 STACK_INIT(bt_gatt_ots_instances_prepare, STACK_SVC_INIT,
-	 CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
+	 BT_STACK_KERNEL_INIT_PRIORITY_DEFAULT);

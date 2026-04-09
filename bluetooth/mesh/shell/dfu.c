@@ -994,7 +994,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	BT_SHELL_SUBCMD_SET_END);
 #endif
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE_EXTERN(
 	dfu_cmds,
 #if defined(CONFIG_BT_MESH_SHELL_DFU_METADATA)
 	BT_SHELL_CMD(metadata, &dfu_metadata_cmds, "Metadata commands", bt_mesh_shell_mdl_cmds_help),
@@ -1010,5 +1010,5 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 #endif
 	BT_SHELL_SUBCMD_SET_END);
 
-SHELL_SUBCMD_ADD((mesh, models), dfu, &dfu_cmds, "DFU models commands",
+BT_SHELL_SUBCMD_ADD((mesh, models), dfu, &dfu_cmds, "DFU models commands",
 		 bt_mesh_shell_mdl_cmds_help, 1, 1);

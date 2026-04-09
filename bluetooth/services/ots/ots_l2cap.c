@@ -308,4 +308,4 @@ int bt_gatt_ots_l2cap_disconnect(struct bt_gatt_ots_l2cap *l2cap_ctx)
 
 
 STACK_INIT(bt_gatt_ots_l2cap_init, STACK_SVC_INIT,
-	 CONFIG_APPLICATION_INIT_PRIORITY);
+	 BT_STACK_APPLICATION_INIT_PRIORITY);

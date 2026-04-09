@@ -77,12 +77,12 @@ static int cmd_models_metadata_get(const struct bt_shell *sh, size_t argc, char 
 	return err;
 }
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE_EXTERN(
 	large_comp_data_cmds,
 	BT_SHELL_CMD_ARG(large-comp-data-get, NULL, "<page> <offset>", cmd_large_comp_data_get, 3, 0),
 	BT_SHELL_CMD_ARG(models-metadata-get, NULL, "<page> <offset>", cmd_models_metadata_get, 3, 0),
 	BT_SHELL_SUBCMD_SET_END);
 
-SHELL_SUBCMD_ADD((mesh, models), lcd, &large_comp_data_cmds,
+BT_SHELL_SUBCMD_ADD((mesh, models), lcd, &large_comp_data_cmds,
 		 "Large Comp Data Cli commands",
 		 bt_mesh_shell_mdl_cmds_help, 1, 1);

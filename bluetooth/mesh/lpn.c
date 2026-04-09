@@ -341,7 +341,7 @@ static void friend_req_send_end(int err, void *user_data)
 		return;
 	}
 
-	lpn->adv_duration = os_time_get_32() - lpn->adv_start_time;
+	lpn->adv_duration = (uint32_t)os_time_get_ms() - lpn->adv_start_time;
 
 	if (IS_ENABLED(CONFIG_BT_MESH_LPN_ESTABLISHMENT)) {
 		bt_work_reschedule(&lpn->timer,
@@ -357,7 +357,7 @@ static void friend_req_send_start(uint16_t duration, int err, void *user_data)
 {
 	struct bt_mesh_lpn *lpn = &bt_mesh.lpn;
 
-	lpn->adv_start_time = os_time_get_32();
+	lpn->adv_start_time = (uint32_t)os_time_get_ms();
 
 	if (err) {
 		friend_req_send_end(err, user_data);
@@ -418,7 +418,7 @@ static void req_send_end(int err, void *user_data)
 		return;
 	}
 
-	lpn->adv_duration = os_time_get_32() - lpn->adv_start_time;
+	lpn->adv_duration = (uint32_t)os_time_get_ms() - lpn->adv_start_time;
 
 #if defined(CONFIG_BT_MESH_LOW_POWER_LOG_LEVEL_DBG)
 	LOG_DBG("req 0x%02x duration %u err %d state %s", lpn->sent_req, lpn->adv_duration, err,
@@ -459,7 +459,7 @@ static void req_send_start(uint16_t duration, int err, void *user_data)
 {
 	struct bt_mesh_lpn *lpn = &bt_mesh.lpn;
 
-	lpn->adv_start_time = os_time_get_32();
+	lpn->adv_start_time = (uint32_t)os_time_get_ms();
 
 	if (err) {
 		req_send_end(err, user_data);

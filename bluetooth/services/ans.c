@@ -483,4 +483,4 @@ int bt_ans_set_unread_support_category(uint16_t mask)
 	return 0;
 }
 
-STACK_INIT(ans_init, STACK_SVC_INIT, CONFIG_APPLICATION_INIT_PRIORITY);
+STACK_INIT(ans_init, STACK_SVC_INIT, BT_STACK_APPLICATION_INIT_PRIORITY);

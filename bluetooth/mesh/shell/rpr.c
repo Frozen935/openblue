@@ -402,7 +402,7 @@ static int cmd_reprovision_remote(const struct bt_shell *sh, size_t argc, char *
 
 BT_MESH_SHELL_MDL_INSTANCE_CMDS(instance_cmds, BT_MESH_MODEL_ID_REMOTE_PROV_CLI, mod);
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE_EXTERN(
 	rpr_cli_cmds,
 	BT_SHELL_CMD_ARG(scan, NULL, "<Timeout(s)> [<UUID(1-16 hex)>]", cmd_scan, 2, 1),
 	BT_SHELL_CMD_ARG(scan-ext, NULL, "<Timeout(s)> <UUID(1-16 hex)> [<ADType> ... ]",
@@ -421,5 +421,5 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	BT_SHELL_CMD(instance, &instance_cmds, "Instance commands", bt_mesh_shell_mdl_cmds_help),
 	BT_SHELL_SUBCMD_SET_END);
 
-SHELL_SUBCMD_ADD((mesh, models), rpr, &rpr_cli_cmds, "Remote Provisioning Cli commands",
+BT_SHELL_SUBCMD_ADD((mesh, models), rpr, &rpr_cli_cmds, "Remote Provisioning Cli commands",
 		 bt_mesh_shell_mdl_cmds_help, 1, 1);

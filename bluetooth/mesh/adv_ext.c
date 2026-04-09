@@ -69,7 +69,14 @@ static void send_pending_adv(struct bt_work *work);
 static bool schedule_send(struct bt_mesh_ext_adv *ext_adv);
 
 static struct bt_work_q bt_mesh_workq;
-static K_KERNEL_STACK_DEFINE(thread_stack, MESH_WORKQ_STACK_SIZE);
+
+#if defined(CONFIG_BT_MESH_WORKQ_MESH)
+static const struct bt_work_queue_config bt_mesh_workq_cfg = {
+	.name = "BT MESH WQ",
+	.no_yield = false,
+	.essential = false,
+};
+#endif
 
 #if defined(CONFIG_BT_MESH_WORKQ_MESH)
 #define MESH_WORKQ &bt_mesh_workq
@@ -181,7 +188,7 @@ static int adv_start(struct bt_mesh_ext_adv *ext_adv,
 		return err;
 	}
 
-	ext_adv->timestamp = os_time_get_32();
+	ext_adv->timestamp = (uint32_t)os_time_get_ms();
 
 	err = bt_le_ext_adv_start(ext_adv->instance, start);
 	if (err) {
@@ -347,7 +354,7 @@ static void send_pending_adv(struct bt_work *work)
 
 	if (bt_atomic_test_and_clear_bit(ext_adv->flags, ADV_FLAG_SENT)) {
 		LOG_DBG("Advertising stopped after %u ms for %s adv",
-			os_time_get_32() - ext_adv->timestamp,
+			(uint32_t)os_time_get_ms() - ext_adv->timestamp,
 			ext_adv->adv ? adv_tag_to_str[ext_adv->adv->ctx.tag]
 				     : adv_tag_to_str[BT_MESH_ADV_TAG_PROXY]);
 
@@ -488,9 +495,8 @@ void bt_mesh_adv_init(void)
 
 	if (IS_ENABLED(CONFIG_BT_MESH_WORKQ_MESH)) {
 		bt_work_queue_init(&bt_mesh_workq);
-		bt_work_queue_start(&bt_mesh_workq, thread_stack, MESH_WORKQ_STACK_SIZE,
-				   OS_PRIORITY(MESH_WORKQ_PRIORITY), NULL);
-		os_thread_name_set(&bt_mesh_workq.thread, "BT MESH WQ");
+		bt_work_queue_start(&bt_mesh_workq, MESH_WORKQ_STACK_SIZE,
+				   OS_PRIORITY(MESH_WORKQ_PRIORITY), &bt_mesh_workq_cfg);
 	}
 }
 
@@ -591,7 +597,7 @@ int bt_mesh_adv_gatt_start(const struct bt_le_adv_param *param,
 	struct bt_mesh_ext_adv *ext_adv = gatt_adv_get();
 	struct bt_le_ext_adv_start_param start = {
 		/* Timeout is set in 10 ms steps, with 0 indicating "forever" */
-		.timeout = (duration == SYS_FOREVER_MS) ? 0 : MAX(1, duration / 10),
+		.timeout = (duration == OS_TIMEOUT_FOREVER) ? 0 : MAX(1, duration / 10),
 	};
 
 	LOG_DBG("Start advertising %d ms", duration);

@@ -175,7 +175,7 @@ static struct bt_mesh_adv *process_events(struct bt_poll_event *ev, int count)
 
 		switch (ev->state) {
 		case BT_POLL_STATE_FIFO_DATA_AVAILABLE:
-			return bt_fifo_get(ev->fifo, OS_TIMEOUT_NO_WAIT);
+			return bt_queue_get(ev->queue, OS_TIMEOUT_NO_WAIT);
 		case BT_POLL_STATE_NOT_READY:
 		case BT_POLL_STATE_CANCELLED:
 			break;
@@ -192,17 +192,17 @@ struct bt_mesh_adv *bt_mesh_adv_get(os_timeout_t timeout)
 {
 	int err;
 	struct bt_poll_event events[] = {
-		BT_POLL_EVENT_STATIC_INITIALIZER(BT_POLL_TYPE_FIFO_DATA_AVAILABLE,
+		BT_POLL_EVENT_STATIC_INITIALIZER(BT_POLL_TYPE_DATA_AVAILABLE,
 						BT_POLL_MODE_NOTIFY_ONLY,
-						&bt_mesh_adv_queue,
+						&bt_mesh_adv_queue._queue,
 						0),
 #if (defined(CONFIG_BT_MESH_RELAY) || defined(CONFIG_BT_MESH_BRG_CFG_SRV)) && \
 	(defined(CONFIG_BT_MESH_ADV_LEGACY) || \
 	 defined(CONFIG_BT_MESH_ADV_EXT_RELAY_USING_MAIN_ADV_SET) || \
 	 !(CONFIG_BT_MESH_RELAY_ADV_SETS))
-		BT_POLL_EVENT_STATIC_INITIALIZER(BT_POLL_TYPE_FIFO_DATA_AVAILABLE,
+		BT_POLL_EVENT_STATIC_INITIALIZER(BT_POLL_TYPE_DATA_AVAILABLE,
 						BT_POLL_MODE_NOTIFY_ONLY,
-						&bt_mesh_relay_queue,
+						&bt_mesh_relay_queue._queue,
 						0),
 #endif
 	};

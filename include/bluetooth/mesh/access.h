@@ -10,6 +10,7 @@
 #ifndef __INCLUDE_BLUETOOTH_MESH_ACCESS_H__
 #define __INCLUDE_BLUETOOTH_MESH_ACCESS_H__
 
+#include <base/bt_work.h>
 #include <utils/bt_utils.h>
 #include <bluetooth/assigned_numbers.h>
 #include <bluetooth/mesh/msg.h>
@@ -578,7 +579,7 @@ struct bt_mesh_model_pub {
 	int (*update)(const struct bt_mesh_model *mod);
 
 	/** Publish Period Timer. Only for stack-internal use. */
-	struct k_work_delayable timer;
+	struct bt_work_delayable timer;
 };
 
 /**

@@ -130,4 +130,4 @@ const struct bt_gatt_attr *bt_bas_get_bas_attr(uint16_t index)
 	return NULL;
 }
 
-STACK_INIT(bas_init, STACK_SVC_INIT, CONFIG_APPLICATION_INIT_PRIORITY);
+STACK_INIT(bas_init, STACK_SVC_INIT, BT_STACK_APPLICATION_INIT_PRIORITY);

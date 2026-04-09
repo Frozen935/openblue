@@ -169,6 +169,14 @@ static inline size_t sys_count_bits(const void *value, size_t len)
 	return cnt;
 }
 
+#ifndef POPCOUNT
+#define POPCOUNT(x)                                                                               \
+	({                                                                                         \
+		__typeof__(x) _bt_popcount_value = (x);                                             \
+		(unsigned int)sys_count_bits(&_bt_popcount_value, sizeof(_bt_popcount_value));       \
+	})
+#endif
+
 static inline void mem_xor_n(uint8_t *dst, const uint8_t *src1, const uint8_t *src2, size_t len)
 {
 	while (len--) {

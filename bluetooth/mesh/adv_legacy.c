@@ -44,7 +44,7 @@ static int bt_data_send(uint8_t num_events, uint16_t adv_int,
 			struct bt_mesh_adv_ctx *ctx)
 {
 	struct bt_le_adv_param param = {};
-	uint64_t uptime = os_time_get();
+	uint64_t uptime = os_time_get_ms();
 	uint16_t duration;
 	int err;
 	const int32_t adv_int_min =
@@ -113,7 +113,7 @@ static int bt_data_send(uint8_t num_events, uint16_t adv_int,
 		return err;
 	}
 
-	LOG_DBG("Advertising stopped (%u ms)", (uint32_t) os_time_delta(&uptime));
+	LOG_DBG("Advertising stopped (%u ms)", (uint32_t)(os_time_get_ms() - uptime));
 
 	return 0;
 }
@@ -159,10 +159,10 @@ static void adv_thread(void *p1)
 				/* Adv timeout may be set by a call from proxy
 				 * to bt_mesh_adv_gatt_start:
 				 */
-				adv_timeout = SYS_FOREVER_MS;
+				adv_timeout = OS_TIMEOUT_FOREVER;
 				(void)bt_mesh_adv_gatt_send();
 
-				adv = bt_mesh_adv_get(SYS_TIMEOUT_MS(adv_timeout));
+				adv = bt_mesh_adv_get(adv_timeout);
 				bt_le_adv_stop();
 
 				if (IS_ENABLED(CONFIG_BT_MESH_PROXY_SOLICITATION) && !adv) {

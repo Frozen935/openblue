@@ -401,17 +401,19 @@ static int ascii_decimal_to_le_bytes(const char *ascii_str, uint8_t *out, size_t
 
 	for (const char *p = ascii_str; *p; ++p) {
 		if (!isdigit((unsigned char)*p)) {
-			return -EINVAL;
+			return -EINVAL; /* Invalid character */
 		}
 
 		uint16_t carry = *p - '0';
 
+		/* If this is the first digit and it's 0, we need at least one byte */
 		if (len == 0) {
 			out[0] = carry;
 			len = 1;
 			continue;
 		}
 
+		/* Multiply current result by 10 and add new digit */
 		for (size_t i = 0; i < len; ++i) {
 			uint16_t value = out[i] * 10 + carry;
 
@@ -419,9 +421,10 @@ static int ascii_decimal_to_le_bytes(const char *ascii_str, uint8_t *out, size_t
 			carry = value >> 8;
 		}
 
+		/* Handle overflow to next byte */
 		if (carry != 0) {
 			if (len >= PROV_IO_OOB_SIZE_MAX) {
-				return -EOVERFLOW;
+				return -EOVERFLOW; /* Overflow */
 			}
 			out[len++] = carry;
 		}
@@ -433,23 +436,6 @@ static int ascii_decimal_to_le_bytes(const char *ascii_str, uint8_t *out, size_t
 
 static int cmd_input_num(const struct bt_shell *sh, size_t argc, char *argv[])
 {
-#if defined(CONFIG_BT_MESH_PROV_OOB_API_LEGACY)
-	int err = 0;
-	uint32_t num;
-
-	num = bt_shell_strtoul(argv[1], 10, &err);
-	if (err) {
-		bt_shell_warn("Unable to parse input string argument");
-		return err;
-	}
-
-	err = bt_mesh_input_number(num);
-	if (err) {
-		bt_shell_error("Numeric input failed (err %d)", err);
-	}
-
-	return 0;
-#else
 	int err = 0;
 	uint8_t result[PROV_IO_OOB_SIZE_MAX] = {0};
 	size_t result_len;
@@ -467,7 +453,6 @@ static int cmd_input_num(const struct bt_shell *sh, size_t argc, char *argv[])
 	}
 
 	return 0;
-#endif
 }
 
 static int cmd_input_str(const struct bt_shell *sh, size_t argc, char *argv[])
@@ -575,29 +560,75 @@ static void prov_reset(void)
 	bt_shell_print("The local node has been reset and needs reprovisioning");
 }
 
-static int output_number(bt_mesh_output_action_t action, uint32_t number)
+static void binary_to_ascii_digits(const uint8_t *in, size_t in_len, char *out_str)
 {
+	uint8_t temp[PROV_IO_OOB_SIZE_MAX];
+	size_t digit_count = 0;
+
+	__ASSERT(in_len <= sizeof(temp), "Output numeric exceeds maximum");
+	memcpy(temp, in, in_len);
+
+	while (in_len > 0) {
+		uint16_t remainder = 0;
+
+		/* Divide the number in `temp` by 10, store quotient back in `temp` */
+		for (ssize_t i = in_len - 1; i >= 0; --i) {
+			uint16_t acc = ((uint16_t)remainder << 8) | temp[i];
+
+			temp[i] = acc / 10;
+			remainder = acc % 10;
+		}
+
+		/* Store ASCII digit */
+		out_str[digit_count++] = '0' + remainder;
+
+		/* Trim leading zeros */
+		while (in_len > 0 && temp[in_len - 1] == 0) {
+			in_len--;
+		}
+	}
+
+	/* Digits are in reverse order, reverse them to get correct string */
+	sys_mem_swap(out_str, digit_count);
+
+	/* Null-terminate the string */
+	out_str[digit_count] = '\0';
+}
+
+static int output_numeric(bt_mesh_output_action_t action, uint8_t *numeric, size_t len)
+{
+	char oob_string[PROV_IO_OOB_SIZE_MAX + 1];
+
+	binary_to_ascii_digits(numeric, len, oob_string);
+
 	switch (action) {
 	case BT_MESH_BLINK:
-		bt_shell_print("OOB blink Number: %u", number);
+		bt_shell_print("OOB blink Number: %s", oob_string);
 		break;
 	case BT_MESH_BEEP:
-		bt_shell_print("OOB beep Number: %u", number);
+		bt_shell_print("OOB beep Number: %s", oob_string);
 		break;
 	case BT_MESH_VIBRATE:
-		bt_shell_print("OOB vibrate Number: %u", number);
+		bt_shell_print("OOB vibrate Number: %s", oob_string);
 		break;
 	case BT_MESH_DISPLAY_NUMBER:
-		bt_shell_print("OOB display Number: %u", number);
+		bt_shell_print("OOB display Number: %s", oob_string);
 		break;
 	default:
-		bt_shell_error("Unknown Output action %u (number %u) requested!",
-			       action, number);
+		bt_shell_error("Unknown Output action %u (number %s) requested!", action,
+			       oob_string);
 		return -EINVAL;
 	}
 
 	return 0;
 }
+
+#if defined CONFIG_BT_MESH_PROV_OOB_API_LEGACY
+static int output_number(bt_mesh_output_action_t action, uint32_t number)
+{
+	return output_numeric(action, (uint8_t *)&number, sizeof(number));
+}
+#endif
 
 static int output_string(const char *str)
 {
@@ -654,7 +685,11 @@ struct bt_mesh_prov bt_mesh_shell_prov = {
 	.output_size = 6,
 	.output_actions = (BT_MESH_BLINK | BT_MESH_BEEP | BT_MESH_VIBRATE | BT_MESH_DISPLAY_NUMBER |
 			   BT_MESH_DISPLAY_STRING),
+#if defined CONFIG_BT_MESH_PROV_OOB_API_LEGACY
 	.output_number = output_number,
+#else
+	.output_numeric = output_numeric,
+#endif
 	.output_string = output_string,
 	.input_size = 6,
 	.input_actions =
@@ -1803,8 +1838,93 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(stat_cmds,
 	BT_SHELL_SUBCMD_SET_END);
 #endif
 
-/* Placeholder for model shell modules that is configured in the application */
-SHELL_SUBCMD_SET_CREATE(model_cmds, (mesh, models));
+#if defined(CONFIG_BT_MESH_SHELL_BLOB_CLI) || defined(CONFIG_BT_MESH_SHELL_BLOB_SRV) || \
+	defined(CONFIG_BT_MESH_SHELL_BLOB_IO_FLASH)
+extern const struct bt_shell_cmd_entry blob_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_BRG_CFG_CLI)
+extern const struct bt_shell_cmd_entry brg_cfg_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_CFG_CLI)
+extern const struct bt_shell_cmd_entry cfg_cli_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_DFD_SRV)
+extern const struct bt_shell_cmd_entry dfd_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_DFU_SLOT) || defined(CONFIG_BT_MESH_SHELL_DFU_METADATA) || \
+	defined(CONFIG_BT_MESH_SHELL_DFU_CLI) || defined(CONFIG_BT_MESH_SHELL_DFU_SRV)
+extern const struct bt_shell_cmd_entry dfu_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_HEALTH_CLI)
+extern const struct bt_shell_cmd_entry health_cli_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_LARGE_COMP_DATA_CLI)
+extern const struct bt_shell_cmd_entry large_comp_data_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_OD_PRIV_PROXY_CLI)
+extern const struct bt_shell_cmd_entry od_priv_proxy_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_OP_AGG_CLI)
+extern const struct bt_shell_cmd_entry op_agg_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_PRIV_BEACON_CLI)
+extern const struct bt_shell_cmd_entry priv_beacons_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_RPR_CLI)
+extern const struct bt_shell_cmd_entry rpr_cli_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_SAR_CFG_CLI)
+extern const struct bt_shell_cmd_entry sar_cfg_cli_cmds[];
+#endif
+#if defined(CONFIG_BT_MESH_SOL_PDU_RPL_CLI)
+extern const struct bt_shell_cmd_entry sol_pdu_rpl_cmds[];
+#endif
+
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(model_cmds,
+#if defined(CONFIG_BT_MESH_SHELL_BLOB_CLI) || defined(CONFIG_BT_MESH_SHELL_BLOB_SRV) || \
+	defined(CONFIG_BT_MESH_SHELL_BLOB_IO_FLASH)
+	BT_SHELL_CMD(blob, &blob_cmds, "BLOB models commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_BRG_CFG_CLI)
+	BT_SHELL_CMD(brg, &brg_cfg_cmds, "Bridge Configuration Cli commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_CFG_CLI)
+	BT_SHELL_CMD(cfg, &cfg_cli_cmds, "Config Cli commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_DFD_SRV)
+	BT_SHELL_CMD(dfd, &dfd_cmds, "Distributor commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_DFU_SLOT) || defined(CONFIG_BT_MESH_SHELL_DFU_METADATA) || \
+	defined(CONFIG_BT_MESH_SHELL_DFU_CLI) || defined(CONFIG_BT_MESH_SHELL_DFU_SRV)
+	BT_SHELL_CMD(dfu, &dfu_cmds, "DFU models commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_HEALTH_CLI)
+	BT_SHELL_CMD(health, &health_cli_cmds, "Health Cli commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_LARGE_COMP_DATA_CLI)
+	BT_SHELL_CMD(lcd, &large_comp_data_cmds, "Large Comp Data Cli commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_OD_PRIV_PROXY_CLI)
+	BT_SHELL_CMD(od_priv_proxy, &od_priv_proxy_cmds,
+		     "On-Demand Private Proxy Cli commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_OP_AGG_CLI)
+	BT_SHELL_CMD(opagg, &op_agg_cmds, "Opcode Aggregator Cli commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_PRIV_BEACON_CLI)
+	BT_SHELL_CMD(prb, &priv_beacons_cmds, "Private Beacon Cli commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_RPR_CLI)
+	BT_SHELL_CMD(rpr, &rpr_cli_cmds, "Remote Provisioning Cli commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SHELL_SAR_CFG_CLI)
+	BT_SHELL_CMD(sar, &sar_cfg_cli_cmds, "Sar Cfg Cli commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+#if defined(CONFIG_BT_MESH_SOL_PDU_RPL_CLI)
+	BT_SHELL_CMD(sol_pdu_rpl, &sol_pdu_rpl_cmds,
+		     "Solicitation PDU RPL Cli commands", bt_mesh_shell_mdl_cmds_help),
+#endif
+	BT_SHELL_SUBCMD_SET_END);
 
 /* List of Mesh subcommands.
  *

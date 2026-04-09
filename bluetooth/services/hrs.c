@@ -166,4 +166,4 @@ int bt_hrs_notify(uint16_t heartrate)
 	return rc == -ENOTCONN ? 0 : rc;
 }
 
-STACK_INIT(hrs_init, STACK_SVC_INIT, CONFIG_APPLICATION_INIT_PRIORITY);
+STACK_INIT(hrs_init, STACK_SVC_INIT, BT_STACK_APPLICATION_INIT_PRIORITY);

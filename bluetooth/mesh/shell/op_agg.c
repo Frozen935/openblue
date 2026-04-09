@@ -53,12 +53,12 @@ static int cmd_seq_abort(const struct bt_shell *sh, size_t argc, char *argv[])
 	return 0;
 }
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE_EXTERN(
 	op_agg_cmds,
 	BT_SHELL_CMD_ARG(seq-start, NULL, "<ElemAddr>", cmd_seq_start, 2, 0),
 	BT_SHELL_CMD_ARG(seq-send, NULL, NULL, cmd_seq_send, 1, 0),
 	BT_SHELL_CMD_ARG(seq-abort, NULL, NULL, cmd_seq_abort, 1, 0),
 	BT_SHELL_SUBCMD_SET_END);
 
-SHELL_SUBCMD_ADD((mesh, models), opagg, &op_agg_cmds, "Opcode Aggregator Cli commands",
+BT_SHELL_SUBCMD_ADD((mesh, models), opagg, &op_agg_cmds, "Opcode Aggregator Cli commands",
 		 bt_mesh_shell_mdl_cmds_help, 1, 1);

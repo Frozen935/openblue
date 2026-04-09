@@ -748,7 +748,7 @@ static int32_t next_period(const struct bt_mesh_model *mod)
 	uint32_t period = 0;
 	uint32_t elapsed;
 
-	elapsed = os_time_get_32() - pub->period_start;
+	elapsed = (uint32_t)os_time_get_ms() - pub->period_start;
 	LOG_DBG("Publishing took %ums", elapsed);
 
 	if (mod->pub->count) {
@@ -799,7 +799,7 @@ static void publish_sent(int err, void *user_data)
 	const struct bt_mesh_model *mod = user_data;
 	int32_t delay;
 
-	LOG_DBG("err %d, time %u", err, os_time_get_32());
+	LOG_DBG("err %d, time %u", err, (uint32_t)os_time_get_ms());
 
 	delay = next_period(mod);
 
@@ -854,7 +854,7 @@ static int pub_period_start(struct bt_mesh_model_pub *pub)
 
 	err = pub->update(pub->mod);
 
-	pub->period_start = os_time_get_32();
+	pub->period_start = (uint32_t)os_time_get_ms();
 
 	if (err) {
 		/* Skip this publish attempt. */
@@ -916,7 +916,7 @@ static void mod_publish(struct bt_work *work)
 		return;
 	}
 
-	LOG_DBG("timestamp: %u", os_time_get_32());
+	LOG_DBG("timestamp: %u", (uint32_t)os_time_get_ms());
 
 	if (pub->count) {
 		pub->count--;
@@ -1623,7 +1623,7 @@ int bt_mesh_model_publish(const struct bt_mesh_model *model)
 
 	/* Account for initial transmission */
 	pub->count = BT_MESH_PUB_MSG_TOTAL(pub);
-	pub->period_start = os_time_get_32();
+	pub->period_start = (uint32_t)os_time_get_ms();
 
 	LOG_DBG("Publish Retransmit Count %u Interval %ums", pub->count,
 		BT_MESH_PUB_TRANSMIT_INT(pub->retransmit));

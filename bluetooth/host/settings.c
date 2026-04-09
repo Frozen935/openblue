@@ -370,15 +370,7 @@ BT_STORAGE_HANDLER_DEFINE_WITH_CPRIO(bt, "bt", NULL, set_setting, commit_setting
 
 int bt_settings_init(void)
 {
-	int err;
-
 	LOG_DBG("");
-
-	err = settings_subsys_init();
-	if (err) {
-		LOG_ERR("settings_subsys_init failed (err %d)", err);
-		return err;
-	}
 
 	return 0;
 }

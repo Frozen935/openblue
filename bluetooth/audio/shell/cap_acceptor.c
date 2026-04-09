@@ -12,6 +12,18 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <base/bt_assert.h>
+#include <base/utils.h>
+
+#include <bluetooth/addr.h>
+#include <bluetooth/assigned_numbers.h>
+#include <bluetooth/audio/audio.h>
+#include <bluetooth/audio/cap.h>
+#include <bluetooth/audio/csip.h>
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/gap.h>
+#include <bluetooth/gatt.h>
+#include <bluetooth/uuid.h>
 #include <utils/bt_utils.h>
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
@@ -101,14 +113,14 @@ static int cmd_cap_acceptor_init(const struct bt_shell *sh, size_t argc,
 
 			set_size = bt_shell_strtoul(argv[argn], 0, &err);
 			if (err != 0) {
-				bt_shell_error(sh, "Could not parse set_size: %d",
+				bt_shell_error("Could not parse set_size: %d",
 					    err);
 
 				return -ENOEXEC;
 			}
 
 			if (set_size > UINT8_MAX) {
-				bt_shell_error(sh, "Invalid set_size: %lu",
+				bt_shell_error("Invalid set_size: %lu",
 					    set_size);
 
 				return -ENOEXEC;
@@ -126,14 +138,14 @@ static int cmd_cap_acceptor_init(const struct bt_shell *sh, size_t argc,
 
 			rank = bt_shell_strtoul(argv[argn], 0, &err);
 			if (err != 0) {
-				bt_shell_error(sh, "Could not parse rank: %d",
+				bt_shell_error("Could not parse rank: %d",
 					    err);
 
 				return -ENOEXEC;
 			}
 
 			if (rank > UINT8_MAX) {
-				bt_shell_error(sh, "Invalid rank: %lu", rank);
+				bt_shell_error("Invalid rank: %lu", rank);
 
 				return -ENOEXEC;
 			}
@@ -153,7 +165,7 @@ static int cmd_cap_acceptor_init(const struct bt_shell *sh, size_t argc,
 			len = hex2bin(argv[argn], strlen(argv[argn]), param.sirk,
 				      sizeof(param.sirk));
 			if (len == 0) {
-				bt_shell_error(sh, "Could not parse SIRK");
+				bt_shell_error("Could not parse SIRK");
 
 				return -ENOEXEC;
 			}
@@ -166,7 +178,7 @@ static int cmd_cap_acceptor_init(const struct bt_shell *sh, size_t argc,
 
 	err = bt_cap_acceptor_register(&param, &cap_csip_svc_inst);
 	if (err != 0) {
-		bt_shell_error(sh, "Could not register CAS: %d", err);
+		bt_shell_error("Could not register CAS: %d", err);
 
 		return err;
 	}
@@ -181,12 +193,12 @@ static int cmd_cap_acceptor_lock(const struct bt_shell *sh, size_t argc,
 
 	err = bt_csip_set_member_lock(cap_csip_svc_inst, true, false);
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to set lock: %d", err);
+		bt_shell_error("Failed to set lock: %d", err);
 
 		return -ENOEXEC;
 	}
 
-	bt_shell_print(sh, "Set locked");
+	bt_shell_print("Set locked");
 
 	return 0;
 }
@@ -201,7 +213,7 @@ static int cmd_cap_acceptor_release(const struct bt_shell *sh, size_t argc,
 		if (strcmp(argv[1], "force") == 0) {
 			force = true;
 		} else {
-			bt_shell_error(sh, "Unknown parameter: %s", argv[1]);
+			bt_shell_error("Unknown parameter: %s", argv[1]);
 
 			return -ENOEXEC;
 		}
@@ -210,12 +222,12 @@ static int cmd_cap_acceptor_release(const struct bt_shell *sh, size_t argc,
 	err = bt_csip_set_member_lock(cap_csip_svc_inst, false, force);
 
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to release lock: %d", err);
+		bt_shell_error("Failed to release lock: %d", err);
 
 		return -ENOEXEC;
 	}
 
-	bt_shell_print(sh, "Set released");
+	bt_shell_print("Set released");
 
 	return 0;
 }
@@ -227,25 +239,25 @@ static int cmd_cap_acceptor_sirk(const struct bt_shell *sh, size_t argc, char *a
 	int err;
 
 	if (cap_csip_svc_inst == NULL) {
-		bt_shell_error(sh, "CSIS not registered");
+		bt_shell_error("CSIS not registered");
 
 		return -ENOEXEC;
 	}
 
 	len = hex2bin(argv[1], strlen(argv[1]), sirk, sizeof(sirk));
 	if (len != sizeof(sirk)) {
-		bt_shell_error(sh, "Invalid SIRK Length: %zu", len);
+		bt_shell_error("Invalid SIRK Length: %zu", len);
 
 		return -ENOEXEC;
 	}
 
 	err = bt_csip_set_member_sirk(cap_csip_svc_inst, sirk);
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to set SIRK: %d", err);
+		bt_shell_error("Failed to set SIRK: %d", err);
 		return -ENOEXEC;
 	}
 
-	bt_shell_print(sh, "SIRK updated");
+	bt_shell_print("SIRK updated");
 
 	return 0;
 }
@@ -257,29 +269,29 @@ static int cmd_cap_acceptor_get_info(const struct bt_shell *sh, size_t argc, cha
 	int err;
 
 	if (cap_csip_svc_inst == NULL) {
-		bt_shell_error(sh, "CSIS not registered yet");
+		bt_shell_error("CSIS not registered yet");
 
 		return -ENOEXEC;
 	}
 
 	err = bt_csip_set_member_get_info(cap_csip_svc_inst, &info);
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to get SIRK: %d", err);
+		bt_shell_error("Failed to get SIRK: %d", err);
 		return -ENOEXEC;
 	}
 
-	bt_shell_print(sh, "Info for %p", cap_csip_svc_inst);
-	bt_shell_print(sh, "\tSIRK");
-	bt_shell_hexdump(sh, sirk, sizeof(sirk));
-	bt_shell_print(sh, "\tSet size: %u", info.set_size);
-	bt_shell_print(sh, "\tRank: %u", info.rank);
-	bt_shell_print(sh, "\tLockable: %s", info.lockable ? "true" : "false");
-	bt_shell_print(sh, "\tLocked: %s", info.locked ? "true" : "false");
+	bt_shell_print("Info for %p", cap_csip_svc_inst);
+	bt_shell_print("\tSIRK");
+	bt_shell_hexdump(sirk, sizeof(sirk));
+	bt_shell_print("\tSet size: %u", info.set_size);
+	bt_shell_print("\tRank: %u", info.rank);
+	bt_shell_print("\tLockable: %s", info.lockable ? "true" : "false");
+	bt_shell_print("\tLocked: %s", info.locked ? "true" : "false");
 	if (info.locked) {
 		char addr_str[BT_ADDR_LE_STR_LEN];
 
 		bt_addr_le_to_str(&info.lock_client_addr, addr_str, sizeof(addr_str));
-		bt_shell_print(sh, "\tLock owner: %s", addr_str);
+		bt_shell_print("\tLock owner: %s", addr_str);
 	}
 
 	return 0;
@@ -296,7 +308,7 @@ static int cmd_cap_acceptor_sirk_rsp(const struct bt_shell *sh, size_t argc, cha
 	} else if (strcmp(argv[1], "oob") == 0) {
 		sirk_read_rsp = BT_CSIP_READ_SIRK_REQ_RSP_OOB_ONLY;
 	} else {
-		bt_shell_error(sh, "Unknown parameter: %s", argv[1]);
+		bt_shell_error("Unknown parameter: %s", argv[1]);
 		return -ENOEXEC;
 	}
 
@@ -305,7 +317,7 @@ static int cmd_cap_acceptor_sirk_rsp(const struct bt_shell *sh, size_t argc, cha
 
 static int cmd_cap_acceptor(const struct bt_shell *sh, size_t argc, char **argv)
 {
-	bt_shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
+	bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
 
 	return -ENOEXEC;
 }

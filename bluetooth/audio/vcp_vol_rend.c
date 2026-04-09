@@ -103,7 +103,7 @@ static void notify_work_reschedule(struct bt_vcp_vol_rend *inst, enum vol_rend_n
 	if (err < 0) {
 		LOG_ERR("Failed to reschedule %s notification err %d", vol_rend_notify_str(notify),
 			err);
-	} else if (!K_TIMEOUT_EQ(delay, OS_TIMEOUT_NO_WAIT)) {
+	} else if (!TIMEOUT_EQ(delay, OS_TIMEOUT_NO_WAIT)) {
 		LOG_DBG("%s notification scheduled in %dms", vol_rend_notify_str(notify),
 			k_ticks_to_ms_floor32(bt_work_delayable_remaining_get(&inst->notify_work)));
 	}

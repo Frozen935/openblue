@@ -180,7 +180,7 @@ struct bt_iso_chan iso_chan = {
 	.qos = &cis_iso_qos,
 };
 
-BT_BUF_POOL_FIXED_DEFINE(tx_pool, 1, BT_ISO_SDU_BUF_SIZE(CONFIG_BT_ISO_TX_MTU),
+BT_BUF_POOL_FIXED_DEFINE(iso_tx_pool, 1, BT_ISO_SDU_BUF_SIZE(CONFIG_BT_ISO_TX_MTU),
 			  CONFIG_BT_CONN_TX_USER_DATA_SIZE, NULL);
 
 #if defined(CONFIG_BT_ISO_CENTRAL)
@@ -596,7 +596,7 @@ static int cmd_send(const struct bt_shell *sh, size_t argc, char *argv[])
 	cis_sn_last = get_next_sn(cis_sn_last, &cis_sn_last_updated_ticks, cis_sdu_interval_us);
 
 	while (count--) {
-		buf = bt_buf_alloc(&tx_pool, TX_BUF_TIMEOUT);
+		buf = bt_buf_alloc(&iso_tx_pool, TX_BUF_TIMEOUT);
 		if (buf == NULL) {
 			bt_shell_error("Failed to get buffer...");
 			return -ENOEXEC;
@@ -773,7 +773,7 @@ static int cmd_big_create(const struct bt_shell *sh, size_t argc, char *argv[])
 			}
 			param.encryption = true;
 		} else {
-			shell_help(sh);
+			bt_shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	} else {
@@ -858,7 +858,7 @@ static int cmd_big_sync(const struct bt_shell *sh, size_t argc, char *argv[])
 
 			i++;
 			if (i == argc) {
-				shell_help(sh);
+				bt_shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
@@ -882,7 +882,7 @@ static int cmd_big_sync(const struct bt_shell *sh, size_t argc, char *argv[])
 
 			i++;
 			if (i == argc) {
-				shell_help(sh);
+				bt_shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
@@ -906,7 +906,7 @@ static int cmd_big_sync(const struct bt_shell *sh, size_t argc, char *argv[])
 
 			i++;
 			if (i == argc) {
-				shell_help(sh);
+				bt_shell_help(sh);
 				return BT_SHELL_CMD_HELP_PRINTED;
 			}
 
@@ -922,7 +922,7 @@ static int cmd_big_sync(const struct bt_shell *sh, size_t argc, char *argv[])
 
 			param.encryption = true;
 		} else {
-			shell_help(sh);
+			bt_shell_help(sh);
 			return BT_SHELL_CMD_HELP_PRINTED;
 		}
 	}
@@ -955,7 +955,7 @@ static int cmd_big_term(const struct bt_shell *sh, size_t argc, char *argv[])
 }
 #endif /* CONFIG_BT_ISO_BROADCAST*/
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE(
 	iso_cmds,
 #if defined(CONFIG_BT_ISO_UNICAST)
 #if defined(CONFIG_BT_ISO_CENTRAL)
@@ -995,7 +995,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 static int cmd_iso(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		shell_help(sh);
+		bt_shell_help(sh);
 
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}

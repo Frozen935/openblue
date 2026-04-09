@@ -10,7 +10,6 @@ if BT_DIS
 
 config BT_DIS_SETTINGS
 	bool "Settings usage in Device Information Service"
-	select SETTINGS
 	help
 	  Enable Settings usage in Device Information Service.
 
@@ -214,8 +213,7 @@ config BT_DIS_UDI_AUTHORITY_STR
 endif # BT_DIS_UDI
 
 config BT_DIS_SYSTEM_ID
-	bool "DIS System ID characteristic [experimental]"
-	select EXPERIMENTAL
+	bool "DIS System ID characteristic"
 	help
 	  Enable System ID characteristic in Device Information Service.
 	  The System ID characteristic is used to represent an extended unique identifier (EUI) of the system

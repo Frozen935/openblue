@@ -4,8 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 menuconfig BT_ETS
-	bool "GATT Elapsed Time service [EXPERIMENTAL]"
-	select EXPERIMENTAL
+	bool "GATT Elapsed Time service"
 	help
 	  Enable Bluetooth Elapsed Time Service (ETS).
 	  This service provides a time service for embedded devices that either:

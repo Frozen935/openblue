@@ -292,4 +292,4 @@ static int ccp_server_init(void)
 	return 0;
 }
 
-SYS_INIT(ccp_server_init, APPLICATION, 0);
+STACK_INIT(ccp_server_init, STACK_SVC_INIT, 0);

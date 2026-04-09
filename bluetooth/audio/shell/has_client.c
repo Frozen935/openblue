@@ -13,6 +13,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <bluetooth/conn.h>
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/audio/has.h>
+
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
@@ -70,7 +74,7 @@ static int cmd_has_client_init(const struct bt_shell *sh, size_t argc, char **ar
 
 	err = bt_has_client_cb_register(&has_client_cb);
 	if (err != 0) {
-		bt_shell_error(sh, "bt_has_client_cb_register (err %d)", err);
+		bt_shell_error("bt_has_client_cb_register (err %d)", err);
 	}
 
 	return err;
@@ -81,13 +85,13 @@ static int cmd_has_client_discover(const struct bt_shell *sh, size_t argc, char 
 	int err;
 
 	if (default_conn == NULL) {
-		bt_shell_error(sh, "Not connected");
+		bt_shell_error("Not connected");
 		return -ENOEXEC;
 	}
 
 	err = bt_has_client_discover(default_conn);
 	if (err != 0) {
-		bt_shell_error(sh, "bt_has_client_discover (err %d)", err);
+		bt_shell_error("bt_has_client_discover (err %d)", err);
 	}
 
 	return err;
@@ -100,23 +104,23 @@ static int cmd_has_client_read_presets(const struct bt_shell *sh, size_t argc, c
 	const uint8_t count = bt_shell_strtoul(argv[2], 10, &err);
 
 	if (err < 0) {
-		bt_shell_error(sh, "Invalid command parameter (err %d)", err);
+		bt_shell_error("Invalid command parameter (err %d)", err);
 		return err;
 	}
 
 	if (default_conn == NULL) {
-		bt_shell_error(sh, "Not connected");
+		bt_shell_error("Not connected");
 		return -ENOEXEC;
 	}
 
 	if (!inst) {
-		bt_shell_error(sh, "No instance discovered");
+		bt_shell_error("No instance discovered");
 		return -ENOEXEC;
 	}
 
 	err = bt_has_client_presets_read(inst, index, count);
 	if (err != 0) {
-		bt_shell_error(sh, "bt_has_client_discover (err %d)", err);
+		bt_shell_error("bt_has_client_discover (err %d)", err);
 	}
 
 	return err;
@@ -130,7 +134,7 @@ static int cmd_has_client_preset_set(const struct bt_shell *sh, size_t argc, cha
 
 	index = bt_shell_strtoul(argv[1], 16, &err);
 	if (err < 0) {
-		bt_shell_error(sh, "Invalid command parameter (err %d)", err);
+		bt_shell_error("Invalid command parameter (err %d)", err);
 		return -ENOEXEC;
 	}
 
@@ -140,24 +144,24 @@ static int cmd_has_client_preset_set(const struct bt_shell *sh, size_t argc, cha
 		if (!strcmp(arg, "sync")) {
 			sync = true;
 		} else {
-			bt_shell_error(sh, "Invalid argument");
+			bt_shell_error("Invalid argument");
 			return -ENOEXEC;
 		}
 	}
 
 	if (default_conn == NULL) {
-		bt_shell_error(sh, "Not connected");
+		bt_shell_error("Not connected");
 		return -ENOEXEC;
 	}
 
 	if (!inst) {
-		bt_shell_error(sh, "No instance discovered");
+		bt_shell_error("No instance discovered");
 		return -ENOEXEC;
 	}
 
 	err = bt_has_client_preset_set(inst, index, sync);
 	if (err != 0) {
-		bt_shell_error(sh, "bt_has_client_preset_switch (err %d)", err);
+		bt_shell_error("bt_has_client_preset_switch (err %d)", err);
 		return -ENOEXEC;
 	}
 
@@ -175,24 +179,24 @@ static int cmd_has_client_preset_next(const struct bt_shell *sh, size_t argc, ch
 		if (!strcmp(arg, "sync")) {
 			sync = true;
 		} else {
-			bt_shell_error(sh, "Invalid argument");
+			bt_shell_error("Invalid argument");
 			return -ENOEXEC;
 		}
 	}
 
 	if (default_conn == NULL) {
-		bt_shell_error(sh, "Not connected");
+		bt_shell_error("Not connected");
 		return -ENOEXEC;
 	}
 
 	if (!inst) {
-		bt_shell_error(sh, "No instance discovered");
+		bt_shell_error("No instance discovered");
 		return -ENOEXEC;
 	}
 
 	err = bt_has_client_preset_next(inst, sync);
 	if (err != 0) {
-		bt_shell_error(sh, "bt_has_client_preset_next (err %d)", err);
+		bt_shell_error("bt_has_client_preset_next (err %d)", err);
 		return -ENOEXEC;
 	}
 
@@ -210,24 +214,24 @@ static int cmd_has_client_preset_prev(const struct bt_shell *sh, size_t argc, ch
 		if (!strcmp(arg, "sync")) {
 			sync = true;
 		} else {
-			bt_shell_error(sh, "Invalid argument");
+			bt_shell_error("Invalid argument");
 			return -ENOEXEC;
 		}
 	}
 
 	if (default_conn == NULL) {
-		bt_shell_error(sh, "Not connected");
+		bt_shell_error("Not connected");
 		return -ENOEXEC;
 	}
 
 	if (!inst) {
-		bt_shell_error(sh, "No instance discovered");
+		bt_shell_error("No instance discovered");
 		return -ENOEXEC;
 	}
 
 	err = bt_has_client_preset_prev(inst, sync);
 	if (err != 0) {
-		bt_shell_error(sh, "bt_has_client_preset_prev (err %d)", err);
+		bt_shell_error("bt_has_client_preset_prev (err %d)", err);
 		return -ENOEXEC;
 	}
 
@@ -237,9 +241,9 @@ static int cmd_has_client_preset_prev(const struct bt_shell *sh, size_t argc, ch
 static int cmd_has_client(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
+		bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
 	} else {
-		bt_shell_error(sh, "%s missing subcomand", argv[0]);
+		bt_shell_error("%s missing subcomand", argv[0]);
 	}
 
 	return -ENOEXEC;

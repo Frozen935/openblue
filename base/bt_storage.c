@@ -10,8 +10,12 @@ int bt_storage_name_steq(const char *name, const char *key, const char **next)
 	return -ENOTSUP;
 }
 
-int bt_storage_load_subtree_direct(const char *subtree, bt_storage_read_cb read_cb, void *param)
+int bt_storage_load_subtree_direct(const char *subtree, bt_storage_load_direct_cb read_cb,
+				   void *param)
 {
+	UNUSED(subtree);
+	UNUSED(read_cb);
+	UNUSED(param);
 	return -ENOTSUP;
 }
 
@@ -41,6 +45,11 @@ int bt_storage_save_one(const char *key, const void *value, size_t len)
 int bt_storage_load(void)
 {
 	return -ENOTSUP;
+}
+
+int settings_load(void)
+{
+	return bt_storage_load();
 }
 
 int bt_storage_delete(const char *key)

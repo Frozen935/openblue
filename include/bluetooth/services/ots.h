@@ -520,6 +520,7 @@ struct bt_ots_date_time {
  */
 struct bt_ots_obj_metadata {
 
+#if defined(CONFIG_BT_OTS)
 	/** @brief Object Name */
 	char                           *name;
 #endif /* CONFIG_BT_OTS */

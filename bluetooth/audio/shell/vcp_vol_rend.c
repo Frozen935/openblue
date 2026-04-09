@@ -14,6 +14,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <bluetooth/audio/aics.h>
+#include <bluetooth/audio/vcp.h>
+#include <bluetooth/audio/vocs.h>
+#include <bluetooth/conn.h>
 #include <utils/bt_utils.h>
 
 #include "host/shell/bt.h"
@@ -218,13 +222,13 @@ static int cmd_vcp_vol_rend_init(const struct bt_shell *sh, size_t argc,
 
 	result = bt_vcp_vol_rend_register(&vcp_register_param);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 		return result;
 	}
 
 	result = bt_vcp_vol_rend_included_get(&vcp_included);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to get included services: %d", result);
+		bt_shell_error("Failed to get included services: %d", result);
 		return result;
 	}
 
@@ -239,20 +243,20 @@ static int cmd_vcp_vol_rend_volume_step(const struct bt_shell *sh, size_t argc,
 
 	step = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse step: %d", result);
+		bt_shell_error("Failed to parse step: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (!IN_RANGE(step, 1, UINT8_MAX)) {
-		bt_shell_error(sh, "Invalid step %lu", step);
+		bt_shell_error("Invalid step %lu", step);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_vcp_vol_rend_set_step(step);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -264,7 +268,7 @@ static int cmd_vcp_vol_rend_state_get(const struct bt_shell *sh, size_t argc,
 	int result = bt_vcp_vol_rend_get_state();
 
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -276,7 +280,7 @@ static int cmd_vcp_vol_rend_flags_get(const struct bt_shell *sh, size_t argc,
 	int result = bt_vcp_vol_rend_get_flags();
 
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -288,7 +292,7 @@ static int cmd_vcp_vol_rend_volume_down(const struct bt_shell *sh, size_t argc,
 	int result = bt_vcp_vol_rend_vol_down();
 
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -301,7 +305,7 @@ static int cmd_vcp_vol_rend_volume_up(const struct bt_shell *sh, size_t argc,
 	int result = bt_vcp_vol_rend_vol_up();
 
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -313,7 +317,7 @@ static int cmd_vcp_vol_rend_unmute_volume_down(const struct bt_shell *sh,
 	int result = bt_vcp_vol_rend_unmute_vol_down();
 
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -325,7 +329,7 @@ static int cmd_vcp_vol_rend_unmute_volume_up(const struct bt_shell *sh,
 	int result = bt_vcp_vol_rend_unmute_vol_up();
 
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -340,20 +344,20 @@ static int cmd_vcp_vol_rend_volume_set(const struct bt_shell *sh, size_t argc,
 
 	volume = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse volume: %d", result);
+		bt_shell_error("Failed to parse volume: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (volume > UINT8_MAX) {
-		bt_shell_error(sh, "Invalid volume %lu", volume);
+		bt_shell_error("Invalid volume %lu", volume);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_vcp_vol_rend_set_vol(volume);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -365,7 +369,7 @@ static int cmd_vcp_vol_rend_unmute(const struct bt_shell *sh, size_t argc,
 	int result = bt_vcp_vol_rend_unmute();
 
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -377,7 +381,7 @@ static int cmd_vcp_vol_rend_mute(const struct bt_shell *sh, size_t argc,
 	int result = bt_vcp_vol_rend_mute();
 
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -392,20 +396,20 @@ static int cmd_vcp_vol_rend_vocs_state_get(const struct bt_shell *sh, size_t arg
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.vocs_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_vocs_state_get(vcp_included.vocs[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -419,20 +423,20 @@ static int cmd_vcp_vol_rend_vocs_location_get(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.vocs_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_vocs_location_get(vcp_included.vocs[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -446,19 +450,19 @@ static int cmd_vcp_vol_rend_vocs_location_set(const struct bt_shell *sh,
 	int result = 0;
 
 	if (default_conn == NULL) {
-		bt_shell_error(sh, "Not connected");
+		bt_shell_error("Not connected");
 		return -ENOEXEC;
 	}
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= vcp_included.vocs_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    vcp_included.vocs_cnt, index);
 
 		return -ENOEXEC;
@@ -466,20 +470,20 @@ static int cmd_vcp_vol_rend_vocs_location_set(const struct bt_shell *sh,
 
 	location = bt_shell_strtoul(argv[2], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse location: %d", result);
+		bt_shell_error("Failed to parse location: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (location > UINT32_MAX) {
-		bt_shell_error(sh, "Invalid location %lu", location);
+		bt_shell_error("Invalid location %lu", location);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_vocs_location_set(vcp_included.vocs[index], location);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -493,19 +497,19 @@ static int cmd_vcp_vol_rend_vocs_offset_set(const struct bt_shell *sh, size_t ar
 	long offset;
 
 	if (default_conn == NULL) {
-		bt_shell_error(sh, "Not connected");
+		bt_shell_error("Not connected");
 		return -ENOEXEC;
 	}
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= vcp_included.vocs_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    vcp_included.vocs_cnt, index);
 
 		return -ENOEXEC;
@@ -513,20 +517,20 @@ static int cmd_vcp_vol_rend_vocs_offset_set(const struct bt_shell *sh, size_t ar
 
 	offset = bt_shell_strtol(argv[2], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse offset: %d", result);
+		bt_shell_error("Failed to parse offset: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (offset > BT_VOCS_MAX_OFFSET || offset < BT_VOCS_MIN_OFFSET) {
-		bt_shell_error(sh, "Offset shall be %d-%d, was %ld",
+		bt_shell_error("Offset shall be %d-%d, was %ld",
 			    BT_VOCS_MIN_OFFSET, BT_VOCS_MAX_OFFSET, offset);
 		return -ENOEXEC;
 	}
 
 	result = bt_vocs_state_set(vcp_included.vocs[index], offset);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -541,20 +545,20 @@ static int cmd_vcp_vol_rend_vocs_output_description_get(const struct bt_shell *s
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.vocs_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_vocs_description_get(vcp_included.vocs[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -569,20 +573,20 @@ static int cmd_vcp_vol_rend_vocs_output_description_set(const struct bt_shell *s
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.vocs_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_vocs_description_set(vcp_included.vocs[index], argv[2]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -598,20 +602,20 @@ static int cmd_vcp_vol_rend_aics_input_state_get(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_aics_state_get(vcp_included.aics[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -625,20 +629,20 @@ static int cmd_vcp_vol_rend_aics_gain_setting_get(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_aics_gain_setting_get(vcp_included.aics[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -652,20 +656,20 @@ static int cmd_vcp_vol_rend_aics_input_type_get(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_aics_type_get(vcp_included.aics[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -679,20 +683,20 @@ static int cmd_vcp_vol_rend_aics_input_status_get(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_aics_status_get(vcp_included.aics[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -706,20 +710,20 @@ static int cmd_vcp_vol_rend_aics_input_unmute(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_aics_unmute(vcp_included.aics[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -733,20 +737,20 @@ static int cmd_vcp_vol_rend_aics_input_mute(const struct bt_shell *sh, size_t ar
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_aics_mute(vcp_included.aics[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -761,20 +765,20 @@ static int cmd_vcp_vol_rend_aics_manual_input_gain_set(const struct bt_shell *sh
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_aics_manual_gain_set(vcp_included.aics[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -789,20 +793,20 @@ static int cmd_vcp_vol_rend_aics_auto_input_gain_set(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_aics_automatic_gain_set(vcp_included.aics[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -817,13 +821,13 @@ static int cmd_vcp_vol_rend_aics_gain_set(const struct bt_shell *sh, size_t argc
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    vcp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -831,13 +835,13 @@ static int cmd_vcp_vol_rend_aics_gain_set(const struct bt_shell *sh, size_t argc
 
 	gain = bt_shell_strtol(argv[2], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse gain: %d", result);
+		bt_shell_error("Could not parse gain: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (gain > INT8_MAX || gain < INT8_MIN) {
-		bt_shell_error(sh, "Gain shall be %d-%d, was %ld",
+		bt_shell_error("Gain shall be %d-%d, was %ld",
 			    INT8_MIN, INT8_MAX, gain);
 
 		return -ENOEXEC;
@@ -845,7 +849,7 @@ static int cmd_vcp_vol_rend_aics_gain_set(const struct bt_shell *sh, size_t argc
 
 	result = bt_aics_gain_set(vcp_included.aics[index], gain);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -859,19 +863,19 @@ static int cmd_vcp_vol_rend_aics_input_description_get(const struct bt_shell *sh
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 	result = bt_aics_description_get(vcp_included.aics[index]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -885,20 +889,20 @@ static int cmd_vcp_vol_rend_aics_input_description_set(const struct bt_shell *sh
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Failed to parse index: %d", result);
+		bt_shell_error("Failed to parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index > vcp_included.aics_cnt) {
-		bt_shell_error(sh, "Invalid index %lu", index);
+		bt_shell_error("Invalid index %lu", index);
 
 		return -ENOEXEC;
 	}
 
 	result = bt_aics_description_set(vcp_included.aics[index], argv[2]);
 	if (result) {
-		bt_shell_print(sh, "Fail: %d", result);
+		bt_shell_print("Fail: %d", result);
 	}
 
 	return result;
@@ -908,10 +912,10 @@ static int cmd_vcp_vol_rend_aics_input_description_set(const struct bt_shell *sh
 static int cmd_vcp_vol_rend(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error(sh, "%s unknown parameter: %s",
+		bt_shell_error("%s unknown parameter: %s",
 			    argv[0], argv[1]);
 	} else {
-		bt_shell_error(sh, "%s Missing subcommand", argv[0]);
+		bt_shell_error("%s Missing subcommand", argv[0]);
 	}
 
 	return -ENOEXEC;

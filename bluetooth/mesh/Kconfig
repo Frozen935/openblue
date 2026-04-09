@@ -1062,8 +1062,6 @@ config BT_MESH_BLOB_IO_FLASH
 	bool "BLOB flash stream"
 	default y
 	depends on BT_MESH_BLOB_SRV || BT_MESH_BLOB_CLI
-	depends on FLASH_MAP
-	depends on FLASH_PAGE_LAYOUT
 	help
 	  Enable the BLOB flash stream for reading and writing BLOBs directly to
 	  and from flash.
@@ -1082,7 +1080,6 @@ config BT_MESH_BLOB_IO_FLASH_WITH_ERASE
 	bool "BLOB flash support for devices with erase [DEPRECATED]"
 	default n
 	depends on FLASH_HAS_EXPLICIT_ERASE
-	depends on FLASH_PAGE_LAYOUT
 	select DEPRECATED
 	help
 	  This option is deprecated and is no longer used by the BLOB IO Flash module.
@@ -1948,8 +1945,7 @@ config BT_MESH_SELF_TEST
 	  mesh networking is initialized.
 
 config BT_MESH_STATISTIC
-	bool "The frame handling statistics [EXPERIMENTAL]"
-	select EXPERIMENTAL
+	bool "The frame handling statistics"
 	help
 	  The module gathers statistics of received, relayed, and transmitted
 	  frames. This helps to estimate the quality of the communication and

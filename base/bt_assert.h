@@ -42,6 +42,8 @@ static inline void __bt_assert_fail(const char *expr, const char *file, int line
 		}                                                                                  \
 	} while (0)
 
+#define __ASSERT(test, msg, ...) __ASSERT_MSG(test, msg, ##__VA_ARGS__)
+
 #define __ASSERT_PRINT(fmt, ...)                                                                   \
 	do {                                                                                       \
 		LOG_INF(fmt, ##__VA_ARGS__);                                                       \
@@ -51,6 +53,7 @@ static inline void __bt_assert_fail(const char *expr, const char *file, int line
 #else
 #define __ASSERT_NO_MSG(cond)
 #define __ASSERT_MSG(cond, msg, ...)
+#define __ASSERT(cond, msg, ...)
 #define __ASSERT_PRINT(...)
 #endif
 #endif /* __BASE_ASSERT_H__ */

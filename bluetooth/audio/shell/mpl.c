@@ -13,6 +13,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <bluetooth/audio/media_proxy.h>
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/conn.h>
+
+#include "common/bt_shell_private.h"
 #include "../mpl_internal.h"
 
 #if defined(CONFIG_BT_MPL)
@@ -26,13 +31,13 @@ int cmd_mpl_test_set_media_state(const struct bt_shell *sh, size_t argc,
 
 	state = bt_shell_strtoul(argv[1], 0, &err);
 	if (err != 0) {
-		bt_shell_error(sh, "Could not parse state: %d", err);
+		bt_shell_error("Could not parse state: %d", err);
 
 		return -ENOEXEC;
 	}
 
 	if (state > UINT8_MAX) {
-		bt_shell_error(sh, "Invalid state %lu", state);
+		bt_shell_error("Invalid state %lu", state);
 
 		return -ENOEXEC;
 	}
@@ -68,7 +73,7 @@ int cmd_media_proxy_pl_init(const struct bt_shell *sh, size_t argc, char *argv[]
 	int err = media_proxy_pl_init();
 
 	if (err) {
-		bt_shell_error(sh, "Could not init mpl");
+		bt_shell_error("Could not init mpl");
 	}
 
 	return err;
@@ -196,7 +201,7 @@ int cmd_mpl_test_search_results_changed_cb(const struct bt_shell *sh, size_t arg
 
 static int cmd_mpl(const struct bt_shell *sh, size_t argc, char **argv)
 {
-	bt_shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
+	bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
 
 	return -ENOEXEC;
 }

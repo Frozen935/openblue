@@ -15,6 +15,16 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <base/bt_assert.h>
+#include <bluetooth/assigned_numbers.h>
+#include <bluetooth/audio/audio.h>
+#include <bluetooth/audio/gmap.h>
+#include <bluetooth/audio/gmap_lc3_preset.h>
+
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/gap.h>
+#include <bluetooth/uuid.h>
+
 #include <bluetooth/byteorder.h>
 #include <utils/bt_utils.h>
 
@@ -125,14 +135,14 @@ static int cmd_gmap_init(const struct bt_shell *sh, size_t argc, char **argv)
 
 	err = bt_gmap_register(gmap_role, features);
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to register GMAS (err %d)", err);
+		bt_shell_error("Failed to register GMAS (err %d)", err);
 
 		return -ENOEXEC;
 	}
 
 	err = bt_gmap_cb_register(&gmap_cb);
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to register callbacks (err %d)", err);
+		bt_shell_error("Failed to register callbacks (err %d)", err);
 
 		return -ENOEXEC;
 	}
@@ -158,7 +168,7 @@ static int cmd_gmap_set_role(const struct bt_shell *sh, size_t argc, char **argv
 		} else if (strcmp(arg, "bgr") == 0) {
 			role |= BT_GMAP_ROLE_BGR;
 		} else {
-			bt_shell_error(sh, "Invalid arg: %s", arg);
+			bt_shell_error("Invalid arg: %s", arg);
 			bt_shell_help(sh);
 
 			return BT_SHELL_CMD_HELP_PRINTED;
@@ -169,7 +179,7 @@ static int cmd_gmap_set_role(const struct bt_shell *sh, size_t argc, char **argv
 
 	err = bt_gmap_set_role(role, features);
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to set new role (err %d)", err);
+		bt_shell_error("Failed to set new role (err %d)", err);
 
 		return -ENOEXEC;
 	}
@@ -184,13 +194,13 @@ static int cmd_gmap_discover(const struct bt_shell *sh, size_t argc, char **argv
 	int err;
 
 	if (default_conn == NULL) {
-		bt_shell_error(sh, "Not connected");
+		bt_shell_error("Not connected");
 		return -ENOEXEC;
 	}
 
 	err = bt_gmap_discover(default_conn);
 	if (err != 0) {
-		bt_shell_error(sh, "bt_gmap_discover (err %d)", err);
+		bt_shell_error("bt_gmap_discover (err %d)", err);
 	}
 
 	return err;
@@ -489,9 +499,9 @@ static int cmd_gmap_ac_14(const struct bt_shell *sh, size_t argc, char **argv)
 static int cmd_gmap(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
+		bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
 	} else {
-		bt_shell_error(sh, "%s missing subcomand", argv[0]);
+		bt_shell_error("%s missing subcomand", argv[0]);
 	}
 
 	return -ENOEXEC;

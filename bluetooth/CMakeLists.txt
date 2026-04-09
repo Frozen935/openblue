@@ -24,6 +24,7 @@ foreach(_t IN ITEMS
   openblue_obj_bluetooth_common
   openblue_obj_bluetooth_host
   openblue_obj_bluetooth_services
+  openblue_obj_bluetooth_services_ots
   openblue_obj_bluetooth_mesh
   openblue_obj_bluetooth_audio
   openblue_obj_bluetooth_crypto
@@ -31,6 +32,7 @@ foreach(_t IN ITEMS
   openblue_obj_bluetooth_host_classic
   openblue_obj_bluetooth_host_shell
   openblue_obj_bluetooth_host_classic_shell
+  openblue_obj_bluetooth_audio_shell
 )
   if(TARGET ${_t})
     target_link_libraries(openblue__bluetooth INTERFACE ${_t})

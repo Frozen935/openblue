@@ -5,9 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 menuconfig BT_ANS
-	bool "GATT Alert Notification Service [EXPERIMENTAL]"
+	bool "GATT Alert Notification Service"
 	depends on UTF8
-	select EXPERIMENTAL
 
 if BT_ANS
 

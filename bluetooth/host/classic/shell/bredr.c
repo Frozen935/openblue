@@ -2107,10 +2107,5 @@ BT_SHELL_SUBCMD_SET_CREATE(br_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_ARG_DEFINE(br, &br_cmds, "Bluetooth BR/EDR shell commands",
+BT_SHELL_CMD_ARG_REGISTER(br, &br_cmds, "Bluetooth BR/EDR shell commands",
 			 cmd_default_handler, 1, 1);
-
-int bt_shell_cmd_br_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &br);
-}

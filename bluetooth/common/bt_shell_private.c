@@ -352,9 +352,9 @@ void bt_shell_init(struct bt_shell *sh)
 	bt_shell_cmd_tbs_register(sh);
 #endif
 
-#ifdef CONFIG_BT_TBS_CLIENT
+	#if defined(CONFIG_BT_TBS_CLIENT_GTBS) || defined(CONFIG_BT_TBS_CLIENT_TBS)
 	bt_shell_cmd_tbs_client_register(sh);
-#endif
+	#endif
 
 	/* PBP */
 #ifdef CONFIG_BT_PBP
@@ -380,9 +380,9 @@ void bt_shell_init(struct bt_shell *sh)
 	bt_shell_cmd_mcc_register(sh);
 #endif
 
-#ifdef CONFIG_BT_MCTL
+	#ifdef CONFIG_BT_MCS
 	bt_shell_cmd_media_register(sh);
-#endif
+	#endif
 
 	/* HAS */
 #ifdef CONFIG_BT_HAS
@@ -408,13 +408,13 @@ void bt_shell_init(struct bt_shell *sh)
 #endif
 
 	/* CCP */
-#ifdef CONFIG_BT_CCAP_CALL_CONTROL_SERVER
+	#ifdef CONFIG_BT_CCP_CALL_CONTROL_SERVER
 	bt_shell_cmd_ccp_call_control_server_register(sh);
-#endif
+	#endif
 
-#ifdef CONFIG_BT_CCAP_CALL_CONTROL_CLIENT
+	#ifdef CONFIG_BT_CCP_CALL_CONTROL_CLIENT
 	bt_shell_cmd_ccp_call_control_client_register(sh);
-#endif
+	#endif
 
 	/* CAP */
 #ifdef CONFIG_BT_CAP_ACCEPTOR
@@ -430,9 +430,9 @@ void bt_shell_init(struct bt_shell *sh)
 #endif
 
 	/* BAP */
-#ifdef CONFIG_BT_BAP_UNICAST_CLIENT
+	#ifdef CONFIG_BT_BAP_STREAM
 	bt_shell_cmd_bap_register(sh);
-#endif
+	#endif
 
 #ifdef CONFIG_BT_BAP_SCAN_DELEGATOR
 	bt_shell_cmd_bap_scan_delegator_register(sh);

@@ -1395,10 +1395,5 @@ static int cmd_gatt(const struct bt_shell *sh, size_t argc, char **argv)
 	return -EINVAL;
 }
 
-BT_SHELL_CMD_ARG_DEFINE(gatt, &gatt_cmds, "Bluetooth GATT shell commands",
+BT_SHELL_CMD_ARG_REGISTER(gatt, &gatt_cmds, "Bluetooth GATT shell commands",
 			 cmd_gatt, 1, 1);
-
-int bt_shell_cmd_gatt_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &gatt);
-}

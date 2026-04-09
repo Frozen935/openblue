@@ -5551,9 +5551,4 @@ BT_SHELL_SUBCMD_SET_CREATE(bt_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_ARG_DEFINE(bt, &bt_cmds, "Bluetooth shell commands", cmd_default_handler, 1, 1);
-
-int bt_shell_cmd_bt_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &bt);
-}
+BT_SHELL_CMD_ARG_REGISTER(bt, &bt_cmds, "Bluetooth shell commands", cmd_default_handler, 1, 1);

@@ -158,9 +158,8 @@ config BT_TX_PROCESSOR_STACK_SIZE
 endif
 
 config BT_CONN_TX_NOTIFY_WQ
-	bool "Use a separate workqueue for connection TX notify processing [EXPERIMENTAL]"
+	bool "Use a separate workqueue for connection TX notify processing"
 	depends on BT_CONN_TX
-	select EXPERIMENTAL
 	help
 	  Use a separate workqueue instead of system workqueue for
 	  bt_conn_tx_notify processing. The option can be used to make Bluetooth
@@ -248,8 +247,6 @@ config BT_HOST_CRYPTO_PRNG
 
 config BT_SETTINGS
 	bool "Store Bluetooth state and configuration persistently"
-	depends on SETTINGS
-	select MPU_ALLOW_FLASH_WRITE if ARM_MPU
 	help
 	  When selected, the Bluetooth stack will take care of storing
 	  (and restoring) the Bluetooth state (e.g. pairing keys) and
@@ -313,7 +310,6 @@ config BT_SETTINGS_CF_STORE_ON_WRITE
 
 config BT_SETTINGS_USE_PRINTK
 	bool "Use snprintf to encode Bluetooth settings key strings"
-	depends on SETTINGS && PRINTK
 	default y
 	help
 	  When selected, Bluetooth settings will use snprintf to encode
@@ -511,24 +507,21 @@ config BT_SMP
 if BT_SMP
 
 config BT_SECURITY_ERR_TO_STR
-	bool "Print security error codes as strings [EXPERIMENTAL]"
-	select EXPERIMENTAL
+	bool "Print security error codes as strings"
 	help
 	  This configuration enables printing of security error
 	  codes represented as strings.
 	  See bt_security_err_to_str() for more details.
 
 config BT_SMP_ERR_TO_STR
-	bool "Print SMP error codes as strings [EXPERIMENTAL]"
-	select EXPERIMENTAL
+	bool "Print SMP error codes as strings"
 	help
 	  This configuration enables printing of SMP error
 	  codes represented as strings.
 	  See bt_smp_err_to_str() for more details.
 
 config BT_PASSKEY_KEYPRESS
-	bool "Passkey Keypress Notification support [EXPERIMENTAL]"
-	select EXPERIMENTAL
+	bool "Passkey Keypress Notification support"
 	help
 	  Enable support for receiving and sending Keypress Notifications during
 	  Passkey Entry during pairing.
@@ -1011,9 +1004,8 @@ config BT_ID_MAX
 	  products this is safe to leave as the default value (1).
 
 config BT_DF
-	bool "Direction Finding support [EXPERIMENTAL]"
+	bool "Direction Finding support"
 	depends on !HAS_BT_CTLR || BT_CTLR_DF_SUPPORT
-	select EXPERIMENTAL
 	help
 	  Enable support for Bluetooth 5.1 Direction Finding.
 	  It will allow to: get information about antennae, configure

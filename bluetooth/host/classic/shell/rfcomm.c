@@ -288,10 +288,5 @@ static int cmd_rfcomm(const struct bt_shell *sh, size_t argc, char **argv)
 	return -ENOEXEC;
 }
 
-BT_SHELL_CMD_ARG_DEFINE(rfcomm, &rfcomm_cmds, "Bluetooth RFCOMM shell commands",
+BT_SHELL_CMD_ARG_REGISTER(rfcomm, &rfcomm_cmds, "Bluetooth RFCOMM shell commands",
 			 cmd_rfcomm, 1, 1);
-
-int bt_shell_cmd_rfcomm_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &rfcomm);
-}

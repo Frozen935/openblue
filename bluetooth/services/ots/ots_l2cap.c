@@ -306,4 +306,6 @@ int bt_gatt_ots_l2cap_disconnect(struct bt_gatt_ots_l2cap *l2cap_ctx)
 	return bt_l2cap_chan_disconnect(&l2cap_ctx->ot_chan.chan);
 }
 
+
+STACK_INIT(bt_gatt_ots_l2cap_init, STACK_SVC_INIT,
 	 CONFIG_APPLICATION_INIT_PRIORITY);

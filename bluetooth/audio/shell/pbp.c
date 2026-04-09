@@ -12,6 +12,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <base/bt_assert.h>
+#include <bluetooth/assigned_numbers.h>
+#include <bluetooth/audio/audio.h>
+#include <bluetooth/audio/pbp.h>
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/gap.h>
+
 #include <utils/bt_utils.h>
 
 #include "common/bt_shell_private.h"
@@ -33,7 +40,7 @@ static int cmd_pbp_set_features(const struct bt_shell *sh, size_t argc, char **a
 
 	features = bt_shell_strtoul(argv[1], 16, &err);
 	if (err != 0) {
-		bt_shell_error(sh, "Could not parse received features: %d", err);
+		bt_shell_error("Could not parse received features: %d", err);
 
 		return -ENOEXEC;
 	}
@@ -71,9 +78,9 @@ size_t pbp_ad_data_add(struct bt_data data[], size_t data_size)
 static int cmd_pbp(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
+		bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
 	} else {
-		bt_shell_error(sh, "%s missing subcomand", argv[0]);
+		bt_shell_error("%s missing subcomand", argv[0]);
 	}
 
 	return -ENOEXEC;

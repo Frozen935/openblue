@@ -1451,4 +1451,4 @@ static int broadcast_sink_init(void)
 	return 0;
 }
 
-SYS_INIT(broadcast_sink_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+STACK_INIT(broadcast_sink_init, STACK_SVC_INIT, 0);

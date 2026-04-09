@@ -216,7 +216,7 @@ uint8_t u8_to_dec(char *buf, uint8_t buflen, uint8_t value)
 	return num_digits;
 }
 
-bool util_memeq(const uint8_t *a, const uint8_t *b, size_t len)
+bool util_memeq(const void *a, const void *b, size_t len)
 {
 	return memcmp(a, b, len) == 0;
 }

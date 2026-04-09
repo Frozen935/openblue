@@ -17,7 +17,6 @@
 #include <bluetooth/audio/tbs.h>
 #include <bluetooth/gatt.h>
 
-#define BT_TBS_MAX_UCI_SIZE                        6
 #define BT_TBS_MIN_URI_LEN                         3 /* a:b */
 #define BT_TBS_FREE_CALL_INDEX                     0
 
@@ -43,9 +42,6 @@
 
 #define BT_TBS_CALL_FLAG_SET_INCOMING(flag) (flag &= ~BT_TBS_CALL_FLAG_OUTGOING)
 #define BT_TBS_CALL_FLAG_SET_OUTGOING(flag) (flag |= BT_TBS_CALL_FLAG_OUTGOING)
-
-const char *parse_string_value(const void *data, uint16_t length,
-				      uint16_t max_len);
 
 static inline const char *bt_tbs_state_str(uint8_t state)
 {

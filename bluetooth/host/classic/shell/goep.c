@@ -1688,9 +1688,4 @@ BT_SHELL_SUBCMD_SET_CREATE(goep_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_ARG_DEFINE(goep, &goep_cmds, "Bluetooth GOEP shell commands", cmd_common, 1, 1);
-
-int bt_shell_cmd_goep_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &goep);
-}
+BT_SHELL_CMD_ARG_REGISTER(goep, &goep_cmds, "Bluetooth GOEP shell commands", cmd_common, 1, 1);

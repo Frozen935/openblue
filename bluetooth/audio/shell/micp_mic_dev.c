@@ -14,6 +14,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <bluetooth/audio/aics.h>
+#include <bluetooth/audio/micp.h>
+#include <bluetooth/conn.h>
+
 #include <utils/bt_utils.h>
 
 #include "common/bt_shell_private.h"
@@ -126,16 +130,16 @@ static int cmd_micp_mic_dev_param(const struct bt_shell *sh, size_t argc,
 
 	result = bt_micp_mic_dev_register(&micp_param);
 	if (result != 0) {
-		bt_shell_error(sh, "MICP register failed: %d", result);
+		bt_shell_error("MICP register failed: %d", result);
 		return result;
 	}
 
-	bt_shell_print(sh, "MICP initialized: %d", result);
+	bt_shell_print("MICP initialized: %d", result);
 
 #if defined(CONFIG_BT_MICP_MIC_DEV_AICS)
 	result = bt_micp_mic_dev_included_get(&micp_included);
 	if (result != 0) {
-		bt_shell_error(sh, "MICP get failed: %d", result);
+		bt_shell_error("MICP get failed: %d", result);
 	}
 #endif /* CONFIG_BT_MICP_MIC_DEV_AICS */
 
@@ -148,7 +152,7 @@ static int cmd_micp_mic_dev_mute_get(const struct bt_shell *sh, size_t argc,
 	int result = bt_micp_mic_dev_mute_get();
 
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -160,7 +164,7 @@ static int cmd_micp_mic_dev_mute(const struct bt_shell *sh, size_t argc,
 	int result = bt_micp_mic_dev_mute();
 
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -172,7 +176,7 @@ static int cmd_micp_mic_dev_unmute(const struct bt_shell *sh, size_t argc,
 	int result = bt_micp_mic_dev_unmute();
 
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -184,7 +188,7 @@ static int cmd_micp_mic_dev_mute_disable(const struct bt_shell *sh, size_t argc,
 	int result = bt_micp_mic_dev_mute_disable();
 
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -199,13 +203,13 @@ static int cmd_micp_mic_dev_aics_deactivate(const struct bt_shell *sh, size_t ar
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -213,7 +217,7 @@ static int cmd_micp_mic_dev_aics_deactivate(const struct bt_shell *sh, size_t ar
 
 	result = bt_aics_deactivate(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -227,13 +231,13 @@ static int cmd_micp_mic_dev_aics_activate(const struct bt_shell *sh, size_t argc
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -241,7 +245,7 @@ static int cmd_micp_mic_dev_aics_activate(const struct bt_shell *sh, size_t argc
 
 	result = bt_aics_activate(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -255,13 +259,13 @@ static int cmd_micp_mic_dev_aics_input_state_get(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -269,7 +273,7 @@ static int cmd_micp_mic_dev_aics_input_state_get(const struct bt_shell *sh,
 
 	result = bt_aics_state_get(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -283,13 +287,13 @@ static int cmd_micp_mic_dev_aics_gain_setting_get(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -297,7 +301,7 @@ static int cmd_micp_mic_dev_aics_gain_setting_get(const struct bt_shell *sh,
 
 	result = bt_aics_gain_setting_get(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -311,13 +315,13 @@ static int cmd_micp_mic_dev_aics_input_type_get(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -325,7 +329,7 @@ static int cmd_micp_mic_dev_aics_input_type_get(const struct bt_shell *sh,
 
 	result = bt_aics_type_get(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -339,13 +343,13 @@ static int cmd_micp_mic_dev_aics_input_status_get(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -353,7 +357,7 @@ static int cmd_micp_mic_dev_aics_input_status_get(const struct bt_shell *sh,
 
 	result = bt_aics_status_get(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -367,13 +371,13 @@ static int cmd_micp_mic_dev_aics_input_unmute(const struct bt_shell *sh,
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -381,7 +385,7 @@ static int cmd_micp_mic_dev_aics_input_unmute(const struct bt_shell *sh,
 
 	result = bt_aics_unmute(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -395,13 +399,13 @@ static int cmd_micp_mic_dev_aics_input_mute(const struct bt_shell *sh, size_t ar
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -409,7 +413,7 @@ static int cmd_micp_mic_dev_aics_input_mute(const struct bt_shell *sh, size_t ar
 
 	result = bt_aics_mute(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -423,13 +427,13 @@ static int cmd_micp_mic_dev_aics_manual_input_gain_set(const struct bt_shell *sh
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -437,7 +441,7 @@ static int cmd_micp_mic_dev_aics_manual_input_gain_set(const struct bt_shell *sh
 
 	result = bt_aics_manual_gain_set(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -452,13 +456,13 @@ static int cmd_micp_mic_dev_aics_automatic_input_gain_set(const struct bt_shell 
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -466,7 +470,7 @@ static int cmd_micp_mic_dev_aics_automatic_input_gain_set(const struct bt_shell 
 
 	result = bt_aics_automatic_gain_set(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -481,20 +485,20 @@ static int cmd_micp_mic_dev_aics_gain_set(const struct bt_shell *sh, size_t argc
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -502,13 +506,13 @@ static int cmd_micp_mic_dev_aics_gain_set(const struct bt_shell *sh, size_t argc
 
 	gain = bt_shell_strtol(argv[2], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse gain: %d", result);
+		bt_shell_error("Could not parse gain: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (!IN_RANGE(gain, INT8_MIN, INT8_MAX)) {
-		bt_shell_error(sh, "Gain shall be %d-%d, was %ld",
+		bt_shell_error("Gain shall be %d-%d, was %ld",
 			    INT8_MIN, INT8_MAX, gain);
 
 		return -ENOEXEC;
@@ -516,7 +520,7 @@ static int cmd_micp_mic_dev_aics_gain_set(const struct bt_shell *sh, size_t argc
 
 	result = bt_aics_gain_set(micp_included.aics[index], gain);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -530,13 +534,13 @@ static int cmd_micp_mic_dev_aics_input_description_get(const struct bt_shell *sh
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -544,7 +548,7 @@ static int cmd_micp_mic_dev_aics_input_description_get(const struct bt_shell *sh
 
 	result = bt_aics_description_get(micp_included.aics[index]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -558,13 +562,13 @@ static int cmd_micp_mic_dev_aics_input_description_set(const struct bt_shell *sh
 
 	index = bt_shell_strtoul(argv[1], 0, &result);
 	if (result != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", result);
+		bt_shell_error("Could not parse index: %d", result);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= micp_included.aics_cnt) {
-		bt_shell_error(sh, "Index shall be less than %u, was %lu",
+		bt_shell_error("Index shall be less than %u, was %lu",
 			    micp_included.aics_cnt, index);
 
 		return -ENOEXEC;
@@ -572,7 +576,7 @@ static int cmd_micp_mic_dev_aics_input_description_set(const struct bt_shell *sh
 
 	result = bt_aics_description_set(micp_included.aics[index], argv[2]);
 	if (result != 0) {
-		bt_shell_error(sh, "Fail: %d", result);
+		bt_shell_error("Fail: %d", result);
 	}
 
 	return result;
@@ -582,10 +586,10 @@ static int cmd_micp_mic_dev_aics_input_description_set(const struct bt_shell *sh
 static int cmd_micp_mic_dev(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error(sh, "%s unknown parameter: %s",
+		bt_shell_error("%s unknown parameter: %s",
 			    argv[0], argv[1]);
 	} else {
-		bt_shell_error(sh, "%s Missing subcommand", argv[0]);
+		bt_shell_error("%s Missing subcommand", argv[0]);
 	}
 
 	return -ENOEXEC;

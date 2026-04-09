@@ -63,16 +63,31 @@ struct bt_shell {
 #define BT_SHELL_CMD(_syntax, _subcmd, _help, _handler)                                            \
 	BT_SHELL_CMD_ARG(_syntax, _subcmd, _help, _handler, 0, 0)
 
+#define __BT_SHELL_CMD_OBJ_NAME(_syntax) __bt_shell_cmd_obj_##_syntax
+
 #define BT_SHELL_CMD_ARG_DEFINE(_syntax, _subcmd, _help, _handler, _mand, _opt)                  \
 	static const struct bt_shell_cmd_entry _syntax##_entry =                                   \
 		BT_SHELL_CMD_ARG(_syntax, _subcmd, _help, _handler, _mand, _opt);                  \
-	static struct bt_shell_cmd _syntax = {.cmd_entry = &_syntax##_entry, .node = {.next = NULL}}
+	static struct bt_shell_cmd __BT_SHELL_CMD_OBJ_NAME(_syntax) =                            \
+		{.cmd_entry = &_syntax##_entry, .node = {.next = NULL}}
 
 #define BT_SHELL_CMD_DEFINE(_syntax, _subcmd, _help, _handler)                                   \
 	BT_SHELL_CMD_ARG_DEFINE(_syntax, _subcmd, _help, _handler, 0, 0)
 
+#define BT_SHELL_CMD_ARG_REGISTER(_syntax, _subcmd, _help, _handler, _mand, _opt)                \
+	BT_SHELL_CMD_ARG_DEFINE(_syntax, _subcmd, _help, _handler, _mand, _opt);                   \
+	int bt_shell_cmd_##_syntax##_register(struct bt_shell *sh)                                  \
+	{                                                                                            \
+		return bt_shell_cmd_register(sh, &__BT_SHELL_CMD_OBJ_NAME(_syntax));                \
+	}
+
+#define BT_SHELL_CMD_REGISTER(_syntax, _subcmd, _help, _handler)                                 \
+	BT_SHELL_CMD_ARG_REGISTER(_syntax, _subcmd, _help, _handler, 0, 0)
+
 #define BT_SHELL_SUBCMD_SET_CREATE(name, ...)                                               \
 	static const struct bt_shell_cmd_entry name[] = {__VA_ARGS__};
+
+#define BT_SHELL_STATIC_SUBCMD_SET_CREATE(name, ...) BT_SHELL_SUBCMD_SET_CREATE(name, __VA_ARGS__)
 
 long bt_shell_strtol(const char *str, int base, int *err);
 unsigned long bt_shell_strtoul(const char *str, int base, int *err);

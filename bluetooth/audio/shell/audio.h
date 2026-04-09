@@ -22,7 +22,10 @@
 #include <sys/types.h>
 
 #include <base/bt_atomic.h>
+#include <bluetooth/bluetooth.h>
 #include <bluetooth/byteorder.h>
+#include <bluetooth/hci_types.h>
+#include <bluetooth/iso.h>
 #include <utils/bt_utils.h>
 
 #include "common/bt_shell_private.h"
@@ -47,6 +50,11 @@ size_t cap_initiator_pa_data_add(struct bt_data *data_array, const size_t data_a
 /* Must guard before including audio.h as audio.h uses Kconfigs guarded by
  * CONFIG_BT_AUDIO
  */
+
+#include <bluetooth/audio/audio.h>
+#include <bluetooth/audio/bap.h>
+#include <bluetooth/audio/bap_lc3_preset.h>
+#include <bluetooth/audio/cap.h>
 
 unsigned long bap_get_stats_interval(void);
 

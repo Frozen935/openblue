@@ -7,6 +7,7 @@ openblue_library_sources(
   bt_atomic.c
   bt_buf.c
   bt_buf_simple.c
+  bt_storage.c
   utils.c
   queue/bt_queue.c
   bt_mem_pool.c

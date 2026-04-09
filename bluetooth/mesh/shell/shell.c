@@ -1847,10 +1847,5 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(mesh_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_ARG_DEFINE(mesh, &mesh_cmds, "Bluetooth Mesh shell commands",
+BT_SHELL_CMD_ARG_REGISTER(mesh, &mesh_cmds, "Bluetooth Mesh shell commands",
 			bt_mesh_shell_mdl_cmds_help, 1, 1);
-
-int bt_shell_cmd_mesh_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &mesh);
-}

@@ -362,7 +362,7 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
 	}
 
 	client = client_alloc(conn);
-	if (unlikely(!client)) {
+	if (!client) {
 		LOG_ERR("Failed to allocate client");
 		return;
 	}
@@ -527,7 +527,7 @@ static void bond_deleted_cb(uint8_t id, const bt_addr_le_t *addr)
 	}
 
 	if (IS_ENABLED(CONFIG_BT_SETTINGS)) {
-		bt_storage_delete("has", 0, addr);
+		bt_settings_delete("has", 0, addr);
 	}
 }
 
@@ -933,7 +933,7 @@ static int settings_set_cb(const char *name, size_t len_rd, bt_storage_read_cb r
 	return 0;
 }
 
-static BT_SETTINGS_DEFINE(has, "has", settings_set_cb, NULL);
+BT_SETTINGS_DEFINE(has, "has", settings_set_cb, NULL);
 
 static void store_client_context(struct client_context *context)
 {
@@ -987,7 +987,7 @@ static int read_preset_response(struct has_client *client)
 			     preset_found, &preset);
 	__ASSERT(err != -EINVAL, "preset_foreach returned %d", err);
 
-	if (unlikely(preset == NULL)) {
+	if (preset == NULL) {
 		return bt_has_cp_read_preset_rsp(client, NULL, BT_HAS_IS_LAST);
 	}
 

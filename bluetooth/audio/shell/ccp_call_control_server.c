@@ -11,6 +11,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include <bluetooth/audio/tbs.h>
+#include <bluetooth/audio/ccp.h>
+
+#include "common/bt_shell_private.h"
+
 static struct bt_ccp_call_control_server_bearer
 	*bearers[CONFIG_BT_CCP_CALL_CONTROL_SERVER_BEARER_COUNT];
 
@@ -19,7 +24,7 @@ static int cmd_ccp_call_control_server_init(const struct bt_shell *sh, size_t ar
 	static bool registered;
 
 	if (registered) {
-		bt_shell_info(sh, "Already initialized");
+		bt_shell_info("Already initialized");
 
 		return -ENOEXEC;
 	}
@@ -37,12 +42,12 @@ static int cmd_ccp_call_control_server_init(const struct bt_shell *sh, size_t ar
 
 	err = bt_ccp_call_control_server_register_bearer(&gtbs_param, &bearers[0]);
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to register GTBS bearer: %d", err);
+		bt_shell_error("Failed to register GTBS bearer: %d", err);
 
 		return -ENOEXEC;
 	}
 
-	bt_shell_info(sh, "Registered GTBS bearer");
+	bt_shell_info("Registered GTBS bearer");
 
 	for (int i = 1; i < CONFIG_BT_CCP_CALL_CONTROL_SERVER_BEARER_COUNT; i++) {
 		char prov_name[22]; /* Enough to store "Telephone Bearer #255" */
@@ -61,12 +66,12 @@ static int cmd_ccp_call_control_server_init(const struct bt_shell *sh, size_t ar
 
 		err = bt_ccp_call_control_server_register_bearer(&tbs_param, &bearers[i]);
 		if (err != 0) {
-			bt_shell_error(sh, "Failed to register bearer[%d]: %d", i, err);
+			bt_shell_error("Failed to register bearer[%d]: %d", i, err);
 
 			return -ENOEXEC;
 		}
 
-		bt_shell_info(sh, "Registered bearer[%d]", i);
+		bt_shell_info("Registered bearer[%d]", i);
 	}
 
 	registered = true;
@@ -81,13 +86,13 @@ static int validate_and_get_index(const struct bt_shell *sh, const char *index_a
 
 	index = bt_shell_strtoul(index_arg, 0, &err);
 	if (err != 0) {
-		bt_shell_error(sh, "Could not parse index: %d", err);
+		bt_shell_error("Could not parse index: %d", err);
 
 		return -ENOEXEC;
 	}
 
 	if (index >= CONFIG_BT_TBS_BEARER_COUNT) {
-		bt_shell_error(sh, "Invalid index: %lu", index);
+		bt_shell_error("Invalid index: %lu", index);
 
 		return -ENOEXEC;
 	}
@@ -113,12 +118,12 @@ static int cmd_ccp_call_control_server_set_bearer_name(const struct bt_shell *sh
 
 	err = bt_ccp_call_control_server_set_bearer_provider_name(bearers[index], name);
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to set bearer[%d] name: %d", index, err);
+		bt_shell_error("Failed to set bearer[%d] name: %d", index, err);
 
 		return -ENOEXEC;
 	}
 
-	bt_shell_print(sh, "Bearer[%d] name: %s", index, name);
+	bt_shell_print("Bearer[%d] name: %s", index, name);
 
 	return 0;
 }
@@ -140,12 +145,12 @@ static int cmd_ccp_call_control_server_get_bearer_name(const struct bt_shell *sh
 	err = bt_ccp_call_control_server_get_bearer_provider_name(bearers[index], name,
 								  sizeof(name));
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to get bearer[%d] name: %d", index, err);
+		bt_shell_error("Failed to get bearer[%d] name: %d", index, err);
 
 		return -ENOEXEC;
 	}
 
-	bt_shell_print(sh, "Bearer[%d] name: %s", index, name);
+	bt_shell_print("Bearer[%d] name: %s", index, name);
 
 	return 0;
 }
@@ -166,12 +171,12 @@ static int cmd_ccp_call_control_server_get_bearer_uci(const struct bt_shell *sh,
 
 	err = bt_ccp_call_control_server_get_bearer_uci(bearers[index], uci);
 	if (err != 0) {
-		bt_shell_error(sh, "Failed to get bearer[%d] UCI: %d", index, err);
+		bt_shell_error("Failed to get bearer[%d] UCI: %d", index, err);
 
 		return -ENOEXEC;
 	}
 
-	bt_shell_print(sh, "Bearer[%d] UCI: %s", index, uci);
+	bt_shell_print("Bearer[%d] UCI: %s", index, uci);
 
 	return 0;
 }
@@ -179,9 +184,9 @@ static int cmd_ccp_call_control_server_get_bearer_uci(const struct bt_shell *sh,
 static int cmd_ccp_call_control_server(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc > 1) {
-		bt_shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
+		bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
 	} else {
-		bt_shell_error(sh, "%s Missing subcommand", argv[0]);
+		bt_shell_error("%s Missing subcommand", argv[0]);
 	}
 
 	return -ENOEXEC;

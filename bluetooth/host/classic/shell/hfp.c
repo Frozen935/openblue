@@ -2187,9 +2187,4 @@ BT_SHELL_SUBCMD_SET_CREATE(hfp_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_ARG_DEFINE(hfp, &hfp_cmds, "Bluetooth HFP shell commands", cmd_default, 1, 1);
-
-int bt_shell_cmd_hfp_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &hfp);
-}
+BT_SHELL_CMD_ARG_REGISTER(hfp, &hfp_cmds, "Bluetooth HFP shell commands", cmd_default, 1, 1);

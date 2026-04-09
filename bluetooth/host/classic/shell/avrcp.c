@@ -4264,9 +4264,4 @@ BT_SHELL_SUBCMD_SET_CREATE(
 	BT_SHELL_CMD(tg, &tg_cmds, "AVRCP TG shell commands", cmd_avrcp),
 	BT_SHELL_SUBCMD_SET_END);
 
-BT_SHELL_CMD_ARG_DEFINE(avrcp, &avrcp_cmds, "Bluetooth AVRCP sh commands", cmd_avrcp, 1, 1);
-
-int bt_shell_cmd_avrcp_register(struct bt_shell *sh)
-{
-	return bt_shell_cmd_register(sh, &avrcp);
-}
+BT_SHELL_CMD_ARG_REGISTER(avrcp, &avrcp_cmds, "Bluetooth AVRCP sh commands", cmd_avrcp, 1, 1);

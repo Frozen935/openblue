@@ -307,7 +307,7 @@ void hf_query_call(struct bt_hfp_hf *hf, struct bt_hfp_hf_current_call *call)
 }
 #endif /* CONFIG_BT_HFP_HF_ECS */
 
-ZTESTABLE_STATIC struct bt_hfp_hf_cb hf_cb = {
+static struct bt_hfp_hf_cb hf_cb = {
 	.connected = hf_connected,
 	.disconnected = hf_disconnected,
 	.sco_connected = hf_sco_connected,
@@ -517,7 +517,7 @@ static int cmd_auto_select_codec(const struct bt_shell *sh, size_t argc, char **
 
 	hf_auto_select_codec = bt_shell_strtobool(argv[1], 0, &err);
 	if (err != 0) {
-		shell_help(sh);
+		bt_shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -977,7 +977,7 @@ static int cmd_query_calls(const struct bt_shell *sh, size_t argc, char **argv)
 }
 #endif /* CONFIG_BT_HFP_HF_ECS */
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(hf_cmds,
+BT_SHELL_SUBCMD_SET_CREATE(hf_cmds,
 	BT_SHELL_CMD_ARG(reg, NULL, HELP_NONE, cmd_reg_enable, 1, 0),
 	BT_SHELL_CMD_ARG(connect, NULL, "<channel>", cmd_connect, 2, 0),
 	BT_SHELL_CMD_ARG(disconnect, NULL, HELP_NONE, cmd_disconnect, 1, 0),
@@ -1394,7 +1394,7 @@ void ag_hf_indicator_value(struct bt_hfp_ag *ag, enum hfp_ag_hf_indicators indic
 	bt_shell_print("indicator %d value %d", indicator, value);
 }
 
-ZTESTABLE_STATIC struct bt_hfp_ag_cb ag_cb = {
+static struct bt_hfp_ag_cb ag_cb = {
 	.connected = ag_connected,
 	.disconnected = ag_disconnected,
 	.sco_connected = ag_sco_connected,
@@ -1510,7 +1510,7 @@ static int cmd_ag_indicator_value(const struct bt_shell *sh, size_t argc, char *
 	}
 
 	if (argc != 5) {
-		shell_help(sh);
+		bt_shell_help(sh);
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
@@ -2109,7 +2109,7 @@ static int cmd_ag_last_number(const struct bt_shell *sh, size_t argc, char **arg
 	"[<service availability 0-1> <signal strength 0-5> " \
 	"<roaming status 0-1> <battery level 0-5>]"
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(ag_cmds,
+BT_SHELL_SUBCMD_SET_CREATE(ag_cmds,
 	BT_SHELL_CMD_ARG(reg, NULL, HELP_NONE, cmd_ag_reg_enable, 1, 0),
 	BT_SHELL_CMD_ARG(connect, NULL, "<channel>", cmd_ag_connect, 2, 0),
 	BT_SHELL_CMD_ARG(disconnect, NULL, HELP_NONE, cmd_ag_disconnect, 1, 0),
@@ -2167,7 +2167,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(ag_cmds,
 static int cmd_default(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		shell_help(sh);
+		bt_shell_help(sh);
 		/* sh returns 1 when help is printed */
 		return BT_SHELL_CMD_HELP_PRINTED;
 	}
@@ -2177,7 +2177,7 @@ static int cmd_default(const struct bt_shell *sh, size_t argc, char **argv)
 	return -ENOEXEC;
 }
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(hfp_cmds,
+BT_SHELL_SUBCMD_SET_CREATE(hfp_cmds,
 #if defined(CONFIG_BT_HFP_HF)
 	BT_SHELL_CMD(hf, &hf_cmds, "HFP HF shell commands", cmd_default),
 #endif /* CONFIG_BT_HFP_HF */
@@ -2187,4 +2187,9 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(hfp_cmds,
 	BT_SHELL_SUBCMD_SET_END
 );
 
-BT_SHELL_CMD_ARG_REGISTER(hfp, &hfp_cmds, "Bluetooth HFP shell commands", cmd_default, 1, 1);
+BT_SHELL_CMD_ARG_DEFINE(hfp, &hfp_cmds, "Bluetooth HFP shell commands", cmd_default, 1, 1);
+
+int bt_shell_cmd_hfp_register(struct bt_shell *sh)
+{
+	return bt_shell_cmd_register(sh, &hfp);
+}

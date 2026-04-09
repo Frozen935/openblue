@@ -9,6 +9,7 @@
  */
 
 #include "hfp_internal.h"
+#include <base/queue/bt_fifo.h>
 
 #if defined(CONFIG_BT_HFP_HF_CLI)
 #define BT_HFP_HF_FEATURE_CLI_ENABLE BT_HFP_HF_FEATURE_CLI
@@ -211,7 +212,7 @@ struct bt_hfp_hf {
 	struct bt_conn *acl;
 	/* AT command sending queue */
 	at_finish_cb_t backup_finish;
-	struct k_fifo tx_pending;
+	struct bt_fifo tx_pending;
 	/* SCO Channel */
 	struct bt_sco_chan chan;
 	/* SCO connect */

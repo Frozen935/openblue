@@ -74,8 +74,8 @@ static struct bt_hfp_ag_cb *bt_ag;
 
 /* Sent but not acknowledged TX packets with a callback */
 static struct bt_ag_tx ag_tx[CONFIG_BT_HFP_AG_TX_BUF_COUNT * 2];
-static K_FIFO_DEFINE(ag_tx_free);
-static K_FIFO_DEFINE(ag_tx_notify);
+static BT_FIFO_DEFINE(ag_tx_free);
+static BT_FIFO_DEFINE(ag_tx_notify);
 
 #define BT_HFP_AG_VERSION BT_HFP_VERSION_1_9
 
@@ -416,7 +416,7 @@ static int hfp_ag_send_data(struct bt_hfp_ag *ag, bt_hfp_ag_tx_cb_t cb, void *us
 	tx->user_data = user_data;
 
 	va_start(vargs, format);
-	err = vsnprintk((char *)buf->data, (bt_buf_tailroom(buf) - 1), format, vargs);
+	err = vsnprintf((char *)buf->data, (bt_buf_tailroom(buf) - 1), format, vargs);
 	va_end(vargs);
 
 	if (err < 0) {
@@ -729,11 +729,11 @@ static void bt_hfp_ag_set_call_state(struct bt_hfp_ag_call *call, bt_hfp_call_st
 		break;
 	case BT_HFP_CALL_OUTGOING:
 		bt_work_reschedule(&call->deferred_work,
-				  K_SECONDS(CONFIG_BT_HFP_AG_OUTGOING_TIMEOUT));
+				  OS_SECONDS(CONFIG_BT_HFP_AG_OUTGOING_TIMEOUT));
 		break;
 	case BT_HFP_CALL_INCOMING:
 		bt_work_reschedule(&call->deferred_work,
-				  K_SECONDS(CONFIG_BT_HFP_AG_INCOMING_TIMEOUT));
+				  OS_SECONDS(CONFIG_BT_HFP_AG_INCOMING_TIMEOUT));
 		break;
 	case BT_HFP_CALL_ALERTING:
 		if (!bt_atomic_test_bit(call->flags, BT_HFP_AG_CALL_INCOMING_3WAY)) {
@@ -742,7 +742,7 @@ static void bt_hfp_ag_set_call_state(struct bt_hfp_ag_call *call, bt_hfp_call_st
 			bt_work_cancel_delayable(&call->ringing_work);
 		}
 		bt_work_reschedule(&call->deferred_work,
-				  K_SECONDS(CONFIG_BT_HFP_AG_ALERTING_TIMEOUT));
+				  OS_SECONDS(CONFIG_BT_HFP_AG_ALERTING_TIMEOUT));
 		break;
 	case BT_HFP_CALL_ACTIVE:
 		bt_work_cancel_delayable(&call->ringing_work);
@@ -841,7 +841,7 @@ static int hfp_ag_send(struct bt_hfp_ag *ag, struct bt_ag_tx *tx)
 
 static void bt_ag_notify_work(struct bt_work *work);
 
-struct bt_work ag_notify_work = Z_WORK_INITIALIZER(bt_ag_notify_work);
+struct bt_work ag_notify_work = BT_WORK_INITIALIZER(bt_ag_notify_work);
 
 static void bt_ag_notify_work(struct bt_work *work)
 {
@@ -1274,7 +1274,7 @@ static int bt_hfp_ag_cind_handler(struct bt_hfp_ag *ag, struct bt_buf *buf)
 			err = -EINPROGRESS;
 			bt_atomic_set_bit(ag->flags, BT_HGP_AG_ONGOING_CALLS);
 			bt_work_reschedule(&ag->ongoing_call_work,
-					  K_MSEC(CONFIG_BT_HFP_AG_GET_ONGOING_CALL_TIMEOUT));
+					  OS_MSEC(CONFIG_BT_HFP_AG_GET_ONGOING_CALL_TIMEOUT));
 		}
 	}
 
@@ -1527,7 +1527,7 @@ static struct bt_conn *bt_hfp_ag_create_sco(struct bt_hfp_ag *ag)
 	updated = bt_atomic_ptr_cas(&ag->sco_conn, NULL, sco);
 	if (!updated) {
 		LOG_WRN("SCO is not NULL (%p), target (%p)", bt_atomic_ptr_get(&ag->sco_conn), sco);
-		__ASSERT(bt_atomic_ptr_get(&ag->sco_conn) == sco,
+		__ASSERT_MSG(bt_atomic_ptr_get(&ag->sco_conn) == sco,
 				"Concurrent SCO connection creation detected");
 		/* The `ag->sco_conn` has been updated in callback `hfp_ag_sco_connected()`.
 		 * The reference count has been increased in callback `hfp_ag_sco_connected()`.
@@ -2654,7 +2654,7 @@ static int bt_hfp_ag_ata_handler(struct bt_hfp_ag *ag, struct bt_buf *buf)
 	}
 
 	call = get_call_with_flag(ag, BT_HFP_AG_CALL_IN_USING);
-	__ASSERT(call, "Invalid call object");
+	__ASSERT_MSG(call, "Invalid call object");
 
 	if (call->call_state != BT_HFP_CALL_ALERTING) {
 		hfp_ag_unlock(ag);
@@ -3960,7 +3960,7 @@ static void bt_ag_ringing_work_cb(struct bt_hfp_ag *ag, void *user_data)
 		}
 
 		bt_work_reschedule(&call->ringing_work,
-				  K_SECONDS(CONFIG_BT_HFP_AG_RING_NOTIFY_INTERVAL));
+				  OS_SECONDS(CONFIG_BT_HFP_AG_RING_NOTIFY_INTERVAL));
 
 		err = hfp_ag_send_data(ag, NULL, NULL, "\r\nRING\r\n");
 		if (err) {
@@ -4057,7 +4057,7 @@ static uint8_t bt_hfp_ag_discover_cb(struct bt_conn *conn, struct bt_sdp_client_
 	int err;
 
 	index = (size_t)bt_conn_index(conn);
-	__ASSERT(index < ARRAY_SIZE(bt_hfp_ag_pool), "Index is out of bounds");
+	__ASSERT_MSG(index < ARRAY_SIZE(bt_hfp_ag_pool), "Index is out of bounds");
 
 	ag = &bt_hfp_ag_pool[index];
 
@@ -4136,7 +4136,7 @@ static struct bt_hfp_ag *hfp_ag_create(struct bt_conn *conn)
 	LOG_DBG("conn %p", conn);
 
 	index = (size_t)bt_conn_index(conn);
-	__ASSERT(index < ARRAY_SIZE(bt_hfp_ag_pool), "Conn index is out of bounds");
+	__ASSERT_MSG(index < ARRAY_SIZE(bt_hfp_ag_pool), "Conn index is out of bounds");
 
 	ag = &bt_hfp_ag_pool[index];
 	if (ag->acl_conn) {
@@ -4302,7 +4302,7 @@ static int bt_hfp_ag_sco_accept(const struct bt_sco_accept_info *info,
 	LOG_DBG("conn %p", info->acl);
 
 	index = (size_t)bt_conn_index(info->acl);
-	__ASSERT(index < ARRAY_SIZE(bt_hfp_ag_pool), "Conn index is out of bounds");
+	__ASSERT_MSG(index < ARRAY_SIZE(bt_hfp_ag_pool), "Conn index is out of bounds");
 
 	ag = &bt_hfp_ag_pool[index];
 	if (ag->acl_conn != info->acl) {
@@ -4331,7 +4331,7 @@ static void ag_sco_disconnected(struct bt_conn *conn, uint8_t reason)
 {
 	ARG_UNUSED(reason);
 
-	__ASSERT(conn != NULL, "Invalid SCO conn");
+	__ASSERT_MSG(conn != NULL, "Invalid SCO conn");
 
 	ARRAY_FOR_EACH(bt_hfp_ag_pool, i) {
 		if (bt_atomic_ptr_cas(&bt_hfp_ag_pool[i].sco_conn, conn, NULL)) {
@@ -4395,7 +4395,7 @@ static void bt_hfp_ag_incoming_cb(struct bt_hfp_ag *ag, void *user_data)
 	struct bt_hfp_ag_call *call = (struct bt_hfp_ag_call *)user_data;
 	bool in_bond = false;
 
-	__ASSERT(call, "Invalid call object");
+	__ASSERT_MSG(call, "Invalid call object");
 
 	bt_hfp_ag_set_call_state(call, BT_HFP_CALL_INCOMING);
 
@@ -4425,7 +4425,7 @@ static void bt_hfp_ag_2nd_incoming_cb(struct bt_hfp_ag *ag, void *user_data)
 
 	call = (struct bt_hfp_ag_call *)user_data;
 
-	__ASSERT(call, "Invalid call object");
+	__ASSERT_MSG(call, "Invalid call object");
 
 	if (bt_ag && bt_ag->incoming) {
 		bt_ag->incoming(ag, call, call->number);

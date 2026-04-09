@@ -59,7 +59,7 @@ static void avctp_tx_raise(int msec)
 		return;
 	}
 	LOG_DBG("kick TX");
-	bt_work_schedule(&avctp_tx_work, K_MSEC(msec));
+	bt_work_schedule(&avctp_tx_work, OS_MSEC(msec));
 }
 
 static void bt_avctp_clear_tx(struct bt_avctp *session)
@@ -408,7 +408,7 @@ static int dispatch_avctp_packet(struct bt_avctp *session, struct bt_buf *buf,
 	if (cr == BT_AVCTP_CMD) {
 		rsp = bt_avctp_create_pdu(NULL);
 		if (rsp == NULL) {
-			__ASSERT(0, "Failed to create AVCTP response PDU");
+			__ASSERT_MSG(0, "Failed to create AVCTP response PDU");
 			return -ENOMEM;
 		}
 

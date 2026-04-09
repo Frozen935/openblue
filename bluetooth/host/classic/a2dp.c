@@ -1293,7 +1293,7 @@ uint32_t bt_a2dp_get_mtu(struct bt_a2dp_stream *stream)
 }
 
 #if defined(CONFIG_BT_A2DP_SOURCE)
-struct bt_buf *bt_a2dp_stream_create_pdu(struct bt_buf_pool *pool, k_timeout_t timeout)
+struct bt_buf *bt_a2dp_stream_create_pdu(struct bt_buf_pool *pool, os_timeout_t timeout)
 {
 	struct bt_buf *buf;
 

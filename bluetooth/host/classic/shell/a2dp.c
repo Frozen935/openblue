@@ -867,7 +867,7 @@ static int cmd_send_media(const struct bt_shell *sh, int32_t argc, char *argv[])
 	/* num of frames is 1 */
 	bt_buf_add_u8(buf, (uint8_t)BT_A2DP_SBC_MEDIA_HDR_ENCODE(1, 0, 0, 0));
 
-	data_len = min(min(sizeof(media_data), bt_a2dp_get_mtu(&sbc_stream)),
+	data_len = MIN(MIN(sizeof(media_data), bt_a2dp_get_mtu(&sbc_stream)),
 		       bt_buf_tailroom(buf));
 	bt_buf_add_mem(buf, media_data, data_len);
 	bt_shell_print("num of frames: %d, data length: %d", 1U, sizeof(media_data));

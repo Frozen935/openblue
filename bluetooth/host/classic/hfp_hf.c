@@ -262,7 +262,7 @@ int hfp_hf_send_cmd(struct bt_hfp_hf *hf, at_resp_cb_t resp,
 	make_at_callback_set(buf->user_data, resp, finish);
 
 	va_start(vargs, format);
-	ret = vsnprintk(buf->data, (bt_buf_tailroom(buf) - 1), format, vargs);
+	ret = vsnprintf((char *)buf->data, (bt_buf_tailroom(buf) - 1), format, vargs);
 	if (ret < 0) {
 		LOG_ERR("Unable to format variable arguments");
 		return ret;
@@ -560,7 +560,7 @@ static int hf_query_current_calls(struct bt_hfp_hf *hf)
 	}
 
 	if (bt_atomic_test_and_set_bit(hf->flags, BT_HFP_HF_FLAG_CLCC_PENDING)) {
-		bt_work_reschedule(&hf->deferred_work, K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+		bt_work_reschedule(&hf->deferred_work, OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 		return 0;
 	}
 
@@ -597,11 +597,11 @@ static void hf_call_state_update(struct bt_hfp_hf_call *call, int state)
 		break;
 	case BT_HFP_HF_CALL_STATE_ALERTING:
 		bt_work_reschedule(&call->hf->deferred_work,
-				  K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+				  OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 		break;
 	case BT_HFP_HF_CALL_STATE_WAITING:
 		bt_work_reschedule(&call->hf->deferred_work,
-				  K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+				  OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 		break;
 	case BT_HFP_HF_CALL_STATE_ACTIVE:
 		break;
@@ -1215,7 +1215,7 @@ static void ag_indicator_handle_call_setup(struct bt_hfp_hf *hf, uint32_t value)
 			} else {
 				LOG_INF("Waiting for +CIEV: (callheld = 1)");
 				bt_work_reschedule(&hf->deferred_work,
-						  K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+					  OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 			}
 		}
 		break;
@@ -1287,7 +1287,7 @@ static void ag_indicator_handle_call_held(struct bt_hfp_hf *hf, uint32_t value)
 	struct bt_hfp_hf_call *call;
 
 	if (bt_atomic_test_bit(hf->flags, BT_HFP_HF_FLAG_CONNECTED)) {
-		bt_work_reschedule(&hf->deferred_work, K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+		bt_work_reschedule(&hf->deferred_work, OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 	}
 
 	LOG_DBG("call setup %d", value);
@@ -2126,7 +2126,7 @@ static int at_cmd_init_start(struct bt_hfp_hf *hf)
 		bt_atomic_clear_bit(hf->flags, BT_HFP_HF_FLAG_INITIATING);
 		if (bt_atomic_test_and_clear_bit(hf->flags, BT_HFP_HF_FLAG_QUERY_CALLS)) {
 			bt_work_reschedule(&hf->deferred_work,
-					  K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+					  OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 		}
 	}
 
@@ -3536,7 +3536,7 @@ static int hfp_hf_create_sco(struct bt_hfp_hf *hf)
 	updated = bt_atomic_ptr_cas(&hf->sco_conn, NULL, sco);
 	if (!updated) {
 		LOG_WRN("SCO is not NULL (%p), target (%p)", bt_atomic_ptr_get(&hf->sco_conn), sco);
-		__ASSERT(bt_atomic_ptr_get(&hf->sco_conn) == sco,
+		__ASSERT_MSG(bt_atomic_ptr_get(&hf->sco_conn) == sco,
 				"Concurrent SCO connection creation detected");
 		/* The `hf->sco_conn` has been updated in callback `hfp_hf_sco_connected()`.
 		 * The reference count has been updated in callback `hfp_hf_sco_connected()`.
@@ -3770,7 +3770,7 @@ static int chld_release_all_held_finish(struct at_client *hf_at, enum at_result 
 
 	LOG_DBG("AT+CHLD=0 (result %d) on %p", result, hf);
 
-	bt_work_reschedule(&hf->deferred_work, K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+	bt_work_reschedule(&hf->deferred_work, OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 
 	return 0;
 }
@@ -3810,7 +3810,7 @@ static int chld_set_udub_finish(struct at_client *hf_at, enum at_result result,
 
 	LOG_DBG("AT+CHLD=0 (result %d) on %p", result, hf);
 
-	bt_work_reschedule(&hf->deferred_work, K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+	bt_work_reschedule(&hf->deferred_work, OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 
 	return 0;
 }
@@ -3850,7 +3850,7 @@ static int chld_release_active_accept_other_finish(struct at_client *hf_at,
 
 	LOG_DBG("AT+CHLD=1 (result %d) on %p", result, hf);
 
-	bt_work_reschedule(&hf->deferred_work, K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+	bt_work_reschedule(&hf->deferred_work, OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 
 	return 0;
 }
@@ -3886,7 +3886,7 @@ static int chld_hold_active_accept_other_finish(struct at_client *hf_at,
 
 	LOG_DBG("AT+CHLD=2 (result %d) on %p", result, hf);
 
-	bt_work_reschedule(&hf->deferred_work, K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+	bt_work_reschedule(&hf->deferred_work, OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 
 	return 0;
 }
@@ -3922,7 +3922,7 @@ static int chld_join_conversation_finish(struct at_client *hf_at,
 
 	LOG_DBG("AT+CHLD=3 (result %d) on %p", result, hf);
 
-	bt_work_reschedule(&hf->deferred_work, K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+	bt_work_reschedule(&hf->deferred_work, OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 
 	return 0;
 }
@@ -3963,7 +3963,7 @@ static int chld_explicit_call_transfer_finish(struct at_client *hf_at,
 
 	LOG_DBG("AT+CHLD=4 (result %d) on %p", result, hf);
 
-	bt_work_reschedule(&hf->deferred_work, K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+	bt_work_reschedule(&hf->deferred_work, OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 
 	return 0;
 }
@@ -4004,7 +4004,7 @@ static int chld_release_specified_call_finish(struct at_client *hf_at,
 
 	LOG_DBG("AT+CHLD=1<idx> (result %d) on %p", result, hf);
 
-	bt_work_reschedule(&hf->deferred_work, K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+	bt_work_reschedule(&hf->deferred_work, OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 
 	return 0;
 }
@@ -4068,7 +4068,7 @@ static int chld_private_consultation_mode_finish(struct at_client *hf_at,
 
 	LOG_DBG("AT+CHLD=2<idx> (result %d) on %p", result, hf);
 
-	bt_work_reschedule(&hf->deferred_work, K_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
+	bt_work_reschedule(&hf->deferred_work, OS_MSEC(HF_ENHANCED_CALL_STATUS_TIMEOUT));
 
 	return 0;
 }
@@ -4317,7 +4317,7 @@ static uint8_t bt_hfp_hf_discover_cb(struct bt_conn *conn, struct bt_sdp_client_
 	int err;
 
 	index = (size_t)bt_conn_index(conn);
-	__ASSERT(index < ARRAY_SIZE(bt_hfp_hf_pool), "Index is out of bounds");
+	__ASSERT_MSG(index < ARRAY_SIZE(bt_hfp_hf_pool), "Index is out of bounds");
 
 	hf = &bt_hfp_hf_pool[index];
 
@@ -4386,7 +4386,7 @@ static struct bt_hfp_hf *hfp_hf_create(struct bt_conn *conn)
 	LOG_DBG("conn %p", conn);
 
 	index = (size_t)bt_conn_index(conn);
-	__ASSERT(index < ARRAY_SIZE(bt_hfp_hf_pool), "Index is out of bounds");
+	__ASSERT_MSG(index < ARRAY_SIZE(bt_hfp_hf_pool), "Index is out of bounds");
 
 	hf = &bt_hfp_hf_pool[index];
 	if (hf->acl) {
@@ -4473,7 +4473,7 @@ static int bt_hfp_hf_sco_accept(const struct bt_sco_accept_info *info,
 	LOG_DBG("conn %p", info->acl);
 
 	index = (size_t)bt_conn_index(info->acl);
-	__ASSERT(index < ARRAY_SIZE(bt_hfp_hf_pool), "Index is out of bounds");
+	__ASSERT_MSG(index < ARRAY_SIZE(bt_hfp_hf_pool), "Index is out of bounds");
 
 	hf = &bt_hfp_hf_pool[index];
 	if (hf->acl != info->acl) {
@@ -4504,7 +4504,7 @@ static void hf_sco_disconnected(struct bt_conn *conn, uint8_t reason)
 {
 	ARG_UNUSED(reason);
 
-	__ASSERT(conn != NULL, "Invalid SCO conn");
+	__ASSERT_MSG(conn != NULL, "Invalid SCO conn");
 
 	ARRAY_FOR_EACH(bt_hfp_hf_pool, i) {
 		if (bt_atomic_ptr_cas(&bt_hfp_hf_pool[i].sco_conn, conn, NULL)) {

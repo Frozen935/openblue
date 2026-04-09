@@ -24,6 +24,8 @@
 #include <bluetooth/classic/sdp.h>
 #include <bluetooth/classic/l2cap_br.h>
 
+#include <base/queue/bt_fifo.h>
+
 
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
@@ -220,7 +222,7 @@ struct bt_l2cap_br_server {
 struct l2cap_br_chan {
 	struct bt_l2cap_br_chan chan;
 #if defined(CONFIG_BT_L2CAP_RET_FC)
-	struct k_fifo l2cap_recv_fifo;
+	struct bt_fifo l2cap_recv_fifo;
 	bool hold_credit;
 #endif /* CONFIG_BT_L2CAP_RET_FC */
 };
@@ -345,7 +347,7 @@ static struct l2cap_br_chan l2cap_chan = {
 		.rx.mtu = DATA_BREDR_MTU,
 	},
 #if defined(CONFIG_BT_L2CAP_RET_FC)
-	.l2cap_recv_fifo = Z_FIFO_INITIALIZER(l2cap_chan.l2cap_recv_fifo),
+	.l2cap_recv_fifo = BT_FIFO_INITIALIZER(l2cap_chan.l2cap_recv_fifo),
 #endif /* CONFIG_BT_L2CAP_RET_FC */
 };
 

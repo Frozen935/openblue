@@ -4132,7 +4132,7 @@ static int cmd_tg_send_browsing_general_reject_rsp(const struct bt_shell *sh, in
 	"Usage: send_browsed_player_rsp [status] [uid_counter] [num_items] "         \
 	"[charset_id] [folder_name]"
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE(
 	ct_cmds,
 	BT_SHELL_CMD_ARG(register_cb, NULL, "register avrcp ct callbacks", cmd_register_ct_cb, 1, 0),
 	BT_SHELL_CMD_ARG(get_unit, NULL, "get unit info", cmd_get_unit_info, 1, 0),
@@ -4180,7 +4180,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 		      cmd_ct_add_to_now_playing, 4, 0),
 	BT_SHELL_SUBCMD_SET_END);
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE(
 	tg_cmds,
 	BT_SHELL_CMD_ARG(register_cb, NULL, "register avrcp tg callbacks", cmd_register_tg_cb, 1, 0),
 	BT_SHELL_CMD_ARG(send_unit_rsp, NULL, "send unit info response", cmd_send_unit_info_rsp, 1, 0),
@@ -4243,7 +4243,7 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 static int cmd_avrcp(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		shell_help(sh);
+		bt_shell_help(sh);
 		/* sh returns 1 when help is printed */
 		return 1;
 	}
@@ -4253,7 +4253,7 @@ static int cmd_avrcp(const struct bt_shell *sh, size_t argc, char **argv)
 	return -ENOEXEC;
 }
 
-BT_SHELL_STATIC_SUBCMD_SET_CREATE(
+BT_SHELL_SUBCMD_SET_CREATE(
 	avrcp_cmds,
 	BT_SHELL_CMD_ARG(connect, NULL, "connect AVRCP", cmd_connect, 1, 0),
 	BT_SHELL_CMD_ARG(disconnect, NULL, "disconnect AVRCP", cmd_disconnect, 1, 0),
@@ -4264,4 +4264,9 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	BT_SHELL_CMD(tg, &tg_cmds, "AVRCP TG shell commands", cmd_avrcp),
 	BT_SHELL_SUBCMD_SET_END);
 
-BT_SHELL_CMD_ARG_REGISTER(avrcp, &avrcp_cmds, "Bluetooth AVRCP sh commands", cmd_avrcp, 1, 1);
+BT_SHELL_CMD_ARG_DEFINE(avrcp, &avrcp_cmds, "Bluetooth AVRCP sh commands", cmd_avrcp, 1, 1);
+
+int bt_shell_cmd_avrcp_register(struct bt_shell *sh)
+{
+	return bt_shell_cmd_register(sh, &avrcp);
+}

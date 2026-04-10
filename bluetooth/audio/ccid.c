@@ -15,7 +15,6 @@
 #include <bluetooth/audio/ccid.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-
 struct ccid_search_param {
 	const struct bt_gatt_attr *attr;
 	uint8_t ccid;

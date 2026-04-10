@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
@@ -24,12 +23,12 @@
 #include <bluetooth/classic/sdp.h>
 #include <bluetooth/classic/l2cap_br.h>
 
-#include <base/queue/bt_fifo.h>
-
-
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <base/byteorder.h>
+
+#include <base/queue/bt_fifo.h>
 #if defined(CONFIG_BT_CONN)
 /* Connection context for BR/EDR legacy pairing in sec mode 3 */
 static struct bt_conn *pairing_conn;

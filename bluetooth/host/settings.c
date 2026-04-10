@@ -7,7 +7,6 @@
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <bluetooth/addr.h>
@@ -22,6 +21,10 @@
 #include "settings.h"
 #include "sys/types.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+
+#include <stdio.h>
 #define LOG_LEVEL CONFIG_BT_SETTINGS_LOG_LEVEL
 
 #if defined(CONFIG_BT_SETTINGS_USE_PRINTK)

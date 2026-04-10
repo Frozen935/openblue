@@ -13,6 +13,7 @@
 
 #include <bluetooth/audio/media_proxy.h>
 
+#include <utils/bt_utils.h>
 #define MPL_NO_TRACK_ID 0
 
 /* Debug output of 48 bit Object ID value */

@@ -22,6 +22,8 @@
 #include "bap_endpoint.h"
 #include "bap_internal.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
 /* TODO: Optimize the ISO_POOL_SIZE */
 #define ISO_POOL_SIZE CONFIG_BT_ISO_MAX_CHAN

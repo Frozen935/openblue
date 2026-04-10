@@ -15,14 +15,14 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <base/bt_atomic.h>
-#include <utils/bt_utils.h>
 
 #include "has_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 #define HAS_INST(_has) CONTAINER_OF(_has, struct bt_has_client, has)
 #define HANDLE_IS_VALID(handle) ((handle) != 0x0000)
 static struct bt_has_client clients[CONFIG_BT_MAX_CONN];

@@ -21,13 +21,14 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/services/ots.h>
-#include <utils/bt_utils.h>
 
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
 #include "../media_proxy_internal.h"
 
+#include <base/bt_buf.h>
+#include <utils/bt_utils.h>
 static struct bt_mcc_cb cb;
 
 #ifdef CONFIG_BT_MCC_OTS

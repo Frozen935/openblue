@@ -21,8 +21,6 @@
 #include "bap_iso.h"
 #include "bap_endpoint.h"
 #include "pacs_internal.h"
-
-
 static const struct bt_bap_unicast_server_cb *unicast_server_cb;
 
 int bt_bap_unicast_server_register(const struct bt_bap_unicast_server_register_param *param)

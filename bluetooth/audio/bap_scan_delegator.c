@@ -27,11 +27,13 @@
 #include <bluetooth/l2cap.h>
 #include <bluetooth/buf.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
+
 #include <base/bt_atomic.h>
-#include <bluetooth/byteorder.h>
+#include <base/byteorder.h>
 #include <utils/bt_utils.h>
 
+#include "osdep/os.h"
+#include <base/bt_buf.h>
 
 #if !defined(CONFIG_ARCH_POSIX) && defined(CONFIG_BT_BAP_SCAN_DELEGATOR_LOG_LEVEL_DBG) &&          \
 	defined(CONFIG_LOG) && !defined(CONFIG_LOG_MODE_DEFERRED)

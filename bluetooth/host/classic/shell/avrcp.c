@@ -13,17 +13,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/classic/avrcp.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/l2cap.h>
 
-
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <base/byteorder.h>
 BT_BUF_POOL_DEFINE(avrcp_tx_pool, CONFIG_BT_MAX_CONN,
 		    BT_L2CAP_BUF_SIZE(CONFIG_BT_L2CAP_TX_MTU),
 		    CONFIG_BT_CONN_TX_USER_DATA_SIZE, NULL);

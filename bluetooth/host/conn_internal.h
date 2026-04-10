@@ -18,8 +18,13 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/iso.h>
 
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+
 #include <base/queue/bt_fifo.h>
 #include <osdep/os.h>
+#include <base/bt_buf.h>
 
 typedef enum __packed {
 	BT_CONN_DISCONNECTED,         /* Disconnected, conn is completely down */

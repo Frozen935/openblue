@@ -15,23 +15,22 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <base/bt_assert.h>
 #include <bluetooth/assigned_numbers.h>
 #include <bluetooth/audio/audio.h>
-#include <bluetooth/audio/gmap.h>
 #include <bluetooth/audio/gmap_lc3_preset.h>
-
+#include <bluetooth/audio/gmap.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/gap.h>
 #include <bluetooth/uuid.h>
-
-#include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
 
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 #include "audio.h"
 
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include <base/bt_assert.h>
 #define UNICAST_SINK_SUPPORTED (CONFIG_BT_BAP_UNICAST_CLIENT_ASE_SNK_COUNT > 0)
 #define UNICAST_SRC_SUPPORTED  (CONFIG_BT_BAP_UNICAST_CLIENT_ASE_SRC_COUNT > 0)
 

@@ -7,11 +7,10 @@
 #ifndef __INCLUDE_BLUETOOTH_BT_MESH_RPR_CLI_H__
 #define __INCLUDE_BLUETOOTH_BT_MESH_RPR_CLI_H__
 
-#include <base/bt_buf.h>
-#include <base/bt_work.h>
 #include <bluetooth/mesh/access.h>
 #include <bluetooth/mesh/rpr.h>
 
+#include <base/bt_work.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

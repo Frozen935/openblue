@@ -18,6 +18,8 @@
 #include "foundation.h"
 #include "msg.h"
 
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 static int32_t msg_timeout;

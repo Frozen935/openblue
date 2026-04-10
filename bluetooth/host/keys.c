@@ -28,6 +28,9 @@
 #include "smp.h"
 #include "sys/types.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_KEYS_LOG_LEVEL
 
 static struct bt_keys key_pool[CONFIG_BT_MAX_PAIRED];

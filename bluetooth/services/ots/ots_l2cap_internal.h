@@ -15,6 +15,7 @@ extern "C" {
 
 #include <bluetooth/l2cap.h>
 
+#include <utils/bt_slist.h>
 struct bt_gatt_ots_l2cap_tx {
 	uint8_t *data;
 	uint32_t len;

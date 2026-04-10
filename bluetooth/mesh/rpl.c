@@ -8,7 +8,6 @@
 #include <string.h>
 #include <errno.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <bluetooth/bluetooth.h>
@@ -20,6 +19,12 @@
 #include "rpl.h"
 #include "settings.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
+
+#include <stdio.h>
 #define LOG_LEVEL CONFIG_BT_MESH_RPL_LOG_LEVEL
 
 /* Replay Protection List information for persistent storage. */

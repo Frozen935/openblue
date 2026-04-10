@@ -10,7 +10,6 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/mesh/access.h>
 #include <bluetooth/mesh/rpr.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

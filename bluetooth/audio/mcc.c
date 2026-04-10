@@ -22,17 +22,18 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/services/ots.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <base/bt_atomic.h>
-#include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
 
 #include "../services/ots/ots_client_internal.h"
 #include "common/bt_str.h"
 #include "mcc_internal.h"
 #include "mcs_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include "osdep/os.h"
 /* TODO: Temporarily copied here from media_proxy_internal.h - clean up */
 /* Debug output of 48 bit Object ID value */
 /* (Zephyr does not yet support debug output of more than 32 bit values.) */

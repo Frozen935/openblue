@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #include <bluetooth/bluetooth.h>
+
 #include <utils/bt_utils.h>
 
 /** Constant Tone Extension (CTE) types. */

@@ -11,7 +11,6 @@
 #define __INCLUDE_BLUETOOTH_MESH_BRG_CFG_SRV_H___H__
 
 #include <bluetooth/mesh/brg_cfg.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -29,6 +29,10 @@
 #include "ssp.h"
 #include "sco_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+#include <utils/bt_slist.h>
 #define LOG_LEVEL CONFIG_BT_CONN_LOG_LEVEL
 
 void bt_sco_cleanup(struct bt_conn *sco_conn)

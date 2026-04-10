@@ -9,8 +9,6 @@
 #include <bluetooth/classic/sdp.h>
 
 #include "did_internal.h"
-
-
 #define DID_VER_1_3 (0x0103u)
 
 #define BLUETOOTH_DEVICE_IDENTIFY_SPEC_VERSION 0x0103

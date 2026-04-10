@@ -11,6 +11,9 @@
 #include <bluetooth/mesh/keys.h>
 #include <bluetooth/mesh/sar_cfg.h>
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
 #define BT_MESH_IV_UPDATE(flags)   ((flags >> 1) & 0x01)
 #define BT_MESH_KEY_REFRESH(flags) (flags & 0x01)
 

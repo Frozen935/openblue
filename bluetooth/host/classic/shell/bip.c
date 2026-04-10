@@ -19,10 +19,10 @@
 #include <bluetooth/classic/sdp.h>
 #include <bluetooth/classic/bip.h>
 
-
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <base/byteorder.h>
 #define BIP_MOPL CONFIG_BT_GOEP_RFCOMM_MTU
 
 BT_BUF_POOL_FIXED_DEFINE(tx_pool, CONFIG_BT_MAX_CONN, BT_RFCOMM_BUF_SIZE(BIP_MOPL),

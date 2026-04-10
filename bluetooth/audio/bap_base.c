@@ -19,8 +19,9 @@
 #include <bluetooth/gap.h>
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
-#include <bluetooth/buf.h>
+
 #include <utils/bt_utils.h>
+#include <base/bt_buf.h>
 
 
 /* The BASE and the following defines are defined by BAP v1.0.1, section 3.7.2.2 Basic Audio

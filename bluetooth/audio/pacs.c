@@ -25,12 +25,6 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <base/bt_atomic.h>
-#include <bluetooth/byteorder.h>
-#include <utils/bt_slist.h>
-#include <utils/bt_utils.h>
 
 #include "common/bt_str.h"
 
@@ -38,7 +32,13 @@
 #include "bap_unicast_server.h"
 #include "pacs_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 #define PAC_NOTIFY_TIMEOUT	OS_MSEC(10)
 #define READ_BUF_SEM_TIMEOUT    OS_MSEC(50)
 

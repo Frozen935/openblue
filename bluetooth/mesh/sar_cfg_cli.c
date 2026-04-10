@@ -14,7 +14,6 @@
 #include "foundation.h"
 #include "mesh.h"
 #include "sar_cfg_internal.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 static struct bt_mesh_sar_cfg_cli *cli;

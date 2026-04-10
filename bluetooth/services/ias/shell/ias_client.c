@@ -15,7 +15,6 @@
 
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
-
 static void ias_discover_cb(struct bt_conn *conn, int err)
 {
 	if (err != 0) {

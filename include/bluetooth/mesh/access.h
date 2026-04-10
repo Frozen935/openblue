@@ -10,15 +10,15 @@
 #ifndef __INCLUDE_BLUETOOTH_MESH_ACCESS_H__
 #define __INCLUDE_BLUETOOTH_MESH_ACCESS_H__
 
-#include <base/bt_work.h>
-#include <utils/bt_utils.h>
 #include <bluetooth/assigned_numbers.h>
 #include <bluetooth/mesh/msg.h>
 
+#include <utils/bt_utils.h>
 /**
  * @cond INTERNAL_HIDDEN
  */
 
+#include <base/bt_work.h>
 /* Internal macros used to initialize array members */
 #define BT_MESH_KEY_UNUSED_ELT_(IDX, _) BT_MESH_KEY_UNUSED
 #define BT_MESH_ADDR_UNASSIGNED_ELT_(IDX, _) BT_MESH_ADDR_UNASSIGNED

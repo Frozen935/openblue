@@ -19,6 +19,10 @@
 #include "foundation.h"
 #include "prov.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_PROV_LOG_LEVEL
 
 /* 10 power 32 represents 14 bytes maximum in little-endian format */

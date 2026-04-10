@@ -5,11 +5,12 @@
  */
 
 #include <bluetooth/mesh.h>
-#include <common/assert.h>
+#include <assert.h>
 #include "blob.h"
 #include "net.h"
 #include "transport.h"
 
+#include <common/assert.h>
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 #define FLASH_IO(_io) CONTAINER_OF(_io, struct bt_mesh_blob_io_flash, io)

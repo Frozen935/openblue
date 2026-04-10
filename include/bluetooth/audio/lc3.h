@@ -23,10 +23,10 @@
  * @{
  */
 
-#include <utils/bt_utils.h>
 #include <bluetooth/byteorder.h>
 #include <bluetooth/hci_types.h>
 
+#include <utils/bt_utils.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

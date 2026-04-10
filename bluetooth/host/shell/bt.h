@@ -17,6 +17,7 @@
 
 #include <bluetooth/bluetooth.h>
 #include <sys/types.h>
+#include <base/bt_buf.h>
 
 extern struct bt_conn *default_conn;
 

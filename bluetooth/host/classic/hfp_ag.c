@@ -5,7 +5,6 @@
  */
 
 #include <errno.h>
-#include <stdio.h>
 
 #include <bluetooth/conn.h>
 
@@ -23,6 +22,11 @@
 #include "sco_internal.h"
 #include "hfp_ag_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include <stdio.h>
 #define LOG_LEVEL CONFIG_BT_HFP_AG_LOG_LEVEL
 
 typedef int (*bt_hfp_ag_parse_command_t)(struct bt_hfp_ag *ag, struct bt_buf *buf);

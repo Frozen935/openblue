@@ -19,6 +19,9 @@
 #include "l2cap_br_internal.h"
 #include "obex_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_BIP_LOG_LEVEL
 
 typedef void (*bt_bip_server_cb_t)(struct bt_bip_server *server, bool final, struct bt_buf *buf);

@@ -20,10 +20,10 @@
 #include <bluetooth/classic/avrcp.h>
 #include <bluetooth/classic/avrcp_cover_art.h>
 
-
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <base/byteorder.h>
 #define COVER_ART_MOPL CONFIG_BT_GOEP_L2CAP_MTU
 
 BT_BUF_POOL_FIXED_DEFINE(tx_pool, CONFIG_BT_MAX_CONN, BT_L2CAP_BUF_SIZE(COVER_ART_MOPL),

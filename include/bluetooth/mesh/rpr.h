@@ -7,9 +7,9 @@
 #ifndef __INCLUDE_BLUETOOTH_BT_MESH_RPR_H__
 #define __INCLUDE_BLUETOOTH_BT_MESH_RPR_H__
 
-#include <utils/bt_utils.h>
 #include <bluetooth/mesh/main.h>
 
+#include <utils/bt_utils.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -18,10 +18,9 @@
 #include <bluetooth/audio/micp.h>
 #include <bluetooth/conn.h>
 
-#include <utils/bt_utils.h>
-
 #include "common/bt_shell_private.h"
 
+#include <utils/bt_utils.h>
 static void micp_mic_dev_mute_cb(uint8_t mute)
 {
 	bt_shell_print("Mute value %u", mute);

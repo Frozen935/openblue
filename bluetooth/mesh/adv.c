@@ -22,6 +22,8 @@
 #include "solicitation.h"
 #include "statistic.h"
 
+#include <base/bt_buf.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_MESH_ADV_LOG_LEVEL
 
 /* Window and Interval are equal for continuous scanning */

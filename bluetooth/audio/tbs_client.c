@@ -18,10 +18,6 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <base/bt_atomic.h>
-#include <utils/bt_slist.h>
-#include <utils/bt_utils.h>
 
 #include "common/bt_str.h"
 #include "tbs_internal.h"
@@ -31,6 +27,13 @@
  */
 
 /* Calculate the required buffers for TBS Client discovery */
+
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+
+#include "osdep/os.h"
 #define TBS_CLIENT_BUF_COUNT                                                                       \
 	(1 /* Discover buffer */ + 1 /* terminate reason */ +                                      \
 	 IS_ENABLED(CONFIG_BT_TBS_CLIENT_BEARER_PROVIDER_NAME) +                                   \

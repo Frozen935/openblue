@@ -36,8 +36,10 @@
 #include <bluetooth/gap.h>
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
+
 #include <utils/bt_slist.h>
 #include <utils/bt_utils.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -13,6 +13,7 @@
 #include <bluetooth/audio/bap.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/iso.h>
+#include <base/bt_buf.h>
 
 int bt_bap_unicast_client_config(struct bt_bap_stream *stream,
 				 const struct bt_audio_codec_cfg *codec_cfg);

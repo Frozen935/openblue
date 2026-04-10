@@ -9,7 +9,6 @@
 #include "foundation.h"
 #include "subnet.h"
 #include "solicitation.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 static void sol_rpl_status_rsp(const struct bt_mesh_model *mod,

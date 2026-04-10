@@ -19,13 +19,13 @@
 #include <bluetooth/audio/micp.h>
 #include <bluetooth/audio/aics.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 struct bt_micp_server {
 	uint8_t mute;
 	struct bt_micp_mic_dev_cb *cb;

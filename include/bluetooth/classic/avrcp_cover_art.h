@@ -24,7 +24,6 @@
 #include <bluetooth/l2cap.h>
 #include <bluetooth/classic/avrcp.h>
 #include <bluetooth/classic/bip.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

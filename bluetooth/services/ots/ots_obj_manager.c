@@ -11,7 +11,8 @@
 #include <bluetooth/services/ots.h>
 #include "ots_internal.h"
 
-
+#include <utils/bt_dlist.h>
+#include <base/byteorder.h>
 struct bt_gatt_ots_pool_item {
 	bt_dnode_t dnode;
 	struct bt_gatt_ots_object val;

@@ -20,11 +20,6 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <base/bt_atomic.h>
-#include <utils/bt_slist.h>
-#include <utils/bt_utils.h>
 
 #include "../bluetooth/host/settings.h"
 
@@ -32,7 +27,12 @@
 #include "common/bt_str.h"
 #include "has_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 /* The service allows operations with paired devices only.
  * The number of clients is set to maximum number of simultaneous connections to paired devices.
  */

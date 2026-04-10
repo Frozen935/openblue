@@ -11,7 +11,6 @@
 #define __BLUETOOTH_MESH_PROXY_MSG_H__
 
 #include <bluetooth/gatt.h>
-
 #define PDU_TYPE(data)     (data[0] & BIT_MASK(6))
 #define CFG_FILTER_SET     0x00
 #define CFG_FILTER_ADD     0x01

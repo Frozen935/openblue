@@ -21,6 +21,7 @@
 #include "common/bt_str.h"
 #include "hci_core.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_HCI_CORE_LOG_LEVEL
 
 int bt_crypto_init(void)

@@ -17,7 +17,6 @@
  */
 
 #include <bluetooth/conn.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

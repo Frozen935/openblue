@@ -14,7 +14,6 @@
 #include "transport.h"
 #include "heartbeat.h"
 #include "foundation.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_TRANS_LOG_LEVEL
 
 /* Heartbeat Publication information for persistent storage. */

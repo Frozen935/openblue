@@ -30,11 +30,10 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/att.h>
+
 #include <base/bt_atomic.h>
 #include <utils/bt_slist.h>
 #include <utils/bt_utils.h>
-#include <utils/bt_utils.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

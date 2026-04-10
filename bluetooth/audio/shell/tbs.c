@@ -18,11 +18,12 @@
 #include <bluetooth/addr.h>
 #include <bluetooth/audio/tbs.h>
 #include <bluetooth/conn.h>
-#include <utils/bt_utils.h>
 
 #include "host/shell/bt.h"
-#include "common/bt_shell_private.h"
 
+#include <utils/bt_utils.h>
+
+#include "common/bt_shell_private.h"
 static struct bt_conn *tbs_authorized_conn;
 
 static bool tbs_authorize_cb(struct bt_conn *conn)

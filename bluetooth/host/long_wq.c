@@ -9,7 +9,6 @@
 #include <base/bt_work.h>
 #include <bt_stack_init.h>
 #include <osdep/os.h>
-
 static struct bt_work_q bt_long_wq;
 
 int bt_long_wq_schedule(struct bt_work_delayable *dwork, os_timeout_t timeout)

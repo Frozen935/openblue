@@ -15,6 +15,7 @@
 #include "mesh.h"
 #include "crypto.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_CRYPTO_LOG_LEVEL
 
 #define NET_MIC_LEN(pdu) (((pdu)[1] & 0x80) ? 8 : 4)

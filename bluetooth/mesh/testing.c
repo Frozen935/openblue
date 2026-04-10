@@ -17,6 +17,7 @@
 #include "testing.h"
 #include "transport.h"
 
+#include <utils/bt_slist.h>
 static bt_slist_t cb_slist;
 
 int bt_mesh_test_cb_register(struct bt_mesh_test_cb *cb)

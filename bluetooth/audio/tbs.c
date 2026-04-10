@@ -22,17 +22,17 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <base/bt_atomic.h>
-#include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 #include "tbs_internal.h"
 #include "common/bt_str.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 #define BT_TBS_VALID_STATUS_FLAGS(val) ((val) <= (BIT(0) | BIT(1)))
 #define MUTEX_TIMEOUT                  OS_MSEC(CONFIG_BT_TBS_LOCK_TIMEOUT)
 

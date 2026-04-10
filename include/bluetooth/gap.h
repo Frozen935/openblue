@@ -13,8 +13,8 @@
 
 #include <bluetooth/assigned_numbers.h>
 #include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
 
+#include <utils/bt_utils.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

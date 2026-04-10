@@ -13,7 +13,6 @@
 #include "dfd_srv_internal.h"
 #include "net.h"
 #include "transport.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_DFU_LOG_LEVEL
 
 #define DFD_UPLOAD_STATUS_MSG_MAXLEN (5 + CONFIG_BT_MESH_DFU_FWID_MAXLEN)

@@ -13,6 +13,7 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/services/ias.h>
+#include <base/bt_buf.h>
 
 #define LOG_LEVEL CONFIG_BT_IAS_LOG_LEVEL
 

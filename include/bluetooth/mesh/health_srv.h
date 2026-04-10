@@ -16,10 +16,10 @@
  * @{
  */
 
-#include <base/bt_work.h>
 #include <bluetooth/mesh.h>
 #include <bluetooth/byteorder.h>
 
+#include <base/bt_work.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

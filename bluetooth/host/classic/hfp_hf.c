@@ -23,6 +23,9 @@
 #include "sco_internal.h"
 #include "hfp_hf_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_HFP_HF_LOG_LEVEL
 
 #define MAX_IND_STR_LEN 17

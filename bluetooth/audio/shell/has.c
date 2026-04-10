@@ -18,7 +18,6 @@
 #include <bluetooth/conn.h>
 
 #include "common/bt_shell_private.h"
-
 #if defined(CONFIG_BT_HAS_PRESET_SUPPORT)
 static int preset_select(uint8_t index, bool sync)
 {

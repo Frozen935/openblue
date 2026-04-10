@@ -9,7 +9,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdint.h>
 
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
@@ -21,6 +20,8 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/iso.h>
 
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 bool bt_cap_acceptor_ccid_exist(const struct bt_conn *conn, uint8_t ccid);
 bool bt_cap_acceptor_ccids_exist(const struct bt_conn *conn, const uint8_t ccids[],
 				 uint8_t ccid_cnt);

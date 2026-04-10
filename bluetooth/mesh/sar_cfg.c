@@ -11,6 +11,7 @@
 
 #include "net.h"
 #include "sar_cfg_internal.h"
+#include <base/bt_buf.h>
 
 void bt_mesh_sar_tx_encode(struct bt_buf_simple *buf,
 			   const struct bt_mesh_sar_tx *tx)

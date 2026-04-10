@@ -42,6 +42,11 @@
 #include "settings.h"
 #include "smp.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_GATT_LOG_LEVEL
 
 #define SC_TIMEOUT	OS_MSEC(10)

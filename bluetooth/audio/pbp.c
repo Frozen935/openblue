@@ -13,9 +13,9 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/gap.h>
 #include <bluetooth/uuid.h>
-#include <bluetooth/buf.h>
-#include <bluetooth/byteorder.h>
 
+#include <base/byteorder.h>
+#include <base/bt_buf.h>
 
 int bt_pbp_get_announcement(const uint8_t meta[], size_t meta_len,
 			    enum bt_pbp_announcement_feature features,

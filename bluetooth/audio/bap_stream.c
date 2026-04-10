@@ -22,11 +22,6 @@
 #include <bluetooth/iso.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <bluetooth/byteorder.h>
-#include <utils/bt_slist.h>
-#include <utils/bt_utils.h>
 
 #include "../host/iso_internal.h"
 
@@ -37,7 +32,12 @@
 #include "bap_unicast_client_internal.h"
 #include "bap_unicast_server.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 #if defined(CONFIG_BT_BAP_UNICAST_CLIENT) || defined(CONFIG_BT_BAP_BROADCAST_SOURCE) ||            \
 	defined(CONFIG_BT_BAP_BROADCAST_SINK)
 void bt_bap_qos_cfg_to_iso_qos(struct bt_iso_chan_io_qos *io, const struct bt_bap_qos_cfg *qos_cfg)

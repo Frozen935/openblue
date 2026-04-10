@@ -25,17 +25,14 @@
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <bluetooth/byteorder.h>
+
+#include <base/byteorder.h>
 #include <utils/bt_utils.h>
 
-
+#include "osdep/os.h"
 #include "common/bt_str.h"
 #include "common/assert.h"
-
 #include "../host/att_internal.h"
-
 #include "ascs_internal.h"
 #include "audio_internal.h"
 #include "bap_endpoint.h"
@@ -44,6 +41,7 @@
 #include "bap_unicast_server.h"
 #include "pacs_internal.h"
 #include "cap_internal.h"
+#include <base/bt_buf.h>
 
 #define ASE_BUF_SEM_TIMEOUT OS_MSEC(CONFIG_BT_ASCS_ASE_BUF_TIMEOUT)
 

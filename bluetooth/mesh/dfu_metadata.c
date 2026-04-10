@@ -10,6 +10,8 @@
 #include "crypto.h"
 #include "access.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
 int bt_mesh_dfu_metadata_decode(struct bt_buf_simple *buf,
 				struct bt_mesh_dfu_metadata *metadata)
 {

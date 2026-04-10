@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <common/bt_str.h>
 
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_MESH_DFU_LOG_LEVEL
 
 #define SLOT_ENTRY_BUFLEN 25

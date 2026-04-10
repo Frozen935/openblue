@@ -7,8 +7,8 @@
 #include <errno.h>
 
 #include <bluetooth/mesh.h>
-#include <psa/key_ids.h>
 
+#include <psa/key_ids.h>
 #define LOG_LEVEL CONFIG_BT_MESH_CRYPTO_LOG_LEVEL
 
 #include "mesh.h"

@@ -19,7 +19,6 @@
 
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
-
 static struct bt_micp_mic_ctlr *micp_mic_ctlr;
 #if defined(CONFIG_BT_MICP_MIC_CTLR_AICS)
 static struct bt_micp_included micp_included;

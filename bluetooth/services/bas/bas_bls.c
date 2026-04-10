@@ -8,6 +8,7 @@
 #include <bluetooth/gatt.h>
 #include "bas_internal.h"
 
+#include <base/byteorder.h>
 /* The battery level status of a battery. */
 static struct bt_bas_bls bls;
 

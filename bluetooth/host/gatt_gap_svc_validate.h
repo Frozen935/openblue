@@ -8,8 +8,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SUBSYS_BLUETOOTH_HOST_GATT_GAP_SVC_VALIDATE_H_
-#define SUBSYS_BLUETOOTH_HOST_GATT_GAP_SVC_VALIDATE_H_
+#ifndef __SUBSYS_BLUETOOTH_HOST_GATT_GAP_SVC_VALIDATE_H_
+#define __SUBSYS_BLUETOOTH_HOST_GATT_GAP_SVC_VALIDATE_H_
 
 
 /** @brief Validate GATT database contains exactly one GAP service.
@@ -24,4 +24,4 @@
  */
 int gatt_gap_svc_validate(void);
 
-#endif /* SUBSYS_BLUETOOTH_HOST_GATT_GAP_SVC_VALIDATE_H_ */
+#endif /* __SUBSYS_BLUETOOTH_HOST_GATT_GAP_SVC_VALIDATE_H_ */

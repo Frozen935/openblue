@@ -12,6 +12,8 @@
 #ifndef __INCLUDE_BLUETOOTH_TESTING_H__
 #define __INCLUDE_BLUETOOTH_TESTING_H__
 
+#include <base/bt_buf.h>
+
 /** @brief Hook for `acl_in_pool.destroy`
  *
  *  Weak-function interface. The user can simply define this

@@ -23,16 +23,16 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/services/ots.h>
-#include "osdep/os.h"
-#include <base/bt_atomic.h>
-#include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 #include "media_proxy_internal.h"
 #include "mcs_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 static void notify(const struct bt_uuid *uuid, const void *data, uint16_t len);
 
 static struct media_proxy_sctrl_cbs cbs;

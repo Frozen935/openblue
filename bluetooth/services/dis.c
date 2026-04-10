@@ -14,7 +14,6 @@
 #include <string.h>
 #include <errno.h>
 
-
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/conn.h>
@@ -22,7 +21,6 @@
 #include <bluetooth/gatt.h>
 
 #include <bluetooth/byteorder.h>
-
 #define LOG_LEVEL CONFIG_BT_SERVICE_LOG_LEVEL
 
 #if CONFIG_BT_DIS_PNP

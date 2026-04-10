@@ -7,11 +7,9 @@
 #include <errno.h>
 #include <stdint.h>
 
-
 #include <bluetooth/gatt.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/services/ias.h>
-
 enum {
 	IAS_DISCOVER_IN_PROGRESS,
 

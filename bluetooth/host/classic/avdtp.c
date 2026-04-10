@@ -21,6 +21,9 @@
 #include "l2cap_br_internal.h"
 #include "avdtp_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_AVDTP_LOG_LEVEL
 
 #define AVDTP_MSG_MASK GENMASK(1, 0)

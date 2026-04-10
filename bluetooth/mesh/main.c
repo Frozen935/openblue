@@ -36,7 +36,7 @@
 #include "solicitation.h"
 #include "gatt_cli.h"
 #include "crypto.h"
-
+#include <base/bt_buf.h>
 
 int bt_mesh_provision(const uint8_t net_key[16], uint16_t net_idx,
 		      uint8_t flags, uint32_t iv_index, uint16_t addr,

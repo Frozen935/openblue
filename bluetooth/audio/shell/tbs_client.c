@@ -15,14 +15,15 @@
 #include <string.h>
 
 #include <bluetooth/conn.h>
-#include <bluetooth/byteorder.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/audio/tbs.h>
+
+#include "host/shell/bt.h"
+
+#include <base/byteorder.h>
 #include <utils/bt_utils.h>
 
 #include "common/bt_shell_private.h"
-#include "host/shell/bt.h"
-
 static int cmd_tbs_client_discover(const struct bt_shell *sh, size_t argc,
 				   char *argv[])
 {

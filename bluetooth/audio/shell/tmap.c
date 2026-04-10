@@ -15,11 +15,10 @@
 #include <bluetooth/audio/tmap.h>
 #include <bluetooth/conn.h>
 
-#include <utils/bt_utils.h>
-
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <utils/bt_utils.h>
 static int cmd_tmap_init(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	const enum bt_tmap_role role =

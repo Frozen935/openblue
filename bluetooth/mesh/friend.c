@@ -18,6 +18,8 @@
 #include "friend.h"
 #include "va.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_FRIEND_LOG_LEVEL
 
 /**

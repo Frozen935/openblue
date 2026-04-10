@@ -7,6 +7,7 @@
 #define __BT_HCI_RAW_INTERNAL_H
 
 #include <drivers/bluetooth.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {

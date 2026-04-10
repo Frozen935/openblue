@@ -12,6 +12,7 @@
 #include <bluetooth/addr.h>
 #include <bluetooth/crypto.h>
 
+#include <utils/bt_utils.h>
 #define ADDR_RESOLVED_BITMASK (0x02)
 
 static inline int create_random_addr(bt_addr_le_t *addr)

@@ -13,7 +13,6 @@
 #include "net.h"
 #include "mesh.h"
 #include "op_agg.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 BT_BUF_SIMPLE_DEFINE_STATIC(srcs, BT_MESH_TX_SDU_MAX);

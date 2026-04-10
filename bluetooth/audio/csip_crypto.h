@@ -8,7 +8,6 @@
 #include <stdint.h>
 
 #include <bluetooth/audio/csip.h>
-
 #define BT_CSIP_CRYPTO_KEY_SIZE   16
 #define BT_CSIP_CRYPTO_SALT_SIZE  16
 #define BT_CSIP_CRYPTO_PRAND_SIZE 3

@@ -15,11 +15,11 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
-#include <bluetooth/buf.h>
-#include <utils/bt_utils.h>
 
 #include "cap_internal.h"
 
+#include <base/bt_buf.h>
+#include <utils/bt_utils.h>
 
 static bool stream_is_central(struct bt_bap_stream *bap_stream)
 {

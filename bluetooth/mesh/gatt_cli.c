@@ -28,6 +28,8 @@
 #include "gatt_cli.h"
 #include "pb_gatt_cli.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_PROXY_LOG_LEVEL
 
 static struct bt_mesh_gatt_server {

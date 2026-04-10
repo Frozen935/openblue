@@ -24,11 +24,14 @@
 #include <bluetooth/classic/rfcomm.h>
 #include <bluetooth/classic/sdp.h>
 
-#include <osdep/os.h>
-
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include <osdep/os.h>
 #define CREDITS			10
 #define DATA_MTU		(23 * CREDITS)
 

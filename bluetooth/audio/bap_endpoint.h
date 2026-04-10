@@ -11,18 +11,18 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <autoconf.h>
-
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/iso.h>
 
-#include <utils/bt_slist.h>
-
-#include "ascs_internal.h"
 #include "bap_stream.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+
+#include <autoconf.h>
+#include "ascs_internal.h"
 #if defined(CONFIG_BT_BAP_UNICAST_CLIENT)
 #define UNICAST_GROUP_CNT	 CONFIG_BT_BAP_UNICAST_CLIENT_GROUP_COUNT
 #define UNICAST_GROUP_STREAM_CNT CONFIG_BT_BAP_UNICAST_CLIENT_GROUP_STREAM_COUNT

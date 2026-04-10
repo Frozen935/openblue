@@ -20,6 +20,9 @@
 #include "conn_internal.h"
 #include "direction_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
 
 /* @brief Antenna information for LE Direction Finding */
 struct bt_le_df_ant_info {

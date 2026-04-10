@@ -22,11 +22,10 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_types.h>
-#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 
-
+#include <utils/bt_utils.h>
 int bt_audio_data_parse(const uint8_t ltv[], size_t size,
 			bool (*func)(struct bt_data *data, void *user_data), void *user_data)
 {

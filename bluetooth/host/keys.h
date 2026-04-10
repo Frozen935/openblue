@@ -16,6 +16,7 @@
 #include <bluetooth/addr.h>
 #include <bluetooth/bluetooth.h>
 
+#include <utils/bt_utils.h>
 /** @cond INTERNAL_HIDDEN */
 
 enum bt_keys_type {

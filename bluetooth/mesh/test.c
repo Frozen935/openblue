@@ -11,7 +11,6 @@
 
 #include "mesh.h"
 #include "test.h"
-
 int bt_mesh_test(void)
 {
 	return 0;

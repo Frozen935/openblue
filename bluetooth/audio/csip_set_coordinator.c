@@ -34,11 +34,6 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/buf.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <base/bt_atomic.h>
-#include <utils/bt_slist.h>
-#include <utils/bt_utils.h>
-#include <bluetooth/byteorder.h>
 
 #include "csip_crypto.h"
 #include "csip_internal.h"
@@ -46,7 +41,12 @@
 #include "host/conn_internal.h"
 #include "host/keys.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 
+#include "osdep/os.h"
 static struct active_members {
 	struct bt_csip_set_coordinator_set_member *members[CONFIG_BT_MAX_CONN];
 	struct bt_csip_set_coordinator_set_info info;

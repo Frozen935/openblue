@@ -9,7 +9,6 @@
 #include <bluetooth/mesh/shell.h>
 
 #include "utils.h"
-
 static const struct bt_mesh_model *mod;
 
 /***************************************************************************************************

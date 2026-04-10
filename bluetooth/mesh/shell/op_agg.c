@@ -9,7 +9,6 @@
 #include <bluetooth/mesh/shell.h>
 
 #include "utils.h"
-
 static int cmd_seq_start(const struct bt_shell *sh, size_t argc, char *argv[])
 {
 	uint16_t elem_addr;

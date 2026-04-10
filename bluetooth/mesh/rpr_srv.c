@@ -16,8 +16,11 @@
 #include "crypto.h"
 #include "rpr.h"
 #include "net.h"
-#include "mesh.h"
 
+#include <utils/bt_slist.h>
+#include <base/byteorder.h>
+
+#include "mesh.h"
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 #define LINK_OPEN_TIMEOUT_DEFAULT 10

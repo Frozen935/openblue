@@ -17,7 +17,6 @@
 #include <bluetooth/hci.h>
 
 #include "common/bt_str.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_PROV_LOG_LEVEL
 
 struct prov_bearer_send_cb {

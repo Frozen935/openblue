@@ -22,11 +22,14 @@
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
 
-#include <osdep/os.h>
-
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include <osdep/os.h>
 #if defined(CONFIG_BT_ISO_TX)
 #define DEFAULT_IO_QOS                                                                             \
 	{                                                                                          \

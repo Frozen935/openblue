@@ -33,6 +33,8 @@
 #include "cfg.h"
 #include "va.h"
 
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 static void node_reset_pending_handler(struct bt_work *work)

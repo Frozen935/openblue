@@ -13,6 +13,7 @@
 
 #include "common/bt_str.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_HCI_CORE_LOG_LEVEL
 
 static inline void xor16(uint8_t *dst, const uint8_t *a, const uint8_t *b)

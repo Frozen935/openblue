@@ -10,7 +10,6 @@
 
 #include "mesh/foundation.h"
 #include "utils.h"
-
 static int cmd_subnet_bridge_get(const struct bt_shell *sh, size_t argc, char *argv[])
 {
 	enum bt_mesh_brg_cfg_state rsp;

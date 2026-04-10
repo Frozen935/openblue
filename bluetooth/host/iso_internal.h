@@ -15,6 +15,10 @@
 #include <bluetooth/buf.h>
 #include <bluetooth/iso.h>
 
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <base/bt_buf.h>
+
 enum bt_iso_cig_state {
 	BT_ISO_CIG_STATE_IDLE,
 	BT_ISO_CIG_STATE_CONFIGURED,

@@ -18,6 +18,10 @@
 
 #include "conn_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_HCI_CORE_LOG_LEVEL
 
 #if defined(CONFIG_BT_CHANNEL_SOUNDING_TEST)

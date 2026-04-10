@@ -8,10 +8,9 @@
 #ifndef __BLUETOOTH_MESH_PROV_H__
 #define __BLUETOOTH_MESH_PROV_H__
 
-#include <stddef.h>
-
 #include "prov_bearer.h"
 
+#include <stddef.h>
 #define PROV_ERR_NONE          0x00
 #define PROV_ERR_NVAL_PDU      0x01
 #define PROV_ERR_NVAL_FMT      0x02

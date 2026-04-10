@@ -10,7 +10,6 @@
 
 #include "common/bt_shell_private.h"
 #include "utils.h"
-
 static void status_print(int err, char *msg, uint16_t addr, struct bt_mesh_large_comp_data_rsp *rsp)
 {
 	if (err) {

@@ -7,7 +7,6 @@
 #include <bluetooth/services/bas.h>
 #include <bluetooth/gatt.h>
 #include "bas_internal.h"
-
 #define BATTERY_CRITICAL_STATUS_CHAR_IDX 9
 
 static uint8_t battery_critical_status;

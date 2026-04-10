@@ -12,6 +12,7 @@
 
 #include <bluetooth/buf.h>
 #include <bluetooth/hci_types.h>
+#include <base/bt_buf.h>
 
 #define BT_MONITOR_NEW_INDEX    0
 #define BT_MONITOR_DEL_INDEX    1

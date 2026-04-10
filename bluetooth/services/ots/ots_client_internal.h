@@ -11,7 +11,6 @@
 #define BT_GATT_OTC_INTERNAL_H_
 
 #include "ots_oacp_internal.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

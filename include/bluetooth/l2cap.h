@@ -21,16 +21,19 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <base/bt_work.h>
-#include <base/queue/bt_fifo.h>
 #include <bluetooth/buf.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/hci.h>
+#include <sys/types.h>
+
 #include <base/bt_atomic.h>
 #include <utils/bt_slist.h>
 #include <utils/bt_utils.h>
+
+#include <base/bt_work.h>
+#include <base/queue/bt_fifo.h>
 #include <osdep/os.h>
-#include <sys/types.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {

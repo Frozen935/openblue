@@ -31,18 +31,19 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if defined(__has_include)
-#if __has_include(<autoconf.h>)
-#include <autoconf.h>
-#endif
-#endif
 #include <bluetooth/addr.h>
 #include <bluetooth/assigned_numbers.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gap.h>
+
 #include <utils/bt_slist.h>
 
+#if defined(__has_include)
+#if __has_include(<autoconf.h>)
+#include <autoconf.h>
+#endif
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

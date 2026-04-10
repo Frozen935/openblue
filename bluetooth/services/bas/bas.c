@@ -20,6 +20,7 @@
 #include <bluetooth/services/bas.h>
 #include "bas_internal.h"
 
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_BAS_LOG_LEVEL
 
 static uint8_t battery_level = 100U;

@@ -21,8 +21,10 @@
 #include "prov.h"
 #include "solicitation.h"
 
-#include "osdep/os.h"
+#include <base/bt_buf.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 #define LOG_LEVEL CONFIG_BT_MESH_ADV_LOG_LEVEL
 
 /* Pre-5.0 controllers enforce a minimum interval of 100ms

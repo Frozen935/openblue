@@ -21,6 +21,7 @@
 
 #include "obex_internal.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_GOEP_LOG_LEVEL
 
 #define OBEX_SERVER(node) CONTAINER_OF(node, struct bt_obex_server, _node)

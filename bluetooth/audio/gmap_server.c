@@ -14,11 +14,10 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 
-
+#include <utils/bt_utils.h>
 #define BT_GMAP_ROLE_MASK                                                                          \
 	(BT_GMAP_ROLE_UGG | BT_GMAP_ROLE_UGT | BT_GMAP_ROLE_BGS | BT_GMAP_ROLE_BGR)
 

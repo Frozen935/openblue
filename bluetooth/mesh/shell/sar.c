@@ -10,7 +10,6 @@
 
 #include "utils.h"
 #include "../sar_cfg_internal.h"
-
 static int cmd_tx_get(const struct bt_shell *sh, size_t argc, char *argv[])
 {
 	struct bt_mesh_sar_tx rsp;

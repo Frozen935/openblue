@@ -33,6 +33,10 @@
 #include "sar_cfg_internal.h"
 #include "brg_cfg.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_NET_LOG_LEVEL
 
 #define LOOPBACK_MAX_PDU_LEN (BT_MESH_NET_HDR_LEN + 16)

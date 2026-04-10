@@ -23,6 +23,7 @@
 #include "l2cap_br_internal.h"
 #include "sdp_internal.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_SDP_LOG_LEVEL
 
 #define SDP_PSM 0x0001

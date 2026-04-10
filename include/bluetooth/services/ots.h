@@ -19,16 +19,17 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include <sys/types.h>
 
-#include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include <stdio.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

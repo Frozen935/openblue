@@ -8,11 +8,11 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "common/bt_shell_private.h"
 #include "mesh/net.h"
 #include "mesh/access.h"
 #include "utils.h"
 
+#include "common/bt_shell_private.h"
 bool bt_mesh_shell_mdl_first_get(uint16_t id, const struct bt_mesh_model **mod)
 {
 	const struct bt_mesh_comp *comp = bt_mesh_comp_get();

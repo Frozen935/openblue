@@ -8,7 +8,6 @@
 #include <string.h>
 #include <errno.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
@@ -17,7 +16,6 @@
 #include "common/bt_str.h"
 
 #include "crypto.h"
-#include "mesh.h"
 #include "net.h"
 #include "lpn.h"
 #include "friend.h"
@@ -30,6 +28,13 @@
 #include "settings.h"
 #include "prov.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
+
+#include <stdio.h>
+#include "mesh.h"
 #define LOG_LEVEL CONFIG_BT_MESH_KEYS_LOG_LEVEL
 
 /* Tracking of what storage changes are pending for Net Keys. We track this in

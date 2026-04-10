@@ -17,7 +17,6 @@
 #include "common/bt_str.h"
 
 #include <bluetooth/crypto.h>
-
 #define LOG_LEVEL CONFIG_BT_RPA_LOG_LEVEL
 
 #if defined(CONFIG_BT_PRIVACY) || defined(CONFIG_BT_CTLR_PRIVACY)

@@ -27,7 +27,6 @@
 #include <stdint.h>
 
 #include <bluetooth/gatt.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

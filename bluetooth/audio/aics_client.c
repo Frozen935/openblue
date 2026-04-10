@@ -20,14 +20,14 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <base/bt_atomic.h>
-#include <utils/bt_utils.h>
 
 #include "aics_internal.h"
 #include "common/bt_str.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 static struct bt_aics aics_insts[CONFIG_BT_MAX_CONN * CONFIG_BT_AICS_CLIENT_MAX_INSTANCE_COUNT];
 
 static int aics_client_common_control(uint8_t opcode, struct bt_aics *inst);

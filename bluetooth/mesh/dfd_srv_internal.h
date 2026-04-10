@@ -8,7 +8,6 @@
 #define __INCLUDE_BLUETOOTH_MESH_DFD_SRV_INTERNAL_H___
 
 #include <bluetooth/mesh.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -17,6 +17,7 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/gatt.h>
 
+#include <base/bt_atomic.h>
 #if defined(CONFIG_BT_AICS)
 #define BT_AICS_MAX_DESC_SIZE CONFIG_BT_AICS_MAX_INPUT_DESCRIPTION_SIZE
 #else

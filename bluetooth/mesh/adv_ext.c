@@ -13,11 +13,13 @@
 #include "common/bt_str.h"
 
 #include "host/hci_core.h"
-#include "osdep/os.h"
 
 #include "net.h"
 #include "proxy.h"
 #include "solicitation.h"
+
+#include "osdep/os.h"
+#include <base/bt_buf.h>
 
 #define LOG_LEVEL CONFIG_BT_MESH_ADV_LOG_LEVEL
 

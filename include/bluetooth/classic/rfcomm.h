@@ -20,10 +20,11 @@
 #include <bluetooth/buf.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/l2cap.h>
-#include <base/bt_work.h>
-#include <base/queue/bt_fifo.h>
+
 #include <utils/bt_slist.h>
 
+#include <base/bt_work.h>
+#include <base/queue/bt_fifo.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

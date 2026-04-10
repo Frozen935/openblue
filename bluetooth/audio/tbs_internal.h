@@ -17,6 +17,9 @@
 #include <bluetooth/audio/tbs.h>
 #include <bluetooth/gatt.h>
 
+#include <base/bt_atomic.h>
+#include <base/bt_buf.h>
+
 #define BT_TBS_MIN_URI_LEN                         3 /* a:b */
 #define BT_TBS_FREE_CALL_INDEX                     0
 

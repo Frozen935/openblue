@@ -20,16 +20,16 @@
 #include <bluetooth/services/ots.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <base/bt_atomic.h>
-#include <utils/bt_utils.h>
 
 #include "media_proxy_internal.h"
 #include "mcs_internal.h"
 #include "mpl_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 #define TRACK_STATUS_INVALID 0x00
 #define TRACK_STATUS_VALID 0x01
 

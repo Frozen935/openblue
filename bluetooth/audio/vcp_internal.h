@@ -18,6 +18,7 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
 
+#include <base/bt_atomic.h>
 /* VCS opcodes */
 #define BT_VCP_OPCODE_REL_VOL_DOWN                      0x00
 #define BT_VCP_OPCODE_REL_VOL_UP                        0x01

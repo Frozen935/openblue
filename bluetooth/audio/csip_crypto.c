@@ -22,7 +22,8 @@
 
 #include "csip_crypto.h"
 
-
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define BT_CSIP_CRYPTO_PADDING_SIZE 13
 #define BT_CSIP_PADDED_RAND_SIZE    (BT_CSIP_CRYPTO_PADDING_SIZE + BT_CSIP_CRYPTO_PRAND_SIZE)
 #define BT_CSIP_R_MASK              BIT_MASK(24) /* r is 24 bit / 3 octet */

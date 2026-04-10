@@ -27,6 +27,10 @@
 #include "settings.h"
 #include "provisioner.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 /* Timeout for receiving the link open response */
 #define LINK_ESTABLISHMENT_TIMEOUT 60
 

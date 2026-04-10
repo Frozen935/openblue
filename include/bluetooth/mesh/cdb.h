@@ -9,9 +9,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <base/bt_atomic.h>
 #include <bluetooth/mesh.h>
 
+#include <base/bt_atomic.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

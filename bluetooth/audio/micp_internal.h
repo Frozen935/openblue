@@ -18,6 +18,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 
+#include <base/bt_atomic.h>
 enum bt_micp_mic_ctlr_flag {
 	BT_MICP_MIC_CTLR_FLAG_BUSY,
 

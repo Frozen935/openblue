@@ -9,7 +9,6 @@
 #include <bluetooth/mesh/shell.h>
 
 #include "utils.h"
-
 static int cmd_priv_beacon_get(const struct bt_shell *sh, size_t argc, char *argv[])
 {
 	struct bt_mesh_priv_beacon val;

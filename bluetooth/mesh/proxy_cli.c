@@ -12,7 +12,6 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/mesh.h>
 
-#include "mesh.h"
 #include "net.h"
 #include "rpl.h"
 #include "transport.h"
@@ -25,6 +24,10 @@
 #include "proxy_msg.h"
 #include "crypto.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
+
+#include "mesh.h"
 #define LOG_LEVEL CONFIG_BT_MESH_PROXY_LOG_LEVEL
 
 static struct bt_mesh_proxy_server {

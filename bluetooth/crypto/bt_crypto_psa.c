@@ -5,12 +5,12 @@
 #include <errno.h>
 #include <string.h>
 
-
 #include "psa/crypto.h"
 
 #include "common/bt_str.h"
 #include "bt_crypto.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_CRYPTO_LOG_LEVEL
 
 int bt_crypto_aes_cmac(const uint8_t *key, const uint8_t *in, size_t len, uint8_t *out)

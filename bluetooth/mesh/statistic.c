@@ -8,7 +8,6 @@
 
 #include "net.h"
 #include "statistic.h"
-
 static struct bt_mesh_statistic stat;
 
 void bt_mesh_stat_get(struct bt_mesh_statistic *st)

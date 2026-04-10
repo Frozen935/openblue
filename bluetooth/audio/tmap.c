@@ -17,13 +17,13 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 /* TMAP mandates the support for CAP Handover if it supports both UMS and BMS */
 BUILD_ASSERT(!(IS_ENABLED(CONFIG_BT_TMAP_UMS_SUPPORTED) &&
 	       IS_ENABLED(CONFIG_BT_TMAP_BMS_SUPPORTED)) ||

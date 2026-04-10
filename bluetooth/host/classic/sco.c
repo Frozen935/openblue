@@ -9,7 +9,6 @@
 
 #include <errno.h>
 
-
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
@@ -22,6 +21,8 @@
 #include "host/conn_internal.h"
 #include "sco_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_CONN_LOG_LEVEL
 
 struct bt_sco_server *sco_server;

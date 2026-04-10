@@ -26,6 +26,10 @@
 #include "scan.h"
 #include "adv.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_HCI_CORE_LOG_LEVEL
 
 struct bt_ad {
@@ -906,6 +910,9 @@ static int adv_start_legacy(struct bt_le_ext_adv *adv,
 		return -EALREADY;
 	}
 
+	/* Add any IRK keys that are still pending (e.g. loaded from settings
+	 * but not yet pushed to the controller RL) before advertising begins.
+	 */
 	if (IS_ENABLED(CONFIG_BT_SMP) && bt_atomic_test_bit(bt_dev.flags, BT_DEV_ID_PENDING)) {
 		bt_id_pending_keys_update();
 	}

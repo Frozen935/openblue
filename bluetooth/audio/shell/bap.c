@@ -18,8 +18,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include <base/bt_atomic.h>
-#include <bluetooth/addr.h>
+#include <bluetooth/assigned_numbers.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
 #include <bluetooth/audio/bap_lc3_preset.h>
@@ -27,8 +26,8 @@
 #include <bluetooth/audio/gmap.h>
 #include <bluetooth/audio/lc3.h>
 #include <bluetooth/audio/pacs.h>
+#include <bluetooth/addr.h>
 #include <bluetooth/bluetooth.h>
-#include <bluetooth/byteorder.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/crypto.h>
 #include <bluetooth/gap.h>
@@ -36,12 +35,15 @@
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
-#include <utils/bt_utils.h>
 
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 #include "audio.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 /* Determines if we can initiate streaming */
 #define IS_BAP_INITIATOR                                                                           \
 	(IS_ENABLED(CONFIG_BT_BAP_BROADCAST_SOURCE) || IS_ENABLED(CONFIG_BT_BAP_UNICAST_CLIENT))
@@ -4088,15 +4090,13 @@ BT_SHELL_STATIC_SUBCMD_SET_CREATE(
 	BT_SHELL_CMD_ARG(bap_stats, NULL,
 		      "Sets or gets the statistics reporting interval in # of packets",
 		      cmd_bap_stats, 1, 1),
-	#if defined(CONFIG_BT_PACS)
-	BT_SHELL_CMD_ARG(set_location, NULL,
-			 "<direction: sink, source> <location bitmask>", cmd_set_loc, 3, 0),
-	BT_SHELL_CMD_ARG(set_context, NULL,
-			 "<direction: sink, source>"
-			 "<context bitmask> <type: supported, available>",
-			 cmd_context, 4, 0),
-	#endif /* CONFIG_BT_PACS */
-	BT_SHELL_SUBCMD_SET_END);
+	SHELL_COND_CMD_ARG(CONFIG_BT_PACS, set_location, NULL,
+			   "<direction: sink, source> <location bitmask>", cmd_set_loc, 3, 0),
+	SHELL_COND_CMD_ARG(CONFIG_BT_PACS, set_context, NULL,
+			   "<direction: sink, source>"
+			   "<context bitmask> <type: supported, available>",
+			   cmd_context, 4, 0),
+	SHELL_SUBCMD_SET_END);
 
 static int cmd_bap(const struct bt_shell *sh, size_t argc, char **argv)
 {

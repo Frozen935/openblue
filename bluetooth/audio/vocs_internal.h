@@ -15,6 +15,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 
+#include <base/bt_atomic.h>
 #if defined(CONFIG_BT_VOCS)
 #define BT_VOCS_MAX_DESC_SIZE CONFIG_BT_VOCS_MAX_OUTPUT_DESCRIPTION_SIZE
 #else

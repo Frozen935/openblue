@@ -19,6 +19,8 @@
 #include "sar_cfg_internal.h"
 #include "settings.h"
 
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 static int sar_rx_store(const struct bt_mesh_model *model, bool delete)

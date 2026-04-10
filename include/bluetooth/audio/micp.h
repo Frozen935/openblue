@@ -28,8 +28,8 @@
 
 #include <bluetooth/audio/aics.h>
 #include <bluetooth/conn.h>
-#include <utils/bt_slist.h>
 
+#include <utils/bt_slist.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

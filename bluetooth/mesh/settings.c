@@ -13,7 +13,6 @@
 #include <bluetooth/mesh.h>
 
 #include "host/hci_core.h"
-#include "osdep/os.h"
 #include "mesh.h"
 #include "subnet.h"
 #include "app_keys.h"
@@ -32,6 +31,9 @@
 #include "solicitation.h"
 #include "va.h"
 
+#include <utils/bt_utils.h>
+
+#include "osdep/os.h"
 #define LOG_LEVEL CONFIG_BT_MESH_SETTINGS_LOG_LEVEL
 
 #ifdef CONFIG_BT_MESH_RPL_STORE_TIMEOUT

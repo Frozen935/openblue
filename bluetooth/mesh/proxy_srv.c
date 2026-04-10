@@ -14,7 +14,6 @@
 
 #include "common/bt_str.h"
 
-#include "mesh.h"
 #include "net.h"
 #include "rpl.h"
 #include "transport.h"
@@ -27,6 +26,11 @@
 #include "proxy_msg.h"
 #include "crypto.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include "mesh.h"
 #define LOG_LEVEL CONFIG_BT_MESH_PROXY_LOG_LEVEL
 
 /* Interval to update random value in (10 minutes).

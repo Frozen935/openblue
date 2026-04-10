@@ -10,6 +10,7 @@
 
 #include <bluetooth/services/ots.h>
 
+#include <utils/bt_utils.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -15,6 +15,7 @@
 #include <bluetooth/addr.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
+#include <base/bt_buf.h>
 
 struct bt_smp_hdr {
 	uint8_t  code;

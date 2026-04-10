@@ -31,6 +31,10 @@
 #include "settings.h"
 #include "smp.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_HCI_CORE_LOG_LEVEL
 
 struct bt_adv_id_check_data {

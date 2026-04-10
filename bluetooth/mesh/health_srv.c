@@ -17,6 +17,8 @@
 #include "access.h"
 #include "foundation.h"
 
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 #define HEALTH_TEST_STANDARD 0x00

@@ -10,7 +10,6 @@
 #include "blob.h"
 #include "net.h"
 #include "transport.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 #define TARGETS_FOR_EACH(cli, target)                                          \

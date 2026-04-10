@@ -22,6 +22,7 @@
 #include "host/conn_internal.h"
 #include "l2cap_br_internal.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_HCI_CORE_LOG_LEVEL
 
 enum pairing_method {

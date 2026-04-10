@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
@@ -23,10 +22,10 @@
 #include <bluetooth/classic/rfcomm.h>
 #include <bluetooth/classic/sdp.h>
 
-
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <base/byteorder.h>
 #define DATA_MTU 48
 
 BT_BUF_POOL_FIXED_DEFINE(pool, 1, DATA_MTU, CONFIG_BT_CONN_TX_USER_DATA_SIZE, NULL);

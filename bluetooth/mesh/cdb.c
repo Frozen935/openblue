@@ -7,19 +7,18 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 #include <bluetooth/mesh.h>
 
 #include "common/bt_str.h"
 
 #include "cdb.h"
-#include "mesh.h"
 #include "net.h"
 #include "app_keys.h"
 #include "rpl.h"
 #include "settings.h"
 #include "keys.h"
 
+#include "mesh.h"
 #define LOG_LEVEL CONFIG_BT_MESH_CDB_LOG_LEVEL
 
 /* Tracking of what storage changes are pending for App and Net Keys. We

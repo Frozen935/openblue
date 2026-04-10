@@ -28,7 +28,9 @@
 #include "rfcomm_internal.h"
 #include "sdp_internal.h"
 
-
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define BR_CHAN_RTX(_w) CONTAINER_OF(bt_work_delayable_from_work(_w), \
 				     struct bt_l2cap_br_chan, rtx_work)
 

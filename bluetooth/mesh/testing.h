@@ -15,6 +15,7 @@
 #include <bluetooth/mesh.h>
 #include <bluetooth/mesh/access.h>
 
+#include <utils/bt_slist.h>
 /** @brief Bluetooth Testing callbacks structure.
  *
  *  Callback structure to be used for Bluetooth testing purposes.

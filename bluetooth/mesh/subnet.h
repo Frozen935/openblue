@@ -11,6 +11,7 @@
 #include <sys/types.h>
 
 #include <bluetooth/mesh/keys.h>
+#include <base/bt_buf.h>
 
 #define BT_MESH_NET_FLAG_KR       BIT(0)
 #define BT_MESH_NET_FLAG_IVU      BIT(1)

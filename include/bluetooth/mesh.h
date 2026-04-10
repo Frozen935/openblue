@@ -48,5 +48,6 @@
 #include <bluetooth/mesh/brg_cfg_cli.h>
 #include <bluetooth/mesh/brg_cfg_srv.h>
 #include <bluetooth/mesh/statistic.h>
+#include <base/bt_buf.h>
 
 #endif /* __INCLUDE_BLUETOOTH_MESH_H__ */

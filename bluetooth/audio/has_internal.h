@@ -15,6 +15,8 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
 
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 /* Control Point opcodes */
 #define BT_HAS_OP_READ_PRESET_REQ        0x01
 #define BT_HAS_OP_READ_PRESET_RSP        0x02

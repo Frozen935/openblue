@@ -11,18 +11,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "bt_shell_private.h"
+
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-
 #include <base/bt_debug.h>
 #include <utils/bt_utils.h>
-#include "bt_shell_private.h"
 
 /**
  * @brief List of registered shell commands
  */
-
 long bt_shell_strtol(const char *str, int base, int *err)
 {
 	long val;

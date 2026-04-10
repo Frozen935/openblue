@@ -10,9 +10,9 @@
 #ifndef __INCLUDE_BLUETOOTH_ADDR_H__
 #define __INCLUDE_BLUETOOTH_ADDR_H__
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
+#include <stdio.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

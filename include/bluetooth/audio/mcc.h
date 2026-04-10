@@ -30,8 +30,8 @@
 #include <stdbool.h>
 
 #include <bluetooth/conn.h>
-#include <bluetooth/buf.h>
 #include <bluetooth/audio/media_proxy.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {

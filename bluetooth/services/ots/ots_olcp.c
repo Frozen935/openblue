@@ -14,7 +14,7 @@
 #include "ots_obj_manager_internal.h"
 #include "ots_dir_list_internal.h"
 
-
+#include <base/byteorder.h>
 #define OLCP_PROC_TYPE_SIZE	1
 
 static enum bt_gatt_ots_olcp_res_code obj_manager_to_olcp_err_map(int err)

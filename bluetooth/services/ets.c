@@ -9,14 +9,14 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <base/bt_work.h>
-
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/services/ets.h>
 
+#include <base/byteorder.h>
 
+#include <base/bt_work.h>
 
 /* ETS epoch: 2000-01-01 00:00:00
  * Unix epoch: 1970-01-01 00:00:00

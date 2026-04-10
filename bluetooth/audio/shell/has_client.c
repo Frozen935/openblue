@@ -19,7 +19,6 @@
 
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
-
 static struct bt_has *inst;
 
 static void has_client_discover_cb(struct bt_conn *conn, int err, struct bt_has *has,

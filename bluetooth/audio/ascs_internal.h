@@ -17,7 +17,6 @@
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
 #include <bluetooth/conn.h>
-
 #define BT_ASCS_ASE_ID_NONE              0x00
 
 /* The number of ASEs in the notification when the opcode is unsupported or the length of the

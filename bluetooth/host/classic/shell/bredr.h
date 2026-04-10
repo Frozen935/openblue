@@ -14,7 +14,6 @@
 #define __BREDR_H
 #include <stddef.h>
 #include <stdint.h>
-
 void role_changed(struct bt_conn *conn, uint8_t status);
 
 #endif /* __BREDR_H */

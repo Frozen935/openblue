@@ -10,7 +10,6 @@
 
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-
 #define LOG_LEVEL CONFIG_BT_GATT_LOG_LEVEL
 
 

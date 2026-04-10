@@ -14,7 +14,6 @@
 #include <stdint.h>
 
 #include <bluetooth/audio/media_proxy.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

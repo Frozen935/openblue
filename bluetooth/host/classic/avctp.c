@@ -24,6 +24,9 @@
 #include "host/conn_internal.h"
 #include "l2cap_br_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_AVCTP_LOG_LEVEL
 
 /** @brief AVCTP Header Sizes for different packet types */

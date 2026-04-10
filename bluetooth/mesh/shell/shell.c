@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/mesh.h>
 #include <bluetooth/mesh/shell.h>
@@ -18,14 +17,15 @@
 #include "mesh/rpl.h"
 #include "mesh/transport.h"
 #include "mesh/foundation.h"
-#include "mesh/prov.h"
 #include "mesh/settings.h"
 #include "mesh/access.h"
+#include "mesh/prov.h"
 #include "common/bt_shell_private.h"
 #include "utils.h"
 #include "dfu.h"
 #include "blob.h"
 
+#include <utils/bt_utils.h>
 #define CID_NVAL   0xffff
 #define COMPANY_ID_LF 0x05F1
 #define COMPANY_ID_NORDIC_SEMI 0x05F9

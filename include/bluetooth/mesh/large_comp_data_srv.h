@@ -8,7 +8,6 @@
 #define BT_MESH_LARGE_COMP_DATA_SRV_H__
 
 #include <bluetooth/mesh.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

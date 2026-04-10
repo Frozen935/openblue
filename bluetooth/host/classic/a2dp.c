@@ -20,6 +20,9 @@
 
 #include "common/assert.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define A2DP_SBC_PAYLOAD_TYPE (0x60U)
 
 #define A2DP_AVDTP(_avdtp) CONTAINER_OF(_avdtp, struct bt_a2dp, session)

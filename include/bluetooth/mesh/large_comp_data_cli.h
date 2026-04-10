@@ -8,7 +8,6 @@
 #define BT_MESH_LARGE_COMP_DATA_CLI_H__
 
 #include <bluetooth/mesh.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -20,7 +19,6 @@ extern "C" {
  */
 
 struct bt_mesh_large_comp_data_cli;
-struct bt_buf_simple;
 
 /** Large Composition Data response. */
 struct bt_mesh_large_comp_data_rsp {

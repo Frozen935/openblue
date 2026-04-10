@@ -9,7 +9,6 @@
 #include "foundation.h"
 #include "access.h"
 #include "msg.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 static struct bt_mesh_priv_beacon_cli *cli;

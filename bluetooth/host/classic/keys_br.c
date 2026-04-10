@@ -18,6 +18,8 @@
 #include "host/settings.h"
 #include "host/keys.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_KEYS_LOG_LEVEL
 
 static struct bt_keys_link_key key_pool[CONFIG_BT_MAX_PAIRED];

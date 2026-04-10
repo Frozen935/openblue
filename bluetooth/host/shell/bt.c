@@ -12,10 +12,10 @@
  */
 
 #include <errno.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -34,8 +34,6 @@
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
 
-#include <base/bt_assert.h>
-
 #include "audio/shell/audio.h"
 #include "common/bt_shell_private.h"
 #if defined(CONFIG_BT_LL_SW_SPLIT)
@@ -46,7 +44,12 @@
 #include "host/classic/shell/bredr.h"
 #endif
 
-extern int settings_load(void);
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include <base/bt_assert.h>
 
 static bool no_settings_load;
 
@@ -1414,7 +1417,7 @@ static void bt_ready(int err)
 	bt_shell_print("Bluetooth initialized");
 
 	if (IS_ENABLED(CONFIG_SETTINGS) && !no_settings_load) {
-		settings_load();
+		bt_storage_load();
 		bt_shell_print("Settings Loaded");
 	}
 
@@ -1481,7 +1484,7 @@ static int cmd_settings_load(const struct bt_shell *sh, size_t argc,
 {
 	int err;
 
-	err = settings_load();
+	err = bt_storage_load();
 	if (err) {
 		bt_shell_error("Settings load failed (err %d)", err);
 		return err;

@@ -10,11 +10,13 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <bluetooth/uuid.h>
 
+#include <base/byteorder.h>
+
+#include <stdio.h>
 #define BT_UUID_STR_LEN_16  4U
 #define BT_UUID_STR_LEN_32  8U
 #define BT_UUID_STR_LEN_128 (UUID_STR_LEN - 1U)

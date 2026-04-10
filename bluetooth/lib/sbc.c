@@ -6,7 +6,6 @@
 
 #include <errno.h>
 #include <bluetooth/sbc.h>
-
 #if defined(CONFIG_LIBSBC)
 
 int sbc_setup_encoder(struct sbc_encoder *encoder, struct sbc_encoder_init_param *param)

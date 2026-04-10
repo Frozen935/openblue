@@ -25,6 +25,8 @@
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 static int check_cs_sync_antenna_selection_input(uint16_t input)
 {
 	if (input != BT_LE_CS_ANTENNA_SELECTION_OPT_ONE &&

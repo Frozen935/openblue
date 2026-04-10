@@ -8,7 +8,6 @@
 #define BT_MESH_OP_AGG_CLI_H__
 
 #include <bluetooth/mesh.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

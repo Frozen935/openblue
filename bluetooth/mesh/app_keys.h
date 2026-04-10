@@ -9,7 +9,6 @@
 
 #include <bluetooth/mesh.h>
 #include "subnet.h"
-
 struct bt_mesh_app_key {
 	uint16_t net_idx;
 	uint16_t app_idx;

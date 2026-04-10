@@ -32,8 +32,9 @@
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/uuid.h>
+
 #include <utils/bt_utils.h>
-#include <utils/bt_utils.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {

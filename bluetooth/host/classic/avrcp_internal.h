@@ -11,7 +11,6 @@
  */
 
 #include <bluetooth/classic/avrcp.h>
-
 #define AVCTP_VER_1_4 (0x0104u)
 #define AVRCP_VER_1_6 (0x0106u)
 

@@ -14,14 +14,12 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 
-
 #include <bluetooth/services/ots.h>
 #include "ots_internal.h"
 #include "ots_obj_manager_internal.h"
 #include "ots_dir_list_internal.h"
 
-
-
+#include <base/byteorder.h>
 #if defined(CONFIG_BT_OTS_OACP_CREATE_SUPPORT)
 #define OACP_FEAT_BIT_CREATE BIT(BT_OTS_OACP_FEAT_CREATE)
 #else

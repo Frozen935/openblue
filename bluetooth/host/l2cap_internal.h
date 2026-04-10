@@ -15,8 +15,9 @@
 #include <bluetooth/l2cap.h>
 
 #include "host/classic/l2cap_br_interface.h"
-/* TODO: we should include conn_internal.h for bt_conn_tx_cb_t but that causes redefinitions */
+#include <base/bt_buf.h>
 
+/* TODO: we should include conn_internal.h for bt_conn_tx_cb_t but that causes redefinitions */
 enum l2cap_conn_list_action {
 	BT_L2CAP_CHAN_LOOKUP,
 	BT_L2CAP_CHAN_DETACH,

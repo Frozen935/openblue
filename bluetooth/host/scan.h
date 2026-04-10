@@ -14,6 +14,7 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 
+#include <base/bt_atomic.h>
 /**
  * Reasons why a scanner can be running.
  * Used as input to @ref bt_le_scan_user_add

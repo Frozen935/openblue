@@ -12,9 +12,9 @@
 
 #include <stdint.h>
 
-#include <base/utils.h>
 #include <utils/bt_slist.h>
 
+#include <base/utils.h>
 /**
  * @brief Heartbeat
  * @defgroup bt_mesh_heartbeat Heartbeat

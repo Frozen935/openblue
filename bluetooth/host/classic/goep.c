@@ -24,6 +24,7 @@
 #include "rfcomm_internal.h"
 #include "obex_internal.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_GOEP_LOG_LEVEL
 
 #define GOEP_MIN_MTU BT_OBEX_MIN_MTU

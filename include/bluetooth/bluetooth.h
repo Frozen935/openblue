@@ -31,14 +31,15 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <base/bt_buf.h>
-
 #include <bluetooth/gap.h>
 #include <bluetooth/addr.h>
 #include <bluetooth/crypto.h>
 #include <bluetooth/hci_types.h>
 #include <bluetooth/classic/classic.h>
+
 #include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -862,8 +863,6 @@ enum bt_le_adv_opt {
 	 *
 	 * This is an advanced feature; most users will want to enable
 	 * @kconfig{CONFIG_BT_EXT_ADV} instead.
-	 *
-	 * @note Not implemented when @kconfig{CONFIG_BT_PRIVACY}.
 	 *
 	 * @note Mutually exclusive with BT_LE_ADV_OPT_USE_IDENTITY.
 	 */

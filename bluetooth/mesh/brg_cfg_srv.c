@@ -10,7 +10,6 @@
 #include "brg_cfg.h"
 #include "foundation.h"
 #include "subnet.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 static void bridge_status_send(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx)

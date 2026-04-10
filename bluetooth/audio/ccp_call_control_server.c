@@ -12,10 +12,10 @@
 #include <string.h>
 
 #include <bluetooth/audio/tbs.h>
-#include "osdep/os.h"
+
 #include <utils/bt_utils.h>
 
-
+#include "osdep/os.h"
 #define MUTEX_TIMEOUT OS_MSEC(1000U)
 
 /* A service instance can either be a GTBS or a TBS instance */

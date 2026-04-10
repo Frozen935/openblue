@@ -21,17 +21,17 @@
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <bluetooth/byteorder.h>
+
+#include <base/byteorder.h>
 #include <utils/bt_slist.h>
 #include <utils/bt_utils.h>
 
-
+#include "osdep/os.h"
 #include "audio_internal.h"
 #include "bap_iso.h"
 #include "bap_endpoint.h"
 #include "bap_stream.h"
+#include <base/bt_buf.h>
 
 struct bt_bap_broadcast_subgroup {
 	/* The streams used to create the broadcast source */

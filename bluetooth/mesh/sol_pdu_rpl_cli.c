@@ -8,7 +8,6 @@
 
 #include "foundation.h"
 #include "msg.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 static struct bt_mesh_sol_pdu_rpl_cli *cli;

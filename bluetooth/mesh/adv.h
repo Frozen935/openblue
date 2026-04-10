@@ -8,6 +8,7 @@
 
 #include <bluetooth/bluetooth.h>
 
+#include <utils/bt_utils.h>
 #ifndef __BLUETOOTH_MESH_ADV_H__
 #define __BLUETOOTH_MESH_ADV_H__
 

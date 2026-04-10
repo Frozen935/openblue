@@ -18,7 +18,6 @@
 #include <bluetooth/mesh/access.h>
 #include <bluetooth/mesh/blob_cli.h>
 #include <bluetooth/mesh/dfu.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

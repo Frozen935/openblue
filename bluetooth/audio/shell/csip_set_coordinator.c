@@ -15,17 +15,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <bluetooth/addr.h>
 #include <bluetooth/audio/csip.h>
-#include <bluetooth/bluetooth.h>
+#include <bluetooth/addr.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gap.h>
 #include <bluetooth/gatt.h>
-#include <utils/bt_utils.h>
+#include <bluetooth/bluetooth.h>
 
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <base/bt_buf.h>
+#include <utils/bt_utils.h>
 static uint8_t members_found;
 static struct bt_work_delayable discover_members_timer;
 static struct bt_conn *conns[CONFIG_BT_MAX_CONN];

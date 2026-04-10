@@ -20,6 +20,9 @@
 #include "hci_core.h"
 #include "iso_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
 /* Events have a length field of 1 byte. This size fits all events.
  *
@@ -130,15 +133,11 @@ struct bt_buf *bt_buf_get_rx(enum bt_buf_type type, os_timeout_t timeout)
 
 void bt_buf_rx_freed_cb_set(bt_buf_rx_freed_cb_t cb)
 {
-	os_sched_lock();
-
 	bt_atomic_ptr_set(&buf_rx_freed_cb, (void *)cb);
 
 #if defined(CONFIG_BT_ISO_RX)
 	bt_iso_buf_rx_freed_cb_set(cb != NULL ? iso_rx_freed_cb : NULL);
 #endif
-
-	os_sched_unlock();
 }
 
 struct bt_buf *bt_buf_get_evt(uint8_t evt, bool discardable,

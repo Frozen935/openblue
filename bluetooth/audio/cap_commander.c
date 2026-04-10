@@ -23,7 +23,6 @@
 #include <bluetooth/gap.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/iso.h>
-#include <utils/bt_utils.h>
 
 #include "audio_internal.h"
 #include "bap_endpoint.h"
@@ -31,9 +30,9 @@
 #include "cap_internal.h"
 #include "csip_internal.h"
 
+#include <utils/bt_utils.h>
 
 #include "common/bt_str.h"
-
 static void cap_commander_proc_complete(struct bt_cap_common_proc *active_proc);
 
 static const struct bt_cap_commander_cb *cap_cb;

@@ -16,11 +16,11 @@
 #include <bluetooth/audio/vcp.h>
 #include <bluetooth/audio/vocs.h>
 #include <bluetooth/conn.h>
-#include <utils/bt_utils.h>
 
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <utils/bt_utils.h>
 static struct bt_vcp_vol_ctlr *vcp_vol_ctlr;
 static struct bt_vcp_included vcp_included;
 

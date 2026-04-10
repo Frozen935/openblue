@@ -17,7 +17,7 @@
  */
 
 #include <osdep/os.h>
-#include <bluetooth/buf.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {

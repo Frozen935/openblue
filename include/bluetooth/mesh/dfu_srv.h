@@ -18,13 +18,11 @@
 #include <bluetooth/mesh/dfu.h>
 #include <bluetooth/mesh/blob_srv.h>
 #include <bluetooth/mesh/access.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct bt_mesh_dfu_srv;
-struct bt_buf_simple;
 
 /**
  *

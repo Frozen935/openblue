@@ -23,11 +23,13 @@
 #include <bluetooth/uuid.h>
 #include <sys/types.h>
 
-#include <osdep/os.h>
-
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include <osdep/os.h>
 #if defined(CONFIG_BT_GATT_CLIENT) || defined(CONFIG_BT_GATT_DYNAMIC_DB)
 extern uint8_t selected_id;
 

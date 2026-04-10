@@ -22,6 +22,9 @@
 #include "l2cap_internal.h"
 #include "smp.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_HCI_CORE_LOG_LEVEL
 
 static struct bt_l2cap_le_chan bt_smp_pool[CONFIG_BT_MAX_CONN];

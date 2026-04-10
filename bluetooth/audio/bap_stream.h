@@ -13,7 +13,6 @@
 #include <bluetooth/audio/bap.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/iso.h>
-
 void bt_bap_stream_init(struct bt_bap_stream *stream);
 
 /* Disconnect ISO channel */

@@ -17,7 +17,6 @@
 #include "cfg.h"
 #include "od_priv_proxy.h"
 #include "priv_beacon.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_CFG_LOG_LEVEL
 
 /* Miscellaneous configuration server model states */

@@ -10,12 +10,13 @@
 #include <errno.h>
 #include <bluetooth/mesh.h>
 
-#include "mesh.h"
+#include "keys.h"
 #include "net.h"
 #include "settings.h"
 #include "brg_cfg.h"
 #include "foundation.h"
 
+#include "mesh.h"
 #define LOG_LEVEL CONFIG_BT_MESH_BRG_LOG_LEVEL
 
 /* Bridging table state and counter */

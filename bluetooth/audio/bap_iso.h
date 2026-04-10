@@ -13,7 +13,6 @@
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
 #include <bluetooth/iso.h>
-
 struct bt_bap_iso_dir {
 	struct bt_bap_stream *stream;
 	struct bt_bap_ep *ep;

@@ -18,7 +18,6 @@
 
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
-
 static struct bt_ccp_call_control_client *clients[CONFIG_BT_MAX_CONN];
 
 static struct bt_ccp_call_control_client *get_client_by_conn(const struct bt_conn *conn)

@@ -41,6 +41,7 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/iso.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {

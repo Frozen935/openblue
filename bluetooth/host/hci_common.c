@@ -12,6 +12,8 @@
 
 #include "common/assert.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
 struct bt_buf *bt_hci_evt_create(uint8_t evt, uint8_t len)
 {
 	struct bt_hci_evt_hdr *hdr;

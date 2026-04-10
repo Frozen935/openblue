@@ -16,6 +16,7 @@
 #include <bluetooth/addr.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/hci_types.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {

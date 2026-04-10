@@ -6,7 +6,6 @@
  */
 
 #include "keys.h"
-
 enum bt_mesh_nonce_type {
 	BT_MESH_NONCE_NETWORK,
 	BT_MESH_NONCE_PROXY,

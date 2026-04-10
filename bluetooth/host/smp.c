@@ -26,8 +26,6 @@
 #include <bluetooth/hci_types.h>
 #include <bluetooth/l2cap.h>
 
-#include <osdep/os.h>
-
 #include "conn_internal.h"
 #include "common/bt_str.h"
 #include "common/rpa.h"
@@ -38,6 +36,13 @@
 #include "l2cap_internal.h"
 #include "smp.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+
+#include <osdep/os.h>
 #define LOG_LEVEL CONFIG_BT_SMP_LOG_LEVEL
 
 #define SMP_TIMEOUT OS_SECONDS(30)

@@ -9,8 +9,8 @@
  */
 
 #include "hfp_internal.h"
-#include <base/queue/bt_fifo.h>
 
+#include <base/queue/bt_fifo.h>
 #if defined(CONFIG_BT_HFP_HF_CLI)
 #define BT_HFP_HF_FEATURE_CLI_ENABLE BT_HFP_HF_FEATURE_CLI
 #define BT_HFP_HF_SDP_FEATURE_CLI_ENABLE BT_HFP_HF_SDP_FEATURE_CLI

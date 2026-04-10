@@ -17,9 +17,9 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 
-#include "common/bt_shell_private.h"
 #include "../mpl_internal.h"
 
+#include "common/bt_shell_private.h"
 #if defined(CONFIG_BT_MPL)
 
 #if defined(CONFIG_BT_TESTING)

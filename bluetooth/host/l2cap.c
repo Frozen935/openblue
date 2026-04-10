@@ -25,6 +25,11 @@
 #include "conn_internal.h"
 #include "l2cap_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 #define LOG_DBG_ENABLED IS_ENABLED(CONFIG_BT_L2CAP_LOG_LEVEL_DBG)
 
 #define LE_CHAN_RTX(_w) CONTAINER_OF(bt_work_delayable_from_work(_w), \

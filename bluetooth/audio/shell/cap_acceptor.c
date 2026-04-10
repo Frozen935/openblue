@@ -12,22 +12,22 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <base/bt_assert.h>
-#include <base/utils.h>
-
 #include <bluetooth/addr.h>
 #include <bluetooth/assigned_numbers.h>
 #include <bluetooth/audio/audio.h>
-#include <bluetooth/audio/cap.h>
 #include <bluetooth/audio/csip.h>
-#include <bluetooth/bluetooth.h>
 #include <bluetooth/gap.h>
-#include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include <utils/bt_utils.h>
+#include <bluetooth/gatt.h>
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/audio/cap.h>
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <utils/bt_utils.h>
+
+#include <base/bt_assert.h>
+#include <base/utils.h>
 static size_t ad_cap_announcement_data_add(struct bt_data data[], size_t data_size)
 {
 	static const uint8_t ad_cap_announcement[3] = {

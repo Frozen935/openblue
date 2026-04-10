@@ -9,7 +9,6 @@
 #include <bluetooth/mesh/shell.h>
 
 #include "utils.h"
-
 static int cmd_od_priv_gatt_proxy_set(const struct bt_shell *sh, size_t argc,
 				      char *argv[])
 {

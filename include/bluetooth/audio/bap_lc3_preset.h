@@ -29,7 +29,6 @@
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
 #include <bluetooth/audio/lc3.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -8,7 +8,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include <bluetooth/addr.h>
-
 void bt_addr_le_copy_resolved(bt_addr_le_t *dst, const bt_addr_le_t *src);
 
 /**

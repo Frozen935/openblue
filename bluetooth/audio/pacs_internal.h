@@ -11,6 +11,7 @@
 
 #include <bluetooth/audio/audio.h>
 
+#include <utils/bt_utils.h>
 #define BT_AUDIO_LOCATION_MASK BIT_MASK(28)
 
 struct bt_pac_codec {

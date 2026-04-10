@@ -9,7 +9,6 @@
 #define __BLUETOOTH_MESH_PB_GATT_SRV_H__
 
 #include <bluetooth/gatt.h>
-
 int bt_mesh_pb_gatt_srv_enable(void);
 int bt_mesh_pb_gatt_srv_disable(void);
 

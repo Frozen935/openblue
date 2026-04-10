@@ -27,7 +27,11 @@
 #include "host/conn_internal.h"
 #include "iso_internal.h"
 
-
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 #if defined(CONFIG_BT_DEBUG_ISO_DATA)
 #define BT_ISO_DATA_DBG(fmt, ...) LOG_DBG(fmt, ##__VA_ARGS__)
 #else

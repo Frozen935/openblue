@@ -15,6 +15,7 @@
 #include "prov.h"
 
 #include "common/bt_str.h"
+#include <base/bt_buf.h>
 
 #define LOG_LEVEL CONFIG_BT_MESH_PROV_LOG_LEVEL
 

@@ -28,6 +28,8 @@
 #include "proxy.h"
 #include "proxy_msg.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_PROXY_LOG_LEVEL
 
 #define PDU_SAR(data)      (data[0] >> 6)

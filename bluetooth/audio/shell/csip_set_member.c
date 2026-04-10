@@ -16,15 +16,16 @@
 #include <sys/types.h>
 
 #include <bluetooth/addr.h>
+#include <bluetooth/assigned_numbers.h>
 #include <bluetooth/audio/csip.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/gap.h>
 #include <bluetooth/gatt.h>
-#include <utils/bt_utils.h>
 
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <utils/bt_utils.h>
 struct bt_csip_set_member_svc_inst *svc_inst;
 static uint8_t sirk_read_rsp = BT_CSIP_READ_SIRK_REQ_RSP_ACCEPT;
 

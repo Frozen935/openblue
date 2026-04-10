@@ -8,9 +8,10 @@
 #include <string.h>
 #include <errno.h>
 
-
 #include "ots_l2cap_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
 
 /* This l2cap is the only OTS-file in use for OTC.
  * If only OTC is used, the OTS log module must be registered here.

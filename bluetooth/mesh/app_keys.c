@@ -22,7 +22,6 @@
 #include "access.h"
 
 #include "common/bt_str.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_KEYS_LOG_LEVEL
 
 /* Tracking of what storage changes are pending for App Keys. We track this in

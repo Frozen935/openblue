@@ -17,23 +17,23 @@
 #include <bluetooth/assigned_numbers.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
-#include <bluetooth/audio/cap.h>
 #include <bluetooth/audio/csip.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/conn.h>
 #include <bluetooth/crypto.h>
 #include <bluetooth/gap.h>
-#include <bluetooth/gatt.h>
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
-
-#include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
+#include <bluetooth/conn.h>
+#include <bluetooth/gatt.h>
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/audio/cap.h>
 
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 #include "audio.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #if defined(CONFIG_BT_BAP_UNICAST_CLIENT)
 #define UNICAST_SINK_SUPPORTED (CONFIG_BT_BAP_UNICAST_CLIENT_ASE_SNK_COUNT > 0)
 #define UNICAST_SRC_SUPPORTED  (CONFIG_BT_BAP_UNICAST_CLIENT_ASE_SRC_COUNT > 0)

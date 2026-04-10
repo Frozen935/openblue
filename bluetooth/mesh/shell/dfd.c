@@ -12,7 +12,6 @@
 #include "../dfu_slot.h"
 #include "../dfd_srv_internal.h"
 #include "../access.h"
-
 static const struct bt_mesh_model *mod;
 
 static void print_receivers_status(const struct bt_shell *sh, struct bt_mesh_dfd_srv *srv,

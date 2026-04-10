@@ -21,14 +21,15 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <base/bt_atomic.h>
-#include <utils/bt_slist.h>
-#include <utils/bt_utils.h>
 
 #include "common/bt_str.h"
 #include "vcp_internal.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+
+#include "osdep/os.h"
 
 /* Callback functions */
 static bt_slist_t vcp_vol_ctlr_cbs = BT_SLIST_STATIC_INIT(&vcp_vol_ctlr_cbs);

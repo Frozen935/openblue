@@ -22,6 +22,7 @@
 
 #include "host/hci_core.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 #if CONFIG_BT_MESH_OD_PRIV_PROXY_SRV

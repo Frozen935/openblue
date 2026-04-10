@@ -15,7 +15,6 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/hci.h>
-
 #define LOG_LEVEL CONFIG_BT_TPS_LOG_LEVEL
 
 static ssize_t read_tx_power_level(struct bt_conn *conn,

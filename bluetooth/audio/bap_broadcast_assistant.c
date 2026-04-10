@@ -27,19 +27,19 @@
 #include <bluetooth/l2cap.h>
 #include <bluetooth/buf.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <base/bt_atomic.h>
-#include <bluetooth/byteorder.h>
-#include <utils/bt_slist.h>
-#include <utils/bt_utils.h>
 
 #include <sys/errno.h>
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 #include "common/bt_str.h"
-
 #include "audio_internal.h"
 #include "bap_internal.h"
+#include <base/bt_buf.h>
 
 #define MINIMUM_RECV_STATE_LEN          15
 

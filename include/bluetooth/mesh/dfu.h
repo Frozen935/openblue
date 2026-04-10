@@ -10,7 +10,6 @@
 #include <sys/types.h>
 
 #include <bluetooth/mesh/blob.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

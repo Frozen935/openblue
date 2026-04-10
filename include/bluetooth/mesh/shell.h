@@ -7,7 +7,6 @@
 #define __INCLUDE_BLUETOOTH_MESH_SHELL_H__
 
 #include <bluetooth/mesh.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

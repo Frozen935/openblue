@@ -11,7 +11,6 @@
 #include <bluetooth/bluetooth.h>
 
 #include "keys.h"
-
 #define RPA_TIMEOUT_MS(_rpa_timeout) (_rpa_timeout * MSEC_PER_SEC)
 
 static inline bool bt_id_rpa_is_new(void)

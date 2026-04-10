@@ -12,8 +12,7 @@
 #define __BLUETOOTH_HOST_BUF_VIEW_H__
 
 #include <stddef.h>
-
-
+#include <base/bt_buf.h>
 
 struct bt_buf_view_meta {
 	struct bt_buf *parent;

@@ -11,7 +11,6 @@
 #include "transport.h"
 #include "lpn.h"
 #include "blob.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_MODEL_LOG_LEVEL
 
 #define MTU_SIZE_MAX (BT_MESH_RX_SDU_MAX - BT_MESH_MIC_SHORT)

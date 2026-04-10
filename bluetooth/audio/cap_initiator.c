@@ -25,19 +25,18 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <base/bt_atomic.h>
-#include <utils/bt_utils.h>
 #include <sys/errno.h>
 
 #include "bap_endpoint.h"
 #include "cap_internal.h"
 #include "csip_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 #include "common/bt_str.h"
-
 static const struct bt_cap_initiator_cb *cap_cb;
 
 int bt_cap_initiator_register_cb(const struct bt_cap_initiator_cb *cb)

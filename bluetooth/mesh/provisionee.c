@@ -27,6 +27,10 @@
 #include "settings.h"
 #include "rpr.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_PROVISIONEE_LOG_LEVEL
 
 static void reprovision_fail(void);

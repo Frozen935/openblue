@@ -11,8 +11,8 @@
 #include "dfu.h"
 #include "blob.h"
 #include <common/bt_str.h>
-#include "osdep/os.h"
 
+#include "osdep/os.h"
 #define LOG_LEVEL CONFIG_BT_MESH_DFU_LOG_LEVEL
 
 #define TARGETS_FOR_EACH(cli, target)                                          \

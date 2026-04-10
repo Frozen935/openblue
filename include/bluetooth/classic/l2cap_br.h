@@ -23,10 +23,12 @@
 #include <bluetooth/buf.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/hci.h>
+#include <sys/types.h>
+
 #include <base/bt_atomic.h>
 #include <utils/bt_slist.h>
 #include <utils/bt_utils.h>
-#include <sys/types.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {

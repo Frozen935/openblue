@@ -16,12 +16,14 @@
 #include <bluetooth/addr.h>
 #include <bluetooth/buf.h>
 
-#include <base/bt_atomic.h>
-#include <bt_stack_init.h>
-#include <osdep/os.h>
-
 #include "monitor.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include <bt_stack_init.h>
+#include <osdep/os.h>
 /* This is the same default priority as for other console handlers,
  * except that we're not exporting it as a Kconfig variable until a
  * clear need arises.

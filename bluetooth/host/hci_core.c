@@ -25,6 +25,7 @@
 #include <bluetooth/hci_types.h>
 #include <bluetooth/hci_vs.h>
 #include <bluetooth/testing.h>
+
 #include "addr_internal.h"
 #include "adv.h"
 #include "classic/br.h"
@@ -50,6 +51,11 @@
 #include "direction_internal.h"
 #endif /* CONFIG_BT_DF */
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+#include <utils/bt_slist.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_HCI_CORE_LOG_LEVEL
 
 /* These checks are added to warn if the number of ACL or ISO packets in Controller is not equal to

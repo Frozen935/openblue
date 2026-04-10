@@ -18,12 +18,16 @@
 #include <bluetooth/l2cap.h>
 #include <bluetooth/iso.h>
 
-#include <base/queue/bt_fifo.h>
-
 #include "common/hci_common_internal.h"
 #include "hci_raw_internal.h"
 #include "monitor.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include <base/queue/bt_fifo.h>
 #define LOG_LEVEL CONFIG_BT_HCI_CORE_LOG_LEVEL
 
 static struct bt_fifo *raw_rx;

@@ -15,11 +15,11 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include <bluetooth/buf.h>
-#include <base/bt_atomic.h>
 
 #include "audio_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
 
 static const struct bt_uuid *gmas_uuid = BT_UUID_GMAS;
 static const struct bt_uuid *gmap_role_uuid = BT_UUID_GMAP_ROLE;

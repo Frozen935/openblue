@@ -7,7 +7,6 @@
 #include <bluetooth/mesh.h>
 
 #include "msg.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_ACCESS_LOG_LEVEL
 
 void bt_mesh_model_msg_init(struct bt_buf_simple *msg, uint32_t opcode)

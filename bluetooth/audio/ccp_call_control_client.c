@@ -15,11 +15,10 @@
 #include <bluetooth/audio/ccp.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/hci_types.h>
+
 #include <base/bt_atomic.h>
 #include <utils/bt_slist.h>
 #include <utils/bt_utils.h>
-
-
 static bt_slist_t ccp_call_control_client_cbs =
 	BT_SLIST_STATIC_INIT(&ccp_call_control_client_cbs);
 static struct bt_tbs_client_cb tbs_client_cbs;

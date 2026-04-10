@@ -26,11 +26,6 @@
 #include <bluetooth/iso.h>
 #include <bluetooth/l2cap.h>
 
-#include <base/bt_work.h>
-#include <base/queue/bt_fifo.h>
-#include <osdep/os.h>
-#include <bt_stack_init.h>
-
 #include "addr_internal.h"
 #include "adv.h"
 #include "att_internal.h"
@@ -51,6 +46,16 @@
 #include "scan.h"
 #include "smp.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+#include <utils/bt_slist.h>
+
+#include <base/bt_work.h>
+#include <base/queue/bt_fifo.h>
+#include <osdep/os.h>
+#include <bt_stack_init.h>
 #define LOG_LEVEL CONFIG_BT_CONN_LOG_LEVEL
 
 BT_FIFO_DEFINE(free_tx);

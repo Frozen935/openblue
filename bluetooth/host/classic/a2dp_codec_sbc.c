@@ -11,7 +11,9 @@
 #include <bluetooth/classic/a2dp.h>
 #include <bluetooth/sbc.h>
 
-
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 uint8_t bt_a2dp_sbc_get_channel_num(struct bt_a2dp_codec_sbc_params *sbc_codec)
 {
 	__ASSERT_NO_MSG(sbc_codec != NULL);

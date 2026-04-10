@@ -13,8 +13,8 @@
 #include "ots_obj_manager_internal.h"
 #include "ots_dir_list_internal.h"
 
-
-
+#include <utils/bt_dlist.h>
+#include <base/byteorder.h>
 static struct bt_ots_dir_list dir_lists[CONFIG_BT_OTS_MAX_INST_CNT];
 
 static size_t dir_list_object_record_size(const struct bt_gatt_ots_object *obj)

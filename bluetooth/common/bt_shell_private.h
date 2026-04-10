@@ -8,9 +8,7 @@
 #define __BT_SHELL_PRIVATE_H
 
 #include <stdint.h>
-
 #include <utils/bt_slist.h>
-
 #define BT_SHELL_PRINT  "PRINT"
 #define BT_SHELL_NORMAL "NORMAL"
 #define BT_SHELL_INFO   "INFO"

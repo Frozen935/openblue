@@ -28,12 +28,6 @@
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <bluetooth/buf.h>
-#include <base/bt_atomic.h>
-#include <bluetooth/byteorder.h>
-#include <utils/bt_slist.h>
-#include <utils/bt_utils.h>
 
 #include "../host/hci_core.h"
 #include "../host/conn_internal.h"
@@ -46,6 +40,13 @@
 #include "bap_unicast_client_internal.h"
 #include "pacs_internal.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+
+#include "osdep/os.h"
 BUILD_ASSERT(CONFIG_BT_BAP_UNICAST_CLIENT_ASE_SNK_COUNT > 0 ||
 		     CONFIG_BT_BAP_UNICAST_CLIENT_ASE_SRC_COUNT > 0,
 	     "CONFIG_BT_BAP_UNICAST_CLIENT_ASE_SNK_COUNT or "

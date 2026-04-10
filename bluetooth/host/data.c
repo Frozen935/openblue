@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include <bluetooth/bluetooth.h>
+#include <base/bt_buf.h>
 
 #define LOG_LEVEL CONFIG_BT_HCI_CORE_LOG_LEVEL
 

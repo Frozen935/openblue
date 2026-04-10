@@ -5,12 +5,12 @@
 #include <errno.h>
 #include <string.h>
 
-
 #include "psa/crypto.h"
 
 #include "common/bt_str.h"
 #include "bt_crypto.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_CRYPTO_LOG_LEVEL
 
 int bt_crypto_f4(const uint8_t *u, const uint8_t *v, const uint8_t *x, uint8_t z, uint8_t res[16])

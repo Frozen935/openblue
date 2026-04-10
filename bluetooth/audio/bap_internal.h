@@ -18,6 +18,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/iso.h>
 
+#include <utils/bt_utils.h>
 #define BT_BAP_BASS_SCAN_STATE_NOT_SCANNING   0x00
 #define BT_BAP_BASS_SCAN_STATE_SCANNING       0x01
 

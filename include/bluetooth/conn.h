@@ -26,8 +26,10 @@
 #include <bluetooth/direction.h>
 #include <bluetooth/gap.h>
 #include <bluetooth/hci_types.h>
+
 #include <utils/bt_slist.h>
 #include <utils/bt_utils.h>
+#include <base/bt_buf.h>
 
 #ifdef __cplusplus
 extern "C" {

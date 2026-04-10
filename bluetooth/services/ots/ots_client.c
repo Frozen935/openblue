@@ -8,7 +8,6 @@
 
 #include <bluetooth/uuid.h>
 
-
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
@@ -22,6 +21,7 @@
 #include "ots_oacp_internal.h"
 #include "ots_olcp_internal.h"
 
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_OTS_CLIENT_LOG_LEVEL
 
 /* TODO: KConfig options */

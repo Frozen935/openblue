@@ -20,8 +20,8 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/services/ots.h>
-#include <utils/bt_utils.h>
 
+#include <utils/bt_utils.h>
 #include "../media_proxy_internal.h" /* For MPL_NO_TRACK_ID - TODO: Fix */
 
 #include "host/shell/bt.h"

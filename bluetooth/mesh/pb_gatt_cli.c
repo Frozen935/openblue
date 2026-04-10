@@ -25,6 +25,8 @@
 #include "gatt_cli.h"
 #include "proxy_msg.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_PROV_LOG_LEVEL
 
 static struct {

@@ -12,17 +12,18 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <base/bt_assert.h>
 #include <bluetooth/assigned_numbers.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/pbp.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/gap.h>
 
-#include <utils/bt_utils.h>
-
 #include "common/bt_shell_private.h"
 
+#include <base/bt_buf.h>
+#include <utils/bt_utils.h>
+
+#include <base/bt_assert.h>
 #define PBS_DEMO                'P', 'B', 'P'
 
 static const uint8_t pba_metadata[] = {

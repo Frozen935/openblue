@@ -13,6 +13,8 @@
 #include "access.h"
 #include "net.h"
 
+#include <base/bt_buf.h>
+#include <utils/bt_slist.h>
 #define LOG_LEVEL CONFIG_BT_MESH_ACCESS_LOG_LEVEL
 
 static void delayable_msg_handler(struct bt_work *w);

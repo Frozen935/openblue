@@ -19,9 +19,7 @@
 
 #include <sys/types.h>
 
-#include <base/bt_buf.h>
 #include <utils/bt_utils.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

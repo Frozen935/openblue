@@ -10,7 +10,6 @@
  */
 
 #include "hfp_internal.h"
-
 #if defined(CONFIG_BT_HFP_AG_EXT_ERR)
 #define BT_HFP_AG_FEATURE_EXT_ERR_ENABLE BT_HFP_AG_FEATURE_EXT_ERR
 #else

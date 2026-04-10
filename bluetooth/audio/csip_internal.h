@@ -12,7 +12,6 @@
 #include <bluetooth/audio/csip.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
-
 #define BT_CSIP_SIRK_TYPE_ENCRYPTED             0x00
 #define BT_CSIP_SIRK_TYPE_PLAIN                 0x01
 

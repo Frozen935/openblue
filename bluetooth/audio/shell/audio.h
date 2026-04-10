@@ -21,16 +21,18 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include <base/bt_atomic.h>
+#include <bluetooth/assigned_numbers.h>
 #include <bluetooth/bluetooth.h>
-#include <bluetooth/byteorder.h>
 #include <bluetooth/hci_types.h>
 #include <bluetooth/iso.h>
-#include <utils/bt_utils.h>
 
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include <base/bt_atomic.h>
 #define SHELL_PRINT_INDENT_LEVEL_SIZE 2
 #define MAX_CODEC_FRAMES_PER_SDU      4U
 

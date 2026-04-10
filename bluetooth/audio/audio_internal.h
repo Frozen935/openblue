@@ -13,7 +13,6 @@
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
-
 #define BT_AUDIO_NOTIFY_RETRY_DELAY_US ((CONFIG_BT_AUDIO_NOTIFY_RETRY_DELAY) * 1250U)
 
 /** @brief LE Audio Attribute User Data. */

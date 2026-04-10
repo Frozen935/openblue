@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
@@ -18,10 +17,10 @@
 #include <bluetooth/classic/a2dp.h>
 #include <bluetooth/classic/sdp.h>
 
-
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <base/byteorder.h>
 struct bt_a2dp *default_a2dp;
 static uint8_t a2dp_sink_sdp_registered;
 static uint8_t a2dp_source_sdp_registered;

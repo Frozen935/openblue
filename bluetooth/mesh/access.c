@@ -25,6 +25,9 @@
 #include "va.h"
 #include "delayable_msg.h"
 
+#include <base/bt_buf.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_ACCESS_LOG_LEVEL
 
 /* 20 - 50ms */

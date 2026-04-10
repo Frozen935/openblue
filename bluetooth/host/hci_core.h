@@ -13,10 +13,15 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/hci_types.h>
-#include <drivers/bluetooth.h>
 
+#include <base/bt_atomic.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+
+#include <drivers/bluetooth.h>
 #include <base/queue/bt_fifo.h>
 #include <osdep/os.h>
+#include <base/bt_buf.h>
 
 /* LL connection parameters */
 #define LE_CONN_LATENCY		0x0000

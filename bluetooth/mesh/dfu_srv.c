@@ -8,7 +8,6 @@
 #include "dfu.h"
 #include "blob.h"
 #include "access.h"
-
 #define LOG_LEVEL CONFIG_BT_MESH_DFU_LOG_LEVEL
 
 #define UPDATE_IDX_NONE 0xff

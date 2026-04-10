@@ -6,6 +6,7 @@
 
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/direction.h>
+#include <base/bt_buf.h>
 
 /* Performs initialization of Direction Finding in Host */
 int le_df_init(void);

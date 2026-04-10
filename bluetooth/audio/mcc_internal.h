@@ -19,6 +19,7 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/services/ots.h>
 
+#include <base/bt_atomic.h>
 struct mcs_instance_t *lookup_inst_by_conn(struct bt_conn *conn);
 
 enum mcc_flag {

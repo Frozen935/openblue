@@ -13,9 +13,8 @@
 #include <stdint.h>
 
 #include <bluetooth/addr.h>
-#include <utils/bt_utils.h>
-#include <utils/bt_utils.h>
 
+#include <utils/bt_utils.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

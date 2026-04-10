@@ -4,7 +4,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
 #ifndef __INCLUDE_BLUETOOTH_EAD_H__
 #define __INCLUDE_BLUETOOTH_EAD_H__
 

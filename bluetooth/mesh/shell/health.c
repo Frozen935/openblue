@@ -11,7 +11,6 @@
 #include "mesh/access.h"
 #include "utils.h"
 #include <bluetooth/mesh/shell.h>
-
 static const struct bt_mesh_model *mod;
 
 static void show_faults(const struct bt_shell *sh, uint8_t test_id, uint16_t cid, uint8_t *faults,

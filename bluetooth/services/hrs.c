@@ -18,7 +18,6 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/services/hrs.h>
-
 #define LOG_LEVEL CONFIG_BT_HRS_LOG_LEVEL
 
 

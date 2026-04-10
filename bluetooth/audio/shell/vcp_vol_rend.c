@@ -15,14 +15,14 @@
 #include <string.h>
 
 #include <bluetooth/audio/aics.h>
-#include <bluetooth/audio/vcp.h>
 #include <bluetooth/audio/vocs.h>
 #include <bluetooth/conn.h>
-#include <utils/bt_utils.h>
+#include <bluetooth/audio/vcp.h>
 
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <utils/bt_utils.h>
 static struct bt_vcp_included vcp_included;
 
 static void vcp_vol_rend_state_cb(struct bt_conn *conn, int err, uint8_t volume, uint8_t mute)

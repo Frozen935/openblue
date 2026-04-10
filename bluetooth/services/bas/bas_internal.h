@@ -9,6 +9,7 @@
 
 #include <sys/types.h>
 
+#include <base/bt_atomic.h>
 /**
  * @brief  Battery level status structure definition.
  */

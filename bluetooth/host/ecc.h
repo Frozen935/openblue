@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <utils/bt_slist.h>
 
 /** Key size used in Bluetooth's ECC domain. */
 #define BT_ECC_KEY_SIZE            32

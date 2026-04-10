@@ -9,7 +9,6 @@
 #include <bluetooth/mesh.h>
 
 #include "crypto.h"
-#include "mesh.h"
 #include "net.h"
 #include "transport.h"
 #include "heartbeat.h"
@@ -18,6 +17,10 @@
 #include "foundation.h"
 #include "lpn.h"
 
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
+
+#include "mesh.h"
 #define LOG_LEVEL CONFIG_BT_MESH_LOW_POWER_LOG_LEVEL
 
 /**

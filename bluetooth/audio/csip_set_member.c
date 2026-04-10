@@ -23,10 +23,6 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/buf.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <base/bt_atomic.h>
-#include <utils/bt_utils.h>
-#include <bluetooth/byteorder.h>
 
 #include "../host/conn_internal.h"
 #include "../host/keys.h"
@@ -38,6 +34,11 @@
 #include "csip_internal.h"
 #include "csip_crypto.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
+
+#include "osdep/os.h"
 #define CSIP_SET_LOCK_TIMER_VALUE       OS_SECONDS(60)
 
 #define CSIS_CHAR_ATTR_COUNT	  3 /* declaration + value + cccd */

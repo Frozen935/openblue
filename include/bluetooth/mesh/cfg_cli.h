@@ -18,7 +18,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,7 +26,6 @@ struct bt_mesh_cfg_cli;
 struct bt_mesh_cfg_cli_hb_pub;
 struct bt_mesh_cfg_cli_hb_sub;
 struct bt_mesh_cfg_cli_mod_pub;
-struct bt_buf_simple;
 
 /** Mesh Configuration Client Status messages callback */
 struct bt_mesh_cfg_cli_cb {

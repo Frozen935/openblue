@@ -9,7 +9,6 @@
 #include <bluetooth/mesh/shell.h>
 
 #include "utils.h"
-
 static int cmd_srpl_clear(const struct bt_shell *sh, size_t argc,
 			  char *argv[])
 {

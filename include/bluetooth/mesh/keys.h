@@ -13,7 +13,6 @@
 
 #include <stdint.h>
 #include <psa/crypto.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

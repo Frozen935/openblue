@@ -8,7 +8,6 @@
 #define __INCLUDE_BLUETOOTH_MESH_PRIV_BEACON_CLI_H___H__
 
 #include <bluetooth/mesh.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

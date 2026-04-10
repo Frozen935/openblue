@@ -13,7 +13,6 @@
 
 #include <bluetooth/addr.h>
 #include <bluetooth/conn.h>
-
 #define BT_GATT_PERM_READ_MASK			(BT_GATT_PERM_READ | \
 						BT_GATT_PERM_READ_ENCRYPT | \
 						BT_GATT_PERM_READ_AUTHEN | \

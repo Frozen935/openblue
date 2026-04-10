@@ -10,8 +10,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-struct bt_buf_simple;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

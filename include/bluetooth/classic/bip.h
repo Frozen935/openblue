@@ -23,7 +23,6 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/l2cap.h>
 #include <bluetooth/classic/goep.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

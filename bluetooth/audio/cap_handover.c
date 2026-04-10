@@ -22,9 +22,10 @@
 
 #include "bap_endpoint.h"
 #include "cap_internal.h"
+#include "common/bt_str.h"
 #include "csip_internal.h"
 
-
+#include <utils/bt_utils.h>
 static const struct bt_cap_handover_cb *cap_cb;
 
 bool bt_cap_handover_is_handover_broadcast_source(

@@ -21,10 +21,10 @@
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci_types.h>
-#include <bluetooth/buf.h>
-#include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
 
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+#include <base/bt_buf.h>
 
 int bt_audio_codec_cfg_freq_to_freq_hz(enum bt_audio_codec_cfg_freq freq)
 {

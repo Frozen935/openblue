@@ -11,7 +11,6 @@
 #include "mesh/access.h"
 #include "utils.h"
 #include <bluetooth/mesh/shell.h>
-
 #define CID_NVAL 0xffff
 
 /* Default net & app key values, unless otherwise specified */

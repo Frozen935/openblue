@@ -13,13 +13,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <base/bt_assert.h>
-#include <base/utils.h>
-
-#include <bluetooth/addr.h>
 #include <bluetooth/assigned_numbers.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
+#include <bluetooth/addr.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gap.h>
@@ -27,13 +24,15 @@
 #include <bluetooth/iso.h>
 #include <bluetooth/uuid.h>
 
-#include <utils/bt_utils.h>
-
 #include <audio/bap_internal.h>
 #include "audio.h"
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <utils/bt_utils.h>
+
+#include <base/bt_assert.h>
+#include <base/utils.h>
 #define PA_SYNC_INTERVAL_TO_TIMEOUT_RATIO 20 /* Set the timeout relative to interval */
 #define PA_SYNC_SKIP              5
 

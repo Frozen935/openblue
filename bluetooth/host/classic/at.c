@@ -15,6 +15,7 @@
 #include <stdarg.h>
 
 #include "at.h"
+#include <base/bt_buf.h>
 
 typedef bool (*pull_char_t)(uint8_t *c, void *data);
 

@@ -22,6 +22,9 @@
 #include "l2cap_br_internal.h"
 #include "rfcomm_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_RFCOMM_LOG_LEVEL
 
 #define RFCOMM_CHANNEL_START	0x01

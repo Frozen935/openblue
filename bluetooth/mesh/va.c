@@ -9,7 +9,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 #include <bluetooth/mesh.h>
 
 #include "common/bt_str.h"
@@ -20,6 +19,7 @@
 #include "net.h"
 #include "crypto.h"
 #include "settings.h"
+#include <base/bt_buf.h>
 
 #define LOG_LEVEL CONFIG_BT_MESH_TRANS_LOG_LEVEL
 

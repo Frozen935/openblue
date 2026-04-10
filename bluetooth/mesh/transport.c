@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-
 #include <bluetooth/hci.h>
 #include <bluetooth/mesh.h>
 
@@ -31,6 +30,9 @@
 #include "transport.h"
 #include "va.h"
 
+#include <base/bt_buf.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
 #define LOG_LEVEL CONFIG_BT_MESH_TRANS_LOG_LEVEL
 
 #define AID_MASK                    ((uint8_t)(BIT_MASK(6)))

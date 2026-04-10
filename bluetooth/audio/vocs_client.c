@@ -21,13 +21,13 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <base/bt_atomic.h>
-#include <utils/bt_utils.h>
 
 #include "vocs_internal.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 static struct bt_vocs_client insts[CONFIG_BT_MAX_CONN * CONFIG_BT_VOCS_CLIENT_MAX_INSTANCE_COUNT];
 
 static struct bt_vocs_client *lookup_vocs_by_handle(struct bt_conn *conn, uint16_t handle)

@@ -21,7 +21,6 @@
 #include <stdbool.h>
 
 #include <bluetooth/uuid.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

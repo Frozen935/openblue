@@ -11,13 +11,17 @@
 
 #include "common/bt_str.h"
 
-#include "mesh.h"
 #include "net.h"
 #include "prov.h"
 #include "crypto.h"
 #include "beacon.h"
 #include "cfg.h"
 
+#include <base/bt_buf.h>
+#include <utils/bt_utils.h>
+#include <base/byteorder.h>
+
+#include "mesh.h"
 #define LOG_LEVEL CONFIG_BT_MESH_BEACON_LOG_LEVEL
 
 #define PROVISIONED_INTERVAL       OS_SECONDS(10)

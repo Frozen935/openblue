@@ -11,7 +11,6 @@
 
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
-
 int bt_bap_unicast_server_reconfig(struct bt_bap_stream *stream,
 				   const struct bt_audio_codec_cfg *codec_cfg);
 int bt_bap_unicast_server_start(struct bt_bap_stream *stream);

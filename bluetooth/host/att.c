@@ -22,9 +22,6 @@
 #include <bluetooth/uuid.h>
 #include <sys/types.h>
 
-#include <base/bt_mem_pool.h>
-#include <base/queue/bt_fifo.h>
-
 #include "att_internal.h"
 #include "common/bt_str.h"
 #include "conn_internal.h"
@@ -33,6 +30,14 @@
 #include "l2cap_internal.h"
 #include "smp.h"
 
+#include <base/bt_buf.h>
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+
+#include <base/bt_mem_pool.h>
+#include <base/queue/bt_fifo.h>
 #define LOG_LEVEL CONFIG_BT_ATT_LOG_LEVEL
 
 #define ATT_CHAN(_ch) CONTAINER_OF(_ch, struct bt_att_chan, chan.chan)

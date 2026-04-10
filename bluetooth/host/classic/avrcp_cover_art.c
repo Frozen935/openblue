@@ -24,6 +24,9 @@
 #include "avctp_internal.h"
 #include "avrcp_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
 #define LOG_LEVEL CONFIG_BT_AVRCP_LOG_LEVEL
 
 /** @brief AVRCP Cover Art service UUID */

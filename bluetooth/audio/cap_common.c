@@ -16,16 +16,15 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <base/bt_atomic.h>
-#include <utils/bt_utils.h>
 
 #include "cap_internal.h"
 #include "csip_internal.h"
 
+#include <base/bt_atomic.h>
+#include <utils/bt_utils.h>
 
+#include "osdep/os.h"
 #include "common/bt_str.h"
-
 static struct bt_cap_common_client bt_cap_common_clients[CONFIG_BT_MAX_CONN];
 static const struct bt_uuid *cas_uuid = BT_UUID_CAS;
 static struct bt_cap_common_proc active_proc;

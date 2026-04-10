@@ -16,7 +16,6 @@
 
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
-
 static void alert_stop(void)
 {
 	bt_shell_print("Alert stopped\n");

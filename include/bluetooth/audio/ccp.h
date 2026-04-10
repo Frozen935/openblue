@@ -36,8 +36,8 @@
 
 #include <bluetooth/audio/tbs.h>
 #include <bluetooth/conn.h>
-#include <utils/bt_slist.h>
 
+#include <utils/bt_slist.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

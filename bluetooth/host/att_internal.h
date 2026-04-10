@@ -7,6 +7,10 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/l2cap.h>
 
+#include <utils/bt_slist.h>
+#include <utils/bt_utils.h>
+#include <base/bt_buf.h>
+
 /*
  * Copyright (c) 2015-2016 Intel Corporation
  *

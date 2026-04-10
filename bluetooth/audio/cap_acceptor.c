@@ -14,11 +14,10 @@
 #include <bluetooth/audio/csip.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
-#include <utils/bt_utils.h>
 
 #include "cap_internal.h"
 
-
+#include <utils/bt_utils.h>
 #if defined(CONFIG_BT_CAP_ACCEPTOR_SET_MEMBER)
 
 static struct bt_gatt_attr svc_attrs[] = {

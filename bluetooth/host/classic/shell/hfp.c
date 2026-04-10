@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
@@ -17,10 +16,10 @@
 #include <bluetooth/classic/hfp_hf.h>
 #include <bluetooth/classic/hfp_ag.h>
 
-
 #include "host/shell/bt.h"
 #include "common/bt_shell_private.h"
 
+#include <base/byteorder.h>
 #define HELP_NONE "[none]"
 
 extern struct bt_conn *default_conn;

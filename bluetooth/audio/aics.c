@@ -18,14 +18,15 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/audio/aics.h>
 #include <bluetooth/uuid.h>
-#include "osdep/os.h"
-#include <base/bt_atomic.h>
-#include <bluetooth/byteorder.h>
-#include <utils/bt_utils.h>
 
 #include "aics_internal.h"
 #include "audio_internal.h"
 
+#include <base/bt_atomic.h>
+#include <base/byteorder.h>
+#include <utils/bt_utils.h>
+
+#include "osdep/os.h"
 #define LOG_LEVEL CONFIG_BT_AICS_LOG_LEVEL
 
 #define VALID_AICS_OPCODE(opcode)                                              \

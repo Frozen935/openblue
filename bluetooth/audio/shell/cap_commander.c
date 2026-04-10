@@ -15,19 +15,18 @@
 #include <bluetooth/addr.h>
 #include <bluetooth/audio/audio.h>
 #include <bluetooth/audio/bap.h>
-#include <bluetooth/audio/cap.h>
 #include <bluetooth/audio/csip.h>
-#include <bluetooth/audio/vocs.h>
 #include <bluetooth/conn.h>
+#include <bluetooth/audio/cap.h>
+#include <bluetooth/audio/vocs.h>
 #include <bluetooth/gap.h>
 #include <bluetooth/iso.h>
-
-#include <utils/bt_utils.h>
 
 #include "common/bt_shell_private.h"
 #include "host/shell/bt.h"
 #include "audio.h"
 
+#include <utils/bt_utils.h>
 static void cap_discover_cb(struct bt_conn *conn, int err,
 			    const struct bt_csip_set_coordinator_set_member *member,
 			    const struct bt_csip_set_coordinator_csis_inst *csis_inst)

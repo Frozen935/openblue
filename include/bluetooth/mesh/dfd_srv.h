@@ -20,7 +20,6 @@
 #include <bluetooth/mesh/blob_srv.h>
 #include <bluetooth/mesh/blob_cli.h>
 #include <bluetooth/mesh/dfu_cli.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

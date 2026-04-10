@@ -8,7 +8,6 @@
 #include <stdbool.h>
 
 #include <bluetooth/bluetooth.h>
-
 struct bt_le_ext_adv *bt_le_adv_lookup_legacy(void);
 
 void bt_le_adv_delete_legacy(void);

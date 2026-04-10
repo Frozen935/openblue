@@ -11,6 +11,7 @@
 #include <bluetooth/l2cap.h>
 #include "l2cap_br_interface.h"
 
+#include <utils/bt_utils.h>
 #define BT_L2CAP_CID_BR_SIG             0x0001
 #define BT_L2CAP_CID_CONNLESS           0x0002
 #define BT_L2CAP_CID_BR_SMP             0x0007

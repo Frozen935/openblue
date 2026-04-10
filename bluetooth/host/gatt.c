@@ -183,6 +183,7 @@ static void sc_store(struct gatt_sc_cfg *cfg)
 {
 	int err;
 
+#if defined(CONFIG_BT_SETTINGS)
 	err = bt_settings_store_sc(cfg->id, &cfg->peer, &cfg->data, sizeof(cfg->data));
 	if (err) {
 		LOG_ERR("failed to store SC (err %d)", err);
@@ -191,6 +192,7 @@ static void sc_store(struct gatt_sc_cfg *cfg)
 
 	LOG_DBG("stored SC for %s (0x%04x-0x%04x)", bt_addr_le_str(&cfg->peer), cfg->data.start,
 		cfg->data.end);
+#endif
 }
 
 static void clear_sc_cfg(struct gatt_sc_cfg *cfg)

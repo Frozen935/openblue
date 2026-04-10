@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
 project(openblue C)
 
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 # ==============================================================================
 # Add GNU_SOURCE compile option
 add_compile_definitions(_GNU_SOURCE)
@@ -8,6 +12,10 @@ add_compile_definitions(_GNU_SOURCE)
 # ==============================================================================
 # Option to enable AddressSanitizer (ASan)
 option(ENABLE_ASAN "Enable AddressSanitizer" ON)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(-Og -g3 -fno-omit-frame-pointer)
+endif()
 
 if(ENABLE_ASAN)
     message(STATUS "AddressSanitizer (ASan) is enabled.")

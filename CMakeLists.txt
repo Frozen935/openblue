@@ -186,12 +186,10 @@ foreach(_t IN ITEMS
 endforeach()
 
 # ==============================================================================
-# Samples (executables)
+# Samples / Tests
 # ==============================================================================
-if(DEFINED CONFIG_OPENBLUE_SAMPLES AND CONFIG_OPENBLUE_SAMPLES)
-  add_subdirectory(samples/demo)
-endif()
+add_subdirectory(samples)
 
-if(DEFINED CONFIG_OPENBLUE_BT_CMD AND CONFIG_OPENBLUE_BT_CMD)
-  add_subdirectory(samples/cmds)
+if(DEFINED CONFIG_OPENBLUE_TESTS AND CONFIG_OPENBLUE_TESTS)
+  add_subdirectory(tests)
 endif()

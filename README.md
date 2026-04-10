@@ -2,6 +2,8 @@
 
 This project is an independent module extracted from the Zephyr Bluetooth subsystem, built using GNU Make. It currently enables mbed TLS by default (CONFIG_OPENBLUE_CRYPTO_USE_MBEDTLS=y) and supports "system-first, fallback-to-local" dependency handling to ensure stable compilation of demos even in clean environments.
 
+Change history is tracked in `CHANGELOG_OPENBLUE.md`.
+
 ## Environment Dependencies
 - gcc (recommended) or clang
 - python3 (for generating configuration header files from Kconfig)

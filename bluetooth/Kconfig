@@ -38,7 +38,7 @@ endchoice
 # a cooperative priority.
 config SYSTEM_WORKQUEUE_PRIORITY
 	int "System Workqueue Priority"
-	default -256
+	default 100
 	range -256 -1
 
 if BT_HCI

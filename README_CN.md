@@ -2,6 +2,8 @@
 
 该项目是从 Zephyr 蓝牙子系统中提取的独立模块，使用 CMake 构建。目前默认启用 mbed TLS (CONFIG_OPENBLUE_CRYPTO_USE_MBEDTLS=y)，并支持“系统优先，本地回退”的依赖处理方式，以确保即使在干净的环境中也能稳定编译演示程序。
 
+修改记录见 `CHANGELOG_OPENBLUE.md`。
+
 ## 环境依赖
 - gcc (推荐) 或 clang
 - python3 (用于从 Kconfig 生成配置头文件)

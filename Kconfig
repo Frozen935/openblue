@@ -5,6 +5,20 @@ mainmenu "OpenBlue Bluetooth Configuration"
 
 rsource "Kconfig.constants"
 
+config NUM_PREEMPT_PRIORITIES
+	int
+	default 16
+	help
+	  OpenBlue decoupled menuconfig compatibility default for the number
+	  of preemptible priorities.
+
+config OPENBLUE_SYSTEM_WORKQUEUE_STACK_SIZE
+	int "OpenBlue system workqueue stack size"
+	default 2048
+	help
+	  Default stack size used by OpenBlue features that conceptually map
+	  to Zephyr's system workqueue in the standalone menuconfig tree.
+
 config BIG_ENDIAN
 	bool "Big-endian"
 	default n

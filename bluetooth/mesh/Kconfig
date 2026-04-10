@@ -124,7 +124,7 @@ config BT_MESH_WORKQ_SYS
 	help
 	  When this option is selected, the mesh sends messages from
 	  the system work queue. The application needs to ensure the system
-	  workqueue stack size (SYSTEM_WORKQUEUE_STACK_SIZE) is large enough,
+	  workqueue stack size (OPENBLUE_SYSTEM_WORKQUEUE_STACK_SIZE) is large enough,
 	  refer to BT_MESH_ADV_STACK_SIZE for the recommended minimum.
 
 	  When this option is enabled and the mesh tries to send a message,

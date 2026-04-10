@@ -90,59 +90,7 @@ static void drop_add(uint16_t opcode)
 	}
 }
 
-#if defined(CONFIG_BT_DEBUG_MONITOR_RTT)
-#include <SEGGER_RTT.h>
-
-static bool panic_mode;
-
-#define RTT_BUFFER_NAME CONFIG_BT_DEBUG_MONITOR_RTT_BUFFER_NAME
-#define RTT_BUF_SIZE CONFIG_BT_DEBUG_MONITOR_RTT_BUFFER_SIZE
-
-static void monitor_send(const void *data, size_t len)
-{
-	static uint8_t rtt_buf[RTT_BUF_SIZE];
-	static size_t rtt_buf_offset;
-	struct bt_monitor_hdr *hdr;
-	unsigned int cnt = 0;
-	bool drop;
-
-	/* Drop any packet which cannot fit the buffer */
-	drop = rtt_buf_offset + len > sizeof(rtt_buf);
-	if (!drop) {
-		(void)memcpy(rtt_buf + rtt_buf_offset, data, len);
-	}
-
-	rtt_buf_offset += len;
-
-	/* Check if the packet is complete */
-	hdr = (struct bt_monitor_hdr *)rtt_buf;
-	if (rtt_buf_offset < sizeof(hdr->data_len) + hdr->data_len) {
-		return;
-	}
-
-	if (!drop) {
-		if (panic_mode) {
-			cnt = SEGGER_RTT_WriteNoLock(CONFIG_BT_DEBUG_MONITOR_RTT_BUFFER,
-						     rtt_buf, rtt_buf_offset);
-		} else {
-			cnt = SEGGER_RTT_Write(CONFIG_BT_DEBUG_MONITOR_RTT_BUFFER,
-					       rtt_buf, rtt_buf_offset);
-		}
-	}
-
-	if (!cnt) {
-		drop_add(hdr->opcode);
-	}
-
-	/* Prepare for the next packet */
-	rtt_buf_offset = 0;
-}
-
-static void poll_out(char c)
-{
-	monitor_send(&c, sizeof(c));
-}
-#elif defined(CONFIG_BT_DEBUG_MONITOR_UART)
+#if defined(CONFIG_BT_DEBUG_MONITOR_UART)
 static void poll_out(char c)
 {
 	ARG_UNUSED(c);
@@ -347,9 +295,7 @@ static void monitor_log_process(const struct log_backend *const backend,
 
 static void monitor_log_panic(const struct log_backend *const backend)
 {
-#if defined(CONFIG_BT_DEBUG_MONITOR_RTT)
-	panic_mode = true;
-#endif
+	ARG_UNUSED(backend);
 }
 
 static void monitor_log_init(const struct log_backend *const backend)
@@ -368,15 +314,8 @@ LOG_BACKEND_DEFINE(bt_monitor, monitor_log_api, true);
 
 static int bt_monitor_init(void)
 {
-
-#if defined(CONFIG_BT_DEBUG_MONITOR_RTT)
-	static uint8_t rtt_up_buf[RTT_BUF_SIZE];
-
-	SEGGER_RTT_ConfigUpBuffer(CONFIG_BT_DEBUG_MONITOR_RTT_BUFFER,
-				  RTT_BUFFER_NAME, rtt_up_buf, RTT_BUF_SIZE,
-				  SEGGER_RTT_MODE_NO_BLOCK_SKIP);
-#elif defined(CONFIG_BT_DEBUG_MONITOR_UART)
-#endif /* CONFIG_BT_DEBUG_MONITOR_UART */
+	#if defined(CONFIG_BT_DEBUG_MONITOR_UART)
+	#endif /* CONFIG_BT_DEBUG_MONITOR_UART */
 
 #if !defined(CONFIG_UART_CONSOLE) && !defined(CONFIG_RTT_CONSOLE) && !defined(CONFIG_LOG_PRINTK)
 	__printk_hook_install(monitor_console_out);

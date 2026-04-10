@@ -31,6 +31,37 @@
 #include <base/bt_atomic.h>
 #include <base/byteorder.h>
 #include <utils/bt_utils.h>
+
+#define BT_L2CAP_BR_FIXED_CHAN_REGISTRY_CAPACITY 8
+
+static const struct bt_l2cap_br_fixed_chan *br_fixed_chan_registry[BT_L2CAP_BR_FIXED_CHAN_REGISTRY_CAPACITY];
+static size_t br_fixed_chan_registry_count;
+
+int bt_l2cap_br_fixed_chan_register(const struct bt_l2cap_br_fixed_chan *fchan)
+{
+	if (fchan == NULL || fchan->accept == NULL) {
+		return -EINVAL;
+	}
+
+	for (size_t i = 0; i < br_fixed_chan_registry_count; i++) {
+		if (br_fixed_chan_registry[i] == fchan) {
+			return 0;
+		}
+
+		if (br_fixed_chan_registry[i]->cid == fchan->cid) {
+			return -EALREADY;
+		}
+	}
+
+	if (br_fixed_chan_registry_count >= ARRAY_SIZE(br_fixed_chan_registry)) {
+		return -ENOMEM;
+	}
+
+	br_fixed_chan_registry[br_fixed_chan_registry_count++] = fchan;
+
+	return 0;
+}
+
 #define BR_CHAN_RTX(_w) CONTAINER_OF(bt_work_delayable_from_work(_w), \
 				     struct bt_l2cap_br_chan, rtx_work)
 
@@ -1787,7 +1818,8 @@ static uint8_t get_fixed_channels_mask(void)
 	uint8_t mask = 0U;
 
 	/* this needs to be enhanced if AMP Test Manager support is added */
-	STRUCT_SECTION_FOREACH(bt_l2cap_br_fixed_chan, fchan) {
+	for (size_t i = 0; i < br_fixed_chan_registry_count; i++) {
+		const struct bt_l2cap_br_fixed_chan *fchan = br_fixed_chan_registry[i];
 		mask |= BIT(fchan->cid);
 	}
 
@@ -1868,7 +1900,8 @@ void bt_l2cap_br_connected(struct bt_conn *conn)
 {
 	struct bt_l2cap_chan *chan;
 
-	STRUCT_SECTION_FOREACH(bt_l2cap_br_fixed_chan, fchan) {
+	for (size_t i = 0; i < br_fixed_chan_registry_count; i++) {
+		const struct bt_l2cap_br_fixed_chan *fchan = br_fixed_chan_registry[i];
 		struct bt_l2cap_br_chan *br_chan;
 
 		if (!fchan->accept) {
@@ -6185,6 +6218,16 @@ BT_L2CAP_BR_CHANNEL_DEFINE(br_fixed_chan, BT_L2CAP_CID_BR_SIG, l2cap_br_accept);
 
 void bt_l2cap_br_init(void)
 {
+	int err;
+
+	err = bt_l2cap_br_fixed_chan_register(&br_fixed_chan);
+	__ASSERT_NO_MSG(err == 0);
+
+	#if defined(CONFIG_BT_L2CAP_CONNLESS)
+	err = bt_l2cap_br_fixed_chan_register(&br_fixed_chan_connless);
+	__ASSERT_NO_MSG(err == 0);
+	#endif /* CONFIG_BT_L2CAP_CONNLESS */
+
 	if (IS_ENABLED(CONFIG_BT_RFCOMM)) {
 		bt_rfcomm_init();
 	}

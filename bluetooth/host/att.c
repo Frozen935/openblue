@@ -3890,6 +3890,11 @@ static void bt_eatt_init(void)
 
 void bt_att_init(void)
 {
+	int err;
+
+	err = bt_l2cap_fixed_chan_register(&z_att_fixed_chan);
+	__ASSERT_NO_MSG(err == 0);
+
 	bt_gatt_init();
 
 	if (IS_ENABLED(CONFIG_BT_EATT)) {

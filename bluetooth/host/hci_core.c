@@ -5178,6 +5178,11 @@ static int bt_tx_processor_init(void)
 	return 0;
 }
 
+int bt_tx_processor_stack_init(void)
+{
+	return bt_tx_processor_init();
+}
+
 /* Priority 999 is the last to run in POST_KERNEL. We don't actually
  * care when it runs, so long as it's before APPLICATION, when
  * `bt_enable()` can be called. Running it last will allow more urgent

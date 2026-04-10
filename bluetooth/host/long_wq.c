@@ -39,4 +39,9 @@ static int long_wq_init(void)
 	return 0;
 }
 
+int bt_long_wq_init(void)
+{
+	return long_wq_init();
+}
+
 STACK_INIT(long_wq_init, STACK_BASE_INIT, CONFIG_BT_LONG_WQ_INIT_PRIO);

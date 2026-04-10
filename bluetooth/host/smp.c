@@ -6407,6 +6407,20 @@ BT_L2CAP_BR_CHANNEL_DEFINE(smp_br_fixed_chan, BT_L2CAP_CID_BR_SMP,
 
 int bt_smp_init(void)
 {
+	int err;
+
+	err = bt_l2cap_fixed_chan_register(&smp_fixed_chan);
+	if (err) {
+		return err;
+	}
+
+#if defined(CONFIG_BT_CLASSIC)
+	err = bt_l2cap_br_fixed_chan_register(&smp_br_fixed_chan);
+	if (err) {
+		return err;
+	}
+#endif /* CONFIG_BT_CLASSIC */
+
 	sc_supported = le_sc_supported();
 	if (IS_ENABLED(CONFIG_BT_SMP_SC_PAIR_ONLY) && !sc_supported) {
 		LOG_ERR("SC Pair Only Mode selected but LE SC not supported");

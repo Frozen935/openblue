@@ -61,6 +61,11 @@ out:
 	return rc;
 }
 
+int bt_mem_pool_registry_init(void)
+{
+	return mem_pool_list_init();
+}
+
 int bt_mem_pool_init(struct bt_mem_pool *mpool, void *buffer, size_t block_size,
 		     uint32_t num_blocks)
 {

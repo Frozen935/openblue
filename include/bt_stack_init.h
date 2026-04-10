@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <bt_toolchain_macro.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,13 +37,16 @@ struct stack_init_entry {
 	const char *name;     /* optional name for diagnostics */
 };
 
-/* Section name for registration; avoid leading dot for start/stop symbols */
-#define STACK_INIT_SECTION "stack_init"
-
-#define STACK_INIT(fn, level, prio)                                                                \
-	const struct stack_init_entry                                                              \
-		__attribute__((section("." STACK_INIT_SECTION), used)) __stack_init_entry_##fn = { \
-			(fn), (uint16_t)(prio), (uint16_t)(level), #fn}
+/*
+ * Transitional compatibility macro.
+ *
+ * OpenBlue no longer relies on linker-section based init aggregation. `STACK_INIT`
+ * is kept only as local metadata so call sites do not need to be rewritten all at
+ * once while the runtime uses an explicit init table from `core/stack_init.c`.
+ */
+#define STACK_INIT(fn, level, prio)                                                        \
+	static const struct stack_init_entry __maybe_unused __stack_init_entry_##fn = {      \
+		(fn), (uint16_t)(prio), (uint16_t)(level), #fn}
 
 /* Public API: run all registered initializers */
 int bt_stack_init_once(void);

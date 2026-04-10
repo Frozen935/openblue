@@ -4655,5 +4655,10 @@ static int bt_conn_tx_workq_init(void)
 	return 0;
 }
 
+int bt_conn_tx_workq_stack_init(void)
+{
+	return bt_conn_tx_workq_init();
+}
+
 STACK_INIT(bt_conn_tx_workq_init, STACK_BASE_INIT, CONFIG_BT_CONN_TX_NOTIFY_WQ_INIT_PRIORITY);
 #endif /* CONFIG_BT_CONN_TX_NOTIFY_WQ */

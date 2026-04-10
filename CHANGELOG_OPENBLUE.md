@@ -23,6 +23,15 @@
 
 ## 当前记录
 
+## 2026-04-10 - 显式化 `STACK_INIT` 与 BR/LE fixed channel 注册
+- Commit: `working tree`
+- 类型: `refactor`
+- 范围: `core/stack_init.c`、`include/bt_stack_init.h`、`bluetooth/host/{l2cap.c,att.c,smp.c,smp_null.c}`、`bluetooth/host/classic/l2cap_br.c`
+- 背景: 原有 Zephyr 风格的 section/iterable-section 注册机制已被移除语义，但 `STACK_INIT`、BR fixed channel、LE fixed channel 仍依赖自动聚合，导致初始化和固定信道接入不稳定。
+- 修改: 将 `STACK_INIT` 第一阶段改为显式初始化表，先接入 `base/driver/host` 核心初始化项；同时为 LE fixed channel 与 BR fixed channel 新增显式注册表和注册 API，在 `bt_l2cap_init()`、`bt_att_init()`、`bt_smp_init()`、`bt_l2cap_br_init()` 中主动注册默认固定信道。
+- 影响: host 主干初始化、BR fixed channel、LE fixed channel 不再依赖 linker section 聚合即可工作，为后续继续迁移 GATT static service 与 callback bus 打下基础。
+- 验证: `cmake --build build --target genconfig -j 4`；`cmake --build build --target demo -j 4`；运行 `./build/samples/demo/demo` 输出 `Bluetooth ready`。
+
 ## 2026-04-10 - Debug 构建补齐 `CONFIG_BT_SETTINGS` 条件保护
 - Commit: `working tree`
 - 类型: `fix`

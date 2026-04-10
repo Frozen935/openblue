@@ -22,6 +22,8 @@ struct bt_l2cap_br_fixed_chan {
 /* Initialize BR/EDR L2CAP signal layer */
 void bt_l2cap_br_init(void);
 
+int bt_l2cap_br_fixed_chan_register(const struct bt_l2cap_br_fixed_chan *fchan);
+
 /* Notify BR/EDR L2CAP channels about established new ACL connection */
 void bt_l2cap_br_connected(struct bt_conn *conn);
 

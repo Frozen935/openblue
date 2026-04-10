@@ -30,6 +30,41 @@
 #include <base/byteorder.h>
 #include <utils/bt_slist.h>
 #include <utils/bt_utils.h>
+
+#define BT_L2CAP_FIXED_CHAN_REGISTRY_CAPACITY 8
+
+static struct bt_l2cap_fixed_chan *fixed_chan_registry[BT_L2CAP_FIXED_CHAN_REGISTRY_CAPACITY];
+static size_t fixed_chan_registry_count;
+
+int bt_l2cap_fixed_chan_register(struct bt_l2cap_fixed_chan *fchan)
+{
+	if (fchan == NULL || fchan->accept == NULL) {
+		return -EINVAL;
+	}
+
+	if (fchan->cid < 0x0001U || fchan->cid > 0x003fU) {
+		return -EINVAL;
+	}
+
+	for (size_t i = 0; i < fixed_chan_registry_count; i++) {
+		if (fixed_chan_registry[i] == fchan) {
+			return 0;
+		}
+
+		if (fixed_chan_registry[i]->cid == fchan->cid) {
+			return -EALREADY;
+		}
+	}
+
+	if (fixed_chan_registry_count >= ARRAY_SIZE(fixed_chan_registry)) {
+		return -ENOMEM;
+	}
+
+	fixed_chan_registry[fixed_chan_registry_count++] = fchan;
+
+	return 0;
+}
+
 #define LOG_DBG_ENABLED IS_ENABLED(CONFIG_BT_L2CAP_LOG_LEVEL_DBG)
 
 #define LE_CHAN_RTX(_w) CONTAINER_OF(bt_work_delayable_from_work(_w), \
@@ -410,7 +445,8 @@ void bt_l2cap_connected(struct bt_conn *conn)
 		return;
 	}
 
-	STRUCT_SECTION_FOREACH(bt_l2cap_fixed_chan, fchan) {
+	for (size_t i = 0; i < fixed_chan_registry_count; i++) {
+		struct bt_l2cap_fixed_chan *fchan = fixed_chan_registry[i];
 		struct bt_l2cap_le_chan *le_chan;
 
 		__ASSERT_MSG(L2CAP_LE_CID_IS_FIXED(fchan->cid),
@@ -2962,6 +2998,11 @@ BT_L2CAP_FIXED_CHANNEL_DEFINE(le_fixed_chan) = {
 
 void bt_l2cap_init(void)
 {
+	int err;
+
+	err = bt_l2cap_fixed_chan_register(&le_fixed_chan);
+	__ASSERT_NO_MSG(err == 0);
+
 	if (IS_ENABLED(CONFIG_BT_CLASSIC)) {
 		bt_l2cap_br_init();
 	}

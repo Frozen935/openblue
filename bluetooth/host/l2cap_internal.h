@@ -215,6 +215,8 @@ struct bt_l2cap_chan *bt_l2cap_le_lookup_tx_cid(struct bt_conn *conn,
 struct bt_l2cap_chan *bt_l2cap_le_lookup_rx_cid(struct bt_conn *conn,
 						uint16_t cid);
 
+int bt_l2cap_fixed_chan_register(struct bt_l2cap_fixed_chan *fchan);
+
 struct bt_l2cap_ecred_cb {
 	void (*ecred_conn_rsp)(struct bt_conn *conn, uint16_t result, uint8_t attempted,
 			       uint8_t succeeded, uint16_t psm);

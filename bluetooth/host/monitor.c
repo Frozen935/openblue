@@ -325,4 +325,9 @@ static int bt_monitor_init(void)
 	return 0;
 }
 
+int bt_monitor_stack_init(void)
+{
+	return bt_monitor_init();
+}
+
 STACK_INIT(bt_monitor_init, STACK_BASE_INIT, MONITOR_INIT_PRIORITY);

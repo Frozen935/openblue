@@ -392,6 +392,35 @@ int os_thread_name_set(os_thread_t *thr, const char *name)
 }
 
 static pthread_mutex_t os_critical = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t os_sched_mutex;
+static pthread_once_t os_sched_once = PTHREAD_ONCE_INIT;
+
+static void os_sched_mutex_init(void)
+{
+	pthread_mutexattr_t attr;
+	int rc;
+
+	rc = pthread_mutexattr_init(&attr);
+	if (rc != 0) {
+		abort();
+	}
+
+#if defined(PTHREAD_MUTEX_RECURSIVE)
+	rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+#else
+	rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
+#endif
+	if (rc != 0) {
+		pthread_mutexattr_destroy(&attr);
+		abort();
+	}
+
+	rc = pthread_mutex_init(&os_sched_mutex, &attr);
+	(void)pthread_mutexattr_destroy(&attr);
+	if (rc != 0) {
+		abort();
+	}
+}
 
 void os_enter_critical(void)
 {
@@ -405,12 +434,13 @@ void os_exit_critical(void)
 
 void os_sched_lock(void)
 {
-	os_enter_critical();
+	(void)pthread_once(&os_sched_once, os_sched_mutex_init);
+	(void)pthread_mutex_lock(&os_sched_mutex);
 }
 
 void os_sched_unlock(void)
 {
-	os_exit_critical();
+	(void)pthread_mutex_unlock(&os_sched_mutex);
 }
 
 void os_sleep_ms(uint32_t ms)

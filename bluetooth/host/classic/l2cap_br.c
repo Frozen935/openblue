@@ -213,7 +213,7 @@ static bt_slist_t br_servers;
 
 /* Pool for outgoing BR/EDR signaling packets, min MTU is 48 */
 BT_BUF_POOL_FIXED_DEFINE(br_sig_pool, CONFIG_BT_MAX_CONN,
-			  BT_L2CAP_BUF_SIZE(L2CAP_BR_MIN_MTU), 8, NULL);
+			  BT_L2CAP_BUF_SIZE(L2CAP_BR_MIN_MTU), CONFIG_BT_CONN_TX_USER_DATA_SIZE, NULL);
 
 #if defined(CONFIG_BT_L2CAP_RET_FC)
 static void br_tx_buf_destroy(struct bt_buf *buf)

@@ -83,7 +83,7 @@ config OPENBLUE_SAMPLES
 
 config OPENBLUE_BT_CMD
 	bool "Enable Bluetooth command samples"
-	depends on BT_SHELL
+	depends on OPENBLUE_SAMPLES && BT_SHELL
 	default n
 	help
 	  This option enables building Bluetooth command samples.

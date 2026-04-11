@@ -18,4 +18,35 @@ menuconfig LIB_OPENBLUE
 
 if LIB_OPENBLUE
 rsource "openblue/Kconfig"
+
+config OPENBLUE_APP_BTCMD
+	tristate "OpenBlue btcmd command"
+	depends on OPENBLUE_BT_CMD
+	default n
+
+config OPENBLUE_APP_BTCMD_STACKSIZE
+	int "OpenBlue btcmd stack size"
+	depends on OPENBLUE_APP_BTCMD
+	default 8192
+
+config OPENBLUE_APP_DEMO
+	tristate "OpenBlue demo command"
+	depends on OPENBLUE_SAMPLES
+	default n
+
+config OPENBLUE_APP_DEMO_STACKSIZE
+	int "OpenBlue demo stack size"
+	depends on OPENBLUE_APP_DEMO
+	default 8192
+
+config OPENBLUE_APP_TEST
+	tristate "OpenBlue test command"
+	depends on OPENBLUE_TESTS
+	default n
+
+config OPENBLUE_APP_TEST_STACKSIZE
+	int "OpenBlue test stack size"
+	depends on OPENBLUE_APP_TEST
+	default 12288
+
 endif

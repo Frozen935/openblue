@@ -3,7 +3,13 @@
 # Compute a unique object library name for the current source directory
 function(_openblue_compute_current_target out_var)
   # Compute relative dir from source root
-  file(RELATIVE_PATH _rel_dir "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+  if(DEFINED OPENBLUE_SOURCE_DIR)
+    set(_openblue_root_dir "${OPENBLUE_SOURCE_DIR}")
+  else()
+    set(_openblue_root_dir "${CMAKE_SOURCE_DIR}")
+  endif()
+
+  file(RELATIVE_PATH _rel_dir "${_openblue_root_dir}" "${CMAKE_CURRENT_SOURCE_DIR}")
   if(NOT _rel_dir OR _rel_dir STREQUAL ".")
     set(_rel_dir "root")
   endif()

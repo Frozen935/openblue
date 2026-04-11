@@ -73,6 +73,11 @@ cmake --build build -j4
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j4
 ```
 
+**GDB 调试构建:**
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build -j4
+```
+
 ### 注意事项
 
 - 如果在首次运行时在仓库根目录中找不到 `.config` 文件，需要运行 `cmake --build build --target genconfig` 来生成默认配置。

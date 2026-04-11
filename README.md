@@ -73,6 +73,11 @@ cmake --build build -j4
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j
 ```
 
+**For GDB debugging:**
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build -j4
+```
+
 ### Notes
 
 - If a `.config` file is not found in the repository root on the first run, run `cmake --build build --target genconfig` to generate a default configuration.

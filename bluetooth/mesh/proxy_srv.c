@@ -711,6 +711,9 @@ struct proxy_adv_request {
 
 static bool proxy_adv_request_get(struct bt_mesh_subnet *sub, struct proxy_adv_request *request)
 {
+	uint64_t now_ms;
+	int64_t remaining_ms;
+
 	if (!sub) {
 		return false;
 	}
@@ -726,20 +729,26 @@ static bool proxy_adv_request_get(struct bt_mesh_subnet *sub, struct proxy_adv_r
 	 *  connect to the network.
 	 */
 
+	now_ms = os_time_get_ms();
+
 #if defined(CONFIG_BT_MESH_OD_PRIV_PROXY_SRV)
 	if (bt_mesh_od_priv_proxy_get() > 0 && sub->solicited) {
 		int32_t timeout = MSEC_PER_SEC * (int32_t)bt_mesh_od_priv_proxy_get();
 
 		request->evt = OD_PRIV_NET_ID;
-		request->duration = !sub->priv_net_id_sent
-					    ? timeout
-				    : timeout - ((uint32_t)os_time_get_ms() - sub->priv_net_id_sent);
+		if (!sub->priv_net_id_sent) {
+			request->duration = timeout;
+		} else {
+			remaining_ms = (int64_t)timeout - (int64_t)(now_ms - sub->priv_net_id_sent);
+			request->duration = MAX(0, (int32_t)remaining_ms);
+		}
 		return true;
 	}
 #endif
 
 	if (sub->node_id == BT_MESH_NODE_IDENTITY_RUNNING) {
-		request->duration = NODE_ID_TIMEOUT - ((uint32_t)os_time_get_ms() - sub->node_id_start);
+		remaining_ms = (int64_t)NODE_ID_TIMEOUT - (int64_t)(now_ms - sub->node_id_start);
+		request->duration = MAX(0, (int32_t)remaining_ms);
 		request->evt =
 #if defined(CONFIG_BT_MESH_PRIV_BEACONS)
 			sub->priv_beacon_ctx.node_id ? PRIV_NODE_ID :
@@ -781,7 +790,7 @@ static struct bt_mesh_subnet *adv_sub_get_next(struct bt_mesh_subnet *sub_start,
 }
 
 static struct {
-	int32_t start;
+	int64_t start;
 	struct bt_mesh_subnet *sub;
 	struct proxy_adv_request request;
 } sub_adv;
@@ -826,7 +835,7 @@ static int gatt_proxy_advertise(void)
 		if ((sub_adv.request.duration != OS_TIMEOUT_FOREVER) &&
 		    proxy_adv_request_get(sub_adv.sub, &request) &&
 		    (sub_adv.request.evt == request.evt)) {
-			int32_t time_passed = (uint32_t)os_time_get_ms() - sub_adv.start;
+			int64_t time_passed = (int64_t)os_time_get_ms() - sub_adv.start;
 
 			if (time_passed < sub_adv.request.duration &&
 			    ((sub_adv.request.duration - time_passed) >= MSEC_PER_SEC)) {
@@ -850,7 +859,7 @@ end:
 	}
 
 	/* Save current state for next iteration */
-	sub_adv.start = (uint32_t)os_time_get_ms();
+	sub_adv.start = (int64_t)os_time_get_ms();
 	sub_adv.sub = sub;
 	sub_adv.request = request;
 

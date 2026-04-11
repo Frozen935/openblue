@@ -547,7 +547,7 @@ struct bt_mesh_model_pub {
 
 	uint8_t delayable:1;   /**< Use random delay for publishing. */
 
-	uint32_t period_start; /**< Start of the current period. */
+	uint64_t period_start; /**< Start of the current period. */
 
 	/** @brief Publication buffer, containing the publication message.
 	 *

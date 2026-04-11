@@ -32,7 +32,7 @@ static struct delayable_msg_ctx {
 	uint16_t src_addr;
 	const struct bt_mesh_send_cb *cb;
 	void *cb_data;
-	uint32_t fired_time;
+	uint64_t fired_time;
 	uint16_t len;
 } delayable_msgs_ctx[CONFIG_BT_MESH_ACCESS_DELAYABLE_MSG_COUNT];
 
@@ -86,7 +86,7 @@ static struct delayable_msg_ctx *peek_pending_msg(void)
 
 static void reschedule_delayable_msg(struct delayable_msg_ctx *msg)
 {
-	uint32_t curr_time;
+	uint64_t curr_time;
 	os_timeout_t delay = OS_TIMEOUT_NO_WAIT;
 	struct delayable_msg_ctx *pending_msg;
 
@@ -100,7 +100,7 @@ static void reschedule_delayable_msg(struct delayable_msg_ctx *msg)
 		return;
 	}
 
-	curr_time = (uint32_t)os_time_get_ms();
+	curr_time = os_time_get_ms();
 	if (curr_time < pending_msg->fired_time) {
 		delay = OS_MSEC(pending_msg->fired_time - curr_time);
 	}

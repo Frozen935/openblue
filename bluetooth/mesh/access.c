@@ -749,10 +749,10 @@ static int32_t next_period(const struct bt_mesh_model *mod)
 {
 	struct bt_mesh_model_pub *pub = mod->pub;
 	uint32_t period = 0;
-	uint32_t elapsed;
+	uint64_t elapsed;
 
-	elapsed = (uint32_t)os_time_get_ms() - pub->period_start;
-	LOG_DBG("Publishing took %ums", elapsed);
+	elapsed = os_time_get_ms() - pub->period_start;
+	LOG_DBG("Publishing took %llums", (unsigned long long)elapsed);
 
 	if (mod->pub->count) {
 		/* If a message is to be retransmitted, period should include time since the first
@@ -857,7 +857,7 @@ static int pub_period_start(struct bt_mesh_model_pub *pub)
 
 	err = pub->update(pub->mod);
 
-	pub->period_start = (uint32_t)os_time_get_ms();
+	pub->period_start = os_time_get_ms();
 
 	if (err) {
 		/* Skip this publish attempt. */
@@ -1626,7 +1626,7 @@ int bt_mesh_model_publish(const struct bt_mesh_model *model)
 
 	/* Account for initial transmission */
 	pub->count = BT_MESH_PUB_MSG_TOTAL(pub);
-	pub->period_start = (uint32_t)os_time_get_ms();
+	pub->period_start = os_time_get_ms();
 
 	LOG_DBG("Publish Retransmit Count %u Interval %ums", pub->count,
 		BT_MESH_PUB_TRANSMIT_INT(pub->retransmit));

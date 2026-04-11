@@ -27,7 +27,7 @@ static int create_mem_pool_list(struct bt_mem_pool *mpool)
 {
 	char *p;
 
-	os_sem_init(&mpool->wait, 0, 1);
+	os_sem_init(&mpool->wait, mpool->info.num_blocks, mpool->info.num_blocks);
 
 	/* blocks must be word aligned */
 	CHECKIF(((mpool->info.block_size | (uintptr_t)mpool->buffer) & (sizeof(void *) - 1)) !=
@@ -85,8 +85,19 @@ int bt_mem_pool_init(struct bt_mem_pool *mpool, void *buffer, size_t block_size,
 
 int bt_mem_pool_alloc(struct bt_mem_pool *mpool, void **mem, os_timeout_t timeout)
 {
-	os_mutex_lock(&lock, OS_TIMEOUT_FOREVER);
 	int result;
+
+	result = os_sem_take(&mpool->wait, timeout);
+	if (result) {
+		if (TIMEOUT_EQ(timeout, OS_TIMEOUT_NO_WAIT) && result == -ETIMEDOUT) {
+			*mem = NULL;
+			return -ENOMEM;
+		}
+
+		return result;
+	}
+
+	os_mutex_lock(&lock, OS_TIMEOUT_FOREVER);
 
 	if (mpool->free_list != NULL) {
 		/* take a free block */
@@ -94,22 +105,10 @@ int bt_mem_pool_alloc(struct bt_mem_pool *mpool, void **mem, os_timeout_t timeou
 		mpool->free_list = *(char **)(mpool->free_list);
 		mpool->info.num_used++;
 		result = 0;
-	} else if (TIMEOUT_EQ(timeout, OS_TIMEOUT_NO_WAIT)) {
-		/* don't wait for a free block to become available */
-		*mem = NULL;
-		result = -ENOMEM;
 	} else {
-		result = os_sem_take(&mpool->wait, timeout);
-		if (result) {
-			os_mutex_unlock(&lock);
-			return result;
-		}
-
 		__ASSERT_NO_MSG(mpool->free_list != NULL);
-
-		*mem = mpool->free_list;
-		mpool->free_list = *(char **)(mpool->free_list);
-		mpool->info.num_used++;
+		*mem = NULL;
+		result = -EIO;
 	}
 
 	os_mutex_unlock(&lock);
@@ -125,9 +124,9 @@ void bt_mem_pool_free(struct bt_mem_pool *mpool, void *mem)
 	mpool->free_list = (char *)mem;
 	mpool->info.num_used--;
 
-	(void)os_sem_give(&mpool->wait);
-
 	os_mutex_unlock(&lock);
+
+	(void)os_sem_give(&mpool->wait);
 }
 
 STACK_INIT(mem_pool_list_init, STACK_BASE_INIT, 0);

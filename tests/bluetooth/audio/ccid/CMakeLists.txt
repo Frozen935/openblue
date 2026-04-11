@@ -2,10 +2,9 @@
 
 cmake_minimum_required(VERSION 3.20.0)
 
-find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(bluetooth_ccid)
-
-target_sources(app PRIVATE
-  # Test source files
-  src/main.c
+openblue_add_native_test(test_bt_audio_ccid
+                         "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c"
+                         "bluetooth/audio/ccid")
+target_sources(test_bt_audio_ccid PRIVATE
+  ${CMAKE_SOURCE_DIR}/bluetooth/audio/ccid.c
 )

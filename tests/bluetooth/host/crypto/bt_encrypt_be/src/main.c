@@ -7,35 +7,26 @@
 #include "mocks/aes.h"
 #include "mocks/aes_expects.h"
 
-#include <zephyr/bluetooth/crypto.h>
-#include <zephyr/fff.h>
-#include <zephyr/kernel.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <cmocka.h>
+
+#include <bluetooth/crypto.h>
 
 #include <host/crypto.h>
 
-DEFINE_FFF_GLOBALS;
-
-static void fff_reset_rule_before(const struct ztest_unit_test *test, void *fixture)
+static int setup(void **state)
 {
-	AES_FFF_FAKES_LIST(RESET_FAKE);
+	(void)state;
+	reset_aes_fakes();
+	return 0;
 }
 
-ZTEST_RULE(fff_reset_rule, fff_reset_rule_before, NULL);
-
-ZTEST_SUITE(bt_encrypt_be, NULL, NULL, NULL, NULL, NULL);
-
-/*
- *  Test bt_encrypt_be() succeeds
- *
- *  Constraints:
- *   - psa_import_key() succeeds and returns 'PSA_SUCCESS'.
- *   - psa_cipher_encrypt() succeeds and returns 'PSA_SUCCESS'.
- *
- *  Expected behaviour:
- *   - bt_encrypt_be() returns 0 (success)
- */
-ZTEST(bt_encrypt_be, test_bt_encrypt_be_succeeds)
+static void test_bt_encrypt_be_succeeds(void **state)
 {
+	(void)state;
 	int err;
 	const uint8_t key[16] = {0};
 	const uint8_t plaintext[16] = {0};
@@ -48,5 +39,14 @@ ZTEST(bt_encrypt_be, test_bt_encrypt_be_succeeds)
 
 	expect_single_call_psa_cipher_encrypt(enc_data);
 
-	zassert_ok(err, "Unexpected error code '%d' was returned", err);
+	assert_int_equal(err, 0);
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup(test_bt_encrypt_be_succeeds, setup),
+	};
+
+	return cmocka_run_group_tests_name("bt_encrypt_be", tests, NULL, NULL);
 }

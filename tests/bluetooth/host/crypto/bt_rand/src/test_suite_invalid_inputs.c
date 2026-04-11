@@ -4,18 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "host_mocks/assert.h"
 #include "mocks/hci_core.h"
 #include "mocks/hci_core_expects.h"
 #include "mocks/prng.h"
 #include "mocks/prng_expects.h"
 
-#include <zephyr/bluetooth/crypto.h>
-#include <zephyr/kernel.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <cmocka.h>
+
+#include <bluetooth/crypto.h>
 
 #include <host/crypto.h>
 
-ZTEST_SUITE(bt_rand_invalid_cases, NULL, NULL, NULL, NULL, NULL);
+static int setup(void **state)
+{
+	(void)state;
+	reset_bt_hci_le_rand_fake();
+	reset_prng_fakes();
+	return 0;
+}
 
 /*
  *  Test passing NULL reference destination buffer argument
@@ -26,10 +36,15 @@ ZTEST_SUITE(bt_rand_invalid_cases, NULL, NULL, NULL, NULL, NULL);
  *  Expected behaviour:
  *   - An assertion is raised and execution stops
  */
-ZTEST(bt_rand_invalid_cases, test_null_dst_buf_reference)
+static void test_null_dst_buf_reference(void **state)
 {
-	expect_assert();
-	bt_rand(NULL, 1);
+	(void)state;
+
+#if defined(CONFIG_BT_HOST_CRYPTO_PRNG)
+	skip();
+#else
+	assert_int_equal(bt_rand(NULL, 1), -EINVAL);
+#endif
 }
 
 /*
@@ -42,12 +57,17 @@ ZTEST(bt_rand_invalid_cases, test_null_dst_buf_reference)
  *  Expected behaviour:
  *   - An assertion is raised and execution stops
  */
-ZTEST(bt_rand_invalid_cases, test_zero_dst_buf_size_reference)
+static void test_zero_dst_buf_size_reference(void **state)
 {
+	(void)state;
 	uint8_t buf[16];
 
-	expect_assert();
-	bt_rand(buf, 0);
+
+#if defined(CONFIG_BT_HOST_CRYPTO_PRNG)
+	skip();
+#else
+	assert_int_equal(bt_rand(buf, 0), -EINVAL);
+#endif
 }
 
 /*
@@ -61,14 +81,17 @@ ZTEST(bt_rand_invalid_cases, test_zero_dst_buf_size_reference)
  *  Expected behaviour:
  *   - bt_rand() returns a negative error code (failure)
  */
-ZTEST(bt_rand_invalid_cases, test_bt_hci_le_rand_fails)
+static void test_bt_hci_le_rand_fails(void **state)
 {
+	(void)state;
+
+#if defined(CONFIG_BT_HOST_CRYPTO_PRNG)
+	skip();
+#else
 	int err;
 	uint8_t buf[16];
 	size_t buf_len = 16;
 	uint8_t expected_args_history[] = {16};
-
-	Z_TEST_SKIP_IFDEF(CONFIG_BT_HOST_CRYPTO_PRNG);
 
 	bt_hci_le_rand_fake.return_val = -1;
 
@@ -76,7 +99,8 @@ ZTEST(bt_rand_invalid_cases, test_bt_hci_le_rand_fails)
 
 	expect_call_count_bt_hci_le_rand(1, expected_args_history);
 
-	zassert_true(err < 0, "Unexpected error code '%d' was returned", err);
+	assert_true(err < 0);
+#endif
 }
 
 /*
@@ -90,13 +114,16 @@ ZTEST(bt_rand_invalid_cases, test_bt_hci_le_rand_fails)
  *  Expected behaviour:
  *   - bt_rand() returns a negative error code '-EIO' (failure)
  */
-ZTEST(bt_rand_invalid_cases, test_tc_hmac_prng_generate_fails_on_first_call)
+static void test_tc_hmac_prng_generate_fails_on_first_call(void **state)
 {
+	(void)state;
+
+#if !defined(CONFIG_BT_HOST_CRYPTO_PRNG)
+	skip();
+#else
 	int err;
 	uint8_t buf[16];
 	size_t buf_len = 16;
-
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_HOST_CRYPTO_PRNG);
 
 	psa_generate_random_fake.return_val = -EIO;
 
@@ -104,5 +131,18 @@ ZTEST(bt_rand_invalid_cases, test_tc_hmac_prng_generate_fails_on_first_call)
 
 	expect_single_call_psa_generate_random(buf, buf_len);
 
-	zassert_true(err == -EIO, "Unexpected error code '%d' was returned", err);
+	assert_int_equal(err, -EIO);
+#endif
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup(test_null_dst_buf_reference, setup),
+		cmocka_unit_test_setup(test_zero_dst_buf_size_reference, setup),
+		cmocka_unit_test_setup(test_bt_hci_le_rand_fails, setup),
+		cmocka_unit_test_setup(test_tc_hmac_prng_generate_fails_on_first_call, setup),
+	};
+
+	return cmocka_run_group_tests_name("bt_rand_invalid_cases", tests, NULL, NULL);
 }

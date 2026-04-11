@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
+#include <stdint.h>
 
 /*
  *  Validate expected behaviour when psa_crypto_init() is called
@@ -20,4 +20,4 @@ void expect_single_call_tc_psa_crypto_init(void);
  *  Expected behaviour:
  *   - psa_generate_random() to be called once with correct parameters
  */
-void expect_single_call_psa_generate_random(uint8_t *out, unsigned int outlen);
+void expect_single_call_psa_generate_random(uint8_t *out, size_t outlen);

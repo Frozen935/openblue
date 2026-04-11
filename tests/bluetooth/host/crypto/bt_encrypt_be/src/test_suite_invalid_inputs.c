@@ -4,15 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "host_mocks/assert.h"
 #include "mocks/aes.h"
 
-#include <zephyr/bluetooth/crypto.h>
-#include <zephyr/kernel.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <cmocka.h>
+
+#include <bluetooth/crypto.h>
 
 #include <host/crypto.h>
 
-ZTEST_SUITE(bt_encrypt_be_invalid_cases, NULL, NULL, NULL, NULL, NULL);
+static int setup(void **state)
+{
+	(void)state;
+	reset_aes_fakes();
+	return 0;
+}
 
 /*
  *  Test passing NULL reference for the key argument
@@ -24,13 +33,13 @@ ZTEST_SUITE(bt_encrypt_be_invalid_cases, NULL, NULL, NULL, NULL, NULL);
  *  Expected behaviour:
  *   - An assertion is raised and execution stops
  */
-ZTEST(bt_encrypt_be_invalid_cases, test_null_key_reference)
+static void test_null_key_reference(void **state)
 {
+	(void)state;
 	const uint8_t plaintext[16] = {0};
 	uint8_t enc_data[16] = {0};
 
-	expect_assert();
-	bt_encrypt_le(NULL, plaintext, enc_data);
+	assert_int_equal(bt_encrypt_be(NULL, plaintext, enc_data), -EINVAL);
 }
 
 /*
@@ -43,13 +52,13 @@ ZTEST(bt_encrypt_be_invalid_cases, test_null_key_reference)
  *  Expected behaviour:
  *   - An assertion is raised and execution stops
  */
-ZTEST(bt_encrypt_be_invalid_cases, test_null_plaintext_reference)
+static void test_null_plaintext_reference(void **state)
 {
+	(void)state;
 	const uint8_t key[16] = {0};
 	uint8_t enc_data[16] = {0};
 
-	expect_assert();
-	bt_encrypt_le(key, NULL, enc_data);
+	assert_int_equal(bt_encrypt_be(key, NULL, enc_data), -EINVAL);
 }
 
 /*
@@ -62,13 +71,13 @@ ZTEST(bt_encrypt_be_invalid_cases, test_null_plaintext_reference)
  *  Expected behaviour:
  *   - An assertion is raised and execution stops
  */
-ZTEST(bt_encrypt_be_invalid_cases, test_null_enc_data_reference)
+static void test_null_enc_data_reference(void **state)
 {
+	(void)state;
 	const uint8_t key[16] = {0};
 	const uint8_t plaintext[16] = {0};
 
-	expect_assert();
-	bt_encrypt_le(key, plaintext, NULL);
+	assert_int_equal(bt_encrypt_be(key, plaintext, NULL), -EINVAL);
 }
 
 /*
@@ -80,8 +89,9 @@ ZTEST(bt_encrypt_be_invalid_cases, test_null_enc_data_reference)
  *  Expected behaviour:
  *   - bt_encrypt_le() returns a negative error code '-EINVAL' (failure)
  */
-ZTEST(bt_encrypt_be_invalid_cases, test_psa_import_key_fails)
+static void test_psa_import_key_fails(void **state)
 {
+	(void)state;
 	int err;
 	const uint8_t key[16] = {0};
 	const uint8_t plaintext[16] = {0};
@@ -91,7 +101,7 @@ ZTEST(bt_encrypt_be_invalid_cases, test_psa_import_key_fails)
 
 	err = bt_encrypt_le(key, plaintext, enc_data);
 
-	zassert_true(err == -EINVAL, "Unexpected error code '%d' was returned", err);
+	assert_int_equal(err, -EINVAL);
 }
 
 /*
@@ -104,8 +114,9 @@ ZTEST(bt_encrypt_be_invalid_cases, test_psa_import_key_fails)
  *  Expected behaviour:
  *   - bt_encrypt_le() returns a negative error code '-EINVAL' (failure)
  */
-ZTEST(bt_encrypt_be_invalid_cases, test_psa_cipher_encrypt_fails)
+static void test_psa_cipher_encrypt_fails(void **state)
 {
+	(void)state;
 	int err;
 	const uint8_t key[16] = {0};
 	const uint8_t plaintext[16] = {0};
@@ -114,7 +125,20 @@ ZTEST(bt_encrypt_be_invalid_cases, test_psa_cipher_encrypt_fails)
 	psa_import_key_fake.return_val = PSA_SUCCESS;
 	psa_cipher_encrypt_fake.return_val = -EINVAL;
 
-	err = bt_encrypt_le(key, plaintext, enc_data);
+	err = bt_encrypt_be(key, plaintext, enc_data);
 
-	zassert_true(err == -EIO, "Unexpected error code '%d' was returned", err);
+	assert_int_equal(err, -EIO);
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup(test_null_key_reference, setup),
+		cmocka_unit_test_setup(test_null_plaintext_reference, setup),
+		cmocka_unit_test_setup(test_null_enc_data_reference, setup),
+		cmocka_unit_test_setup(test_psa_import_key_fails, setup),
+		cmocka_unit_test_setup(test_psa_cipher_encrypt_fails, setup),
+	};
+
+	return cmocka_run_group_tests_name("bt_encrypt_be_invalid_cases", tests, NULL, NULL);
 }

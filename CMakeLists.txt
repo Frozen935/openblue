@@ -59,8 +59,15 @@ endif()
 # Prepare Kconfig (and install kconfiglib if needed)
 openblue_prepare_kconfig_dependency()
 
+# Config file path: default to repository root, but allow focused test builds
+# to override it with a suite-local .config.
+set(OPENBLUE_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.config" CACHE FILEPATH "Path to OpenBlue .config")
+if(NOT IS_ABSOLUTE "${OPENBLUE_CONFIG_FILE}")
+  set(OPENBLUE_CONFIG_FILE "${CMAKE_SOURCE_DIR}/${OPENBLUE_CONFIG_FILE}")
+endif()
+
 # Load Kconfig configuration
-openblue_load_kconfig(${CMAKE_SOURCE_DIR}/.config)
+openblue_load_kconfig(${OPENBLUE_CONFIG_FILE})
 
 # Prepare mbedtls
 #openblue_prepare_mbedtls()
@@ -121,7 +128,7 @@ if(Python3_FOUND)
   add_custom_target(menuconfig
     DEPENDS kconfig-deps
     COMMAND ${CMAKE_COMMAND} -E echo "[Kconfig] Launching menuconfig UI..."
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/kconfig/run_menuconfig.py ${CMAKE_SOURCE_DIR}/Kconfig ${CMAKE_SOURCE_DIR}/.config
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/kconfig/run_menuconfig.py ${CMAKE_SOURCE_DIR}/Kconfig ${OPENBLUE_CONFIG_FILE}
     COMMAND ${CMAKE_COMMAND} -E echo "[Kconfig] menuconfig completed. Please re-run cmake -S . -B build to apply the configuration, or directly run cmake --build build --target genconfig."
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "OpenBlue Kconfig menuconfig"
@@ -139,9 +146,9 @@ if(Python3_FOUND)
   add_custom_target(genconfig
     DEPENDS kconfig-deps
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/include/generated
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/kconfig/genconfig.py --header-output ${CMAKE_BINARY_DIR}/include/generated/autoconf.h ${CMAKE_SOURCE_DIR}/.config
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/kconfig/genconfig.py --header-output ${CMAKE_BINARY_DIR}/include/generated/autoconf.h ${OPENBLUE_CONFIG_FILE}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Generate autoconf.h from .config -> ${CMAKE_BINARY_DIR}/include/generated/autoconf.h"
+    COMMENT "Generate autoconf.h from ${OPENBLUE_CONFIG_FILE} -> ${CMAKE_BINARY_DIR}/include/generated/autoconf.h"
     VERBATIM
   )
 else()
@@ -199,5 +206,7 @@ endforeach()
 add_subdirectory(samples)
 
 if(DEFINED CONFIG_OPENBLUE_TESTS AND CONFIG_OPENBLUE_TESTS)
+  include(CTest)
+  enable_testing()
   add_subdirectory(tests)
 endif()

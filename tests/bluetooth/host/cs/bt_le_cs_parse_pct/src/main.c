@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/bluetooth/cs.h>
-#include <zephyr/fff.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
 
-DEFINE_FFF_GLOBALS;
+#include <cmocka.h>
 
-ZTEST_SUITE(bt_le_cs_parse_pct, NULL, NULL, NULL, NULL, NULL);
+#include <bluetooth/cs.h>
 
 /*
  *  Test success case
@@ -21,8 +21,9 @@ ZTEST_SUITE(bt_le_cs_parse_pct, NULL, NULL, NULL, NULL, NULL);
  *  Expected behaviour:
  *   - IQ term matches expected values
  */
-ZTEST(bt_le_cs_parse_pct, test_parsing_success)
+static void test_parsing_success(void **state)
 {
+	(void)state;
 	struct bt_le_cs_iq_sample iq;
 
 	struct {
@@ -96,11 +97,16 @@ ZTEST(bt_le_cs_parse_pct, test_parsing_success)
 	for (uint16_t k = 0; k < ARRAY_SIZE(test_vector); k++) {
 		iq = bt_le_cs_parse_pct(test_vector[k].input);
 
-		zassert_equal(iq.i, test_vector[k].output.i,
-			      "Failed for k = %u, expected %d, not %d", k, test_vector[k].output.i,
-			      iq.i);
-		zassert_equal(iq.q, test_vector[k].output.q,
-			      "Failed for k = %u, expected %d, not %d", k, test_vector[k].output.q,
-			      iq.q);
+		assert_int_equal(iq.i, test_vector[k].output.i);
+		assert_int_equal(iq.q, test_vector[k].output.q);
 	}
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(test_parsing_success),
+	};
+
+	return cmocka_run_group_tests_name("bt_le_cs_parse_pct", tests, NULL, NULL);
 }

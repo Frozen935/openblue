@@ -6,32 +6,44 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
+#include <stdarg.h>
 #include <stddef.h>
-#include <zephyr/ztest.h>
+#include <setjmp.h>
+#include <string.h>
 
-#include <zephyr/bluetooth/hci.h>
+#include <cmocka.h>
 
-ZTEST_SUITE(test_hci, NULL, NULL, NULL, NULL, NULL);
+#include <bluetooth/hci.h>
 
-ZTEST(test_hci, test_bt_hci_err_to_str)
+static void test_bt_hci_err_to_str_case(void **state)
 {
+	(void)state;
+
 	/* Test a couple of entries */
-	zassert_mem_equal(bt_hci_err_to_str(BT_HCI_ERR_CONN_TIMEOUT),
-			  "BT_HCI_ERR_CONN_TIMEOUT", strlen("BT_HCI_ERR_CONN_TIMEOUT"));
-	zassert_mem_equal(bt_hci_err_to_str(BT_HCI_ERR_REMOTE_USER_TERM_CONN),
-			  "BT_HCI_ERR_REMOTE_USER_TERM_CONN",
-			  strlen("BT_HCI_ERR_REMOTE_USER_TERM_CONN"));
-	zassert_mem_equal(bt_hci_err_to_str(BT_HCI_ERR_TOO_EARLY),
-			  "BT_HCI_ERR_TOO_EARLY", strlen("BT_HCI_ERR_TOO_EARLY"));
+	assert_memory_equal(bt_hci_err_to_str(BT_HCI_ERR_CONN_TIMEOUT),
+			    "BT_HCI_ERR_CONN_TIMEOUT", strlen("BT_HCI_ERR_CONN_TIMEOUT"));
+	assert_memory_equal(bt_hci_err_to_str(BT_HCI_ERR_REMOTE_USER_TERM_CONN),
+			    "BT_HCI_ERR_REMOTE_USER_TERM_CONN",
+			    strlen("BT_HCI_ERR_REMOTE_USER_TERM_CONN"));
+	assert_memory_equal(bt_hci_err_to_str(BT_HCI_ERR_TOO_EARLY),
+			    "BT_HCI_ERR_TOO_EARLY", strlen("BT_HCI_ERR_TOO_EARLY"));
 
 	/* Test a entries that is not used */
-	zassert_mem_equal(bt_hci_err_to_str(0x2b),
-			  "(unknown)", strlen("(unknown)"));
-	zassert_mem_equal(bt_hci_err_to_str(0xFF),
-			  "(unknown)", strlen("(unknown)"));
+	assert_memory_equal(bt_hci_err_to_str(0x2b),
+			    "(unknown)", strlen("(unknown)"));
+	assert_memory_equal(bt_hci_err_to_str(0xFF),
+			    "(unknown)", strlen("(unknown)"));
 
 	for (uint16_t i = 0; i <= UINT8_MAX; i++) {
-		zassert_not_null(bt_hci_err_to_str(i), ": %d", i);
+		assert_non_null(bt_hci_err_to_str(i));
 	}
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(test_bt_hci_err_to_str_case),
+	};
+
+	return cmocka_run_group_tests_name("bt_hci", tests, NULL, NULL);
 }

@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/bluetooth/cs.h>
-#include <zephyr/fff.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
 
-DEFINE_FFF_GLOBALS;
+#include <cmocka.h>
 
-ZTEST_SUITE(bt_le_cs_set_valid_chmap_bits, NULL, NULL, NULL, NULL, NULL);
+#include <bluetooth/cs.h>
 
 /*
  *  Test uninitialized chmap buffer is populated correctly
@@ -18,13 +18,23 @@ ZTEST_SUITE(bt_le_cs_set_valid_chmap_bits, NULL, NULL, NULL, NULL, NULL);
  *  Expected behaviour:
  *   - test_chmap matches correct_chmap
  */
-ZTEST(bt_le_cs_set_valid_chmap_bits, test_uninitialized_chmap)
+static void test_uninitialized_chmap(void **state)
 {
+	(void)state;
 	uint8_t test_chmap[10];
 
 	bt_le_cs_set_valid_chmap_bits(test_chmap);
 
 	uint8_t correct_chmap[10] = {0xFC, 0xFF, 0x7F, 0xFC, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x1F};
 
-	zassert_mem_equal(test_chmap, correct_chmap, 10);
+	assert_memory_equal(test_chmap, correct_chmap, 10);
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(test_uninitialized_chmap),
+	};
+
+	return cmocka_run_group_tests_name("bt_le_cs_set_valid_chmap_bits", tests, NULL, NULL);
 }

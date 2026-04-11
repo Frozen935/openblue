@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
+#include <stdint.h>
 
 /*
  *  Validate expected behaviour when psa_cipher_encrypt() is called

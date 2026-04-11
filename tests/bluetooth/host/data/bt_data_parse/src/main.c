@@ -4,22 +4,47 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/kernel.h>
-#include <zephyr/bluetooth/bluetooth.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
 
-DEFINE_FFF_GLOBALS;
+#include <cmocka.h>
 
-FAKE_VALUE_FUNC(bool, bt_data_parse_func, struct bt_data *, void *);
+#include <base/bt_buf.h>
+#include <bluetooth/bluetooth.h>
 
-static void fff_reset_rule_before(const struct ztest_unit_test *test, void *fixture)
+struct parse_ctx {
+	int call_count;
+	bool return_value;
+	const uint8_t *data;
+	size_t len;
+	bool validate_contents;
+};
+
+static bool bt_data_parse_counting_cb(struct bt_data *data, void *user_data)
 {
-	RESET_FAKE(bt_data_parse_func);
+	struct parse_ctx *ctx = user_data;
+
+	ctx->call_count++;
+	if (!ctx->validate_contents) {
+		return ctx->return_value;
+	}
+
+	assert_true(ctx->len-- > 0);
+	assert_int_equal(data->data_len, *ctx->data - 1);
+	ctx->data++;
+
+	assert_true(ctx->len-- > 0);
+	assert_int_equal(data->type, *ctx->data);
+	ctx->data++;
+
+	assert_true(ctx->len >= data->data_len);
+	assert_memory_equal(data->data, ctx->data, data->data_len);
+	ctx->data += data->data_len;
+	ctx->len -= data->data_len;
+
+	return ctx->return_value;
 }
-
-ZTEST_RULE(fff_reset_rule, fff_reset_rule_before, NULL);
-
-ZTEST_SUITE(bt_data_parse, NULL, NULL, NULL, NULL, NULL);
 
 /*
  *  Test empty data buffer
@@ -30,13 +55,15 @@ ZTEST_SUITE(bt_data_parse, NULL, NULL, NULL, NULL, NULL);
  *  Expected behaviour:
  *   - Callback function is not called
  */
-ZTEST(bt_data_parse, test_parsing_empty_buf)
+static void test_parsing_empty_buf(void **state)
 {
-	struct net_buf_simple *buf = NET_BUF_SIMPLE(0);
+	(void)state;
+	struct bt_buf_simple *buf = BT_BUF_SIMPLE(0);
+	struct parse_ctx ctx = {0};
 
-	bt_data_parse(buf, bt_data_parse_func, NULL);
+	bt_data_parse(buf, bt_data_parse_counting_cb, &ctx);
 
-	zassert_equal(bt_data_parse_func_fake.call_count, 0);
+	assert_int_equal(ctx.call_count, 0);
 }
 
 /*
@@ -48,9 +75,10 @@ ZTEST(bt_data_parse, test_parsing_empty_buf)
  *  Expected behaviour:
  *   - Callback function is called N - 1 times
  */
-ZTEST(bt_data_parse, test_parsing_invalid_length)
+static void test_parsing_invalid_length(void **state)
 {
-	struct net_buf_simple buf;
+	(void)state;
+	struct bt_buf_simple buf;
 	uint8_t data[] = {
 		/* Significant part */
 		0x02, 0x01, 0x00,                       /* AD Structure 1 */
@@ -60,14 +88,15 @@ ZTEST(bt_data_parse, test_parsing_invalid_length)
 		0x05, 0x04, 0x03, 0x02, 0x01, 0x00,     /* AD Structure N + 1 */
 	};
 
-	bt_data_parse_func_fake.return_val = true;
+	struct parse_ctx ctx = {
+		.return_value = true,
+	};
 
-	net_buf_simple_init_with_data(&buf, data, ARRAY_SIZE(data));
+	bt_buf_simple_init_with_data(&buf, data, ARRAY_SIZE(data));
 
-	bt_data_parse(&buf, bt_data_parse_func, NULL);
+	bt_data_parse(&buf, bt_data_parse_counting_cb, &ctx);
 
-	zassert_equal(2, bt_data_parse_func_fake.call_count,
-		      "called %d", bt_data_parse_func_fake.call_count);
+	assert_int_equal(ctx.call_count, 2);
 }
 
 /*
@@ -80,9 +109,10 @@ ZTEST(bt_data_parse, test_parsing_invalid_length)
  *  Expected behaviour:
  *   - Callback function is called N times
  */
-ZTEST(bt_data_parse, test_parsing_early_termination)
+static void test_parsing_early_termination(void **state)
 {
-	struct net_buf_simple buf;
+	(void)state;
+	struct bt_buf_simple buf;
 	uint8_t data[] = {
 		/* Significant part */
 		0x02, 0x01, 0x00,                       /* AD Structure 1 */
@@ -92,14 +122,15 @@ ZTEST(bt_data_parse, test_parsing_early_termination)
 		0x00, 0x00, 0x00, 0x00, 0x00
 	};
 
-	bt_data_parse_func_fake.return_val = true;
+	struct parse_ctx ctx = {
+		.return_value = true,
+	};
 
-	net_buf_simple_init_with_data(&buf, data, ARRAY_SIZE(data));
+	bt_buf_simple_init_with_data(&buf, data, ARRAY_SIZE(data));
 
-	bt_data_parse(&buf, bt_data_parse_func, NULL);
+	bt_data_parse(&buf, bt_data_parse_counting_cb, &ctx);
 
-	zassert_equal(3, bt_data_parse_func_fake.call_count,
-		      "called %d", bt_data_parse_func_fake.call_count);
+	assert_int_equal(ctx.call_count, 3);
 }
 
 /*
@@ -112,52 +143,25 @@ ZTEST(bt_data_parse, test_parsing_early_termination)
  *  Expected behaviour:
  *   - Once parsing is stopped, the callback is not called anymore
  */
-ZTEST(bt_data_parse, test_parsing_stopped)
+static void test_parsing_stopped(void **state)
 {
-	struct net_buf_simple buf;
+	(void)state;
+	struct bt_buf_simple buf;
 	uint8_t data[] = {
 		/* Significant part */
 		0x02, 0x01, 0x00,                       /* AD Structure 1 */
 		0x03, 0x02, 0x01, 0x00,                 /* AD Structure 2 */
 	};
 
-	bt_data_parse_func_fake.return_val = false;
+	struct parse_ctx ctx = {
+		.return_value = false,
+	};
 
-	net_buf_simple_init_with_data(&buf, data, ARRAY_SIZE(data));
+	bt_buf_simple_init_with_data(&buf, data, ARRAY_SIZE(data));
 
-	bt_data_parse(&buf, bt_data_parse_func, NULL);
+	bt_data_parse(&buf, bt_data_parse_counting_cb, &ctx);
 
-	zassert_equal(1, bt_data_parse_func_fake.call_count,
-		      "called %d", bt_data_parse_func_fake.call_count);
-}
-
-struct custom_fake_user_data {
-	const uint8_t *data;
-	size_t len;
-};
-
-static bool bt_data_parse_func_custom_fake(struct bt_data *data,
-					   void *user_data)
-{
-	struct custom_fake_user_data *ud = user_data;
-
-	/* length check */
-	zassert_true(ud->len-- > 0);
-	zassert_equal(data->data_len, *ud->data - 1);
-	ud->data++;
-
-	/* type check */
-	zassert_true(ud->len-- > 0);
-	zassert_equal(data->type, *ud->data);
-	ud->data++;
-
-	/* value check */
-	zassert_true(ud->len >= data->data_len);
-	zassert_mem_equal(data->data, ud->data, data->data_len);
-	ud->data += data->data_len;
-	ud->len -= data->data_len;
-
-	return true;
+	assert_int_equal(ctx.call_count, 1);
 }
 
 /*
@@ -170,25 +174,38 @@ static bool bt_data_parse_func_custom_fake(struct bt_data *data,
  *  Expected behaviour:
  *   - Data passed to the callback match the expected data
  */
-ZTEST(bt_data_parse, test_parsing_success)
+static void test_parsing_success(void **state)
 {
-	struct net_buf_simple buf;
+	(void)state;
+	struct bt_buf_simple buf;
 	uint8_t data[] = {
 		/* Significant part */
 		0x02, 0x01, 0x00,                       /* AD Structure 1 */
 		0x03, 0x02, 0x01, 0x00,                 /* AD Structure 2 */
 	};
-	struct custom_fake_user_data user_data = {
+	struct parse_ctx ctx = {
 		.data = data,
 		.len = ARRAY_SIZE(data),
+		.return_value = true,
+		.validate_contents = true,
 	};
 
-	bt_data_parse_func_fake.custom_fake = bt_data_parse_func_custom_fake;
+	bt_buf_simple_init_with_data(&buf, data, ARRAY_SIZE(data));
 
-	net_buf_simple_init_with_data(&buf, data, ARRAY_SIZE(data));
+	bt_data_parse(&buf, bt_data_parse_counting_cb, &ctx);
 
-	bt_data_parse(&buf, bt_data_parse_func, &user_data);
+	assert_int_equal(ctx.call_count, 2);
+}
 
-	zassert_equal(2, bt_data_parse_func_fake.call_count,
-		      "called %d", bt_data_parse_func_fake.call_count);
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(test_parsing_empty_buf),
+		cmocka_unit_test(test_parsing_invalid_length),
+		cmocka_unit_test(test_parsing_early_termination),
+		cmocka_unit_test(test_parsing_stopped),
+		cmocka_unit_test(test_parsing_success),
+	};
+
+	return cmocka_run_group_tests_name("bt_data_parse", tests, NULL, NULL);
 }

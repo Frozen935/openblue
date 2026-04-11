@@ -4,11 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/fff.h>
+#include <stddef.h>
 
-/* List of fakes used by this unit tester */
-#define HCI_CORE_FFF_FAKES_LIST(FAKE)         \
-		FAKE(bt_hci_le_rand)                  \
+struct bt_hci_le_rand_fake_state {
+	int call_count;
+	int return_val;
+	void *arg0_val;
+	size_t arg1_val;
+	void *arg0_history[8];
+	size_t arg1_history[8];
+};
 
-DECLARE_FAKE_VALUE_FUNC(int, bt_hci_le_rand, void *, size_t);
+extern struct bt_hci_le_rand_fake_state bt_hci_le_rand_fake;
+
+void reset_bt_hci_le_rand_fake(void);
+int bt_hci_le_rand(void *buf, size_t len);

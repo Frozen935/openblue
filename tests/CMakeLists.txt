@@ -34,4 +34,4 @@ endfunction()
 add_subdirectory(base)
 add_subdirectory(osdep)
 
-# `tests/bluetooth` 暂不纳入 openblue 原生 CMake 层级。
+add_subdirectory(bluetooth)

@@ -3,17 +3,22 @@
  */
 
 #include <stdint.h>
-#include <zephyr/ztest.h>
-#include <zephyr/bluetooth/uuid.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <cmocka.h>
+
+#include <bluetooth/uuid.h>
 
 static struct bt_uuid_128 le_128 = BT_UUID_INIT_128(
 	0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80,
 	0x00, 0x10, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00);
 
-ZTEST_SUITE(bt_uuid_create, NULL, NULL, NULL, NULL, NULL);
-
-ZTEST(bt_uuid_create, test_uuid_create)
+static void test_uuid_create_case(void **state)
 {
+	(void)state;
+
 	uint8_t le16[] = { 0x01, 0x00 };
 	uint8_t be16[] = { 0x00, 0x01 };
 	union {
@@ -23,34 +28,35 @@ ZTEST(bt_uuid_create, test_uuid_create)
 	} u;
 
 	/* Create UUID from LE 16 bit byte array */
-	zassert_true(bt_uuid_create(&u.uuid, le16, sizeof(le16)),
-		     "Unable create UUID");
+	assert_true(bt_uuid_create(&u.uuid, le16, sizeof(le16)));
 
 	/* Compare UUID 16 bits */
-	zassert_true(bt_uuid_cmp(&u.uuid, BT_UUID_DECLARE_16(0x0001)) == 0,
-		     "Test UUIDs don't match");
+	assert_true(bt_uuid_cmp(&u.uuid, BT_UUID_DECLARE_16(0x0001)) == 0);
 
 	/* Compare UUID 128 bits */
-	zassert_true(bt_uuid_cmp(&u.uuid, &le_128.uuid) == 0,
-		     "Test UUIDs don't match");
+	assert_true(bt_uuid_cmp(&u.uuid, &le_128.uuid) == 0);
 
 	/* Compare swapped UUID 16 bits */
-	zassert_false(bt_uuid_cmp(&u.uuid, BT_UUID_DECLARE_16(0x0100)) == 0,
-		     "Test UUIDs match");
+	assert_false(bt_uuid_cmp(&u.uuid, BT_UUID_DECLARE_16(0x0100)) == 0);
 
 	/* Create UUID from BE 16 bit byte array */
-	zassert_true(bt_uuid_create(&u.uuid, be16, sizeof(be16)),
-		     "Unable create UUID");
+	assert_true(bt_uuid_create(&u.uuid, be16, sizeof(be16)));
 
 	/* Compare UUID 16 bits */
-	zassert_false(bt_uuid_cmp(&u.uuid, BT_UUID_DECLARE_16(0x0001)) == 0,
-		     "Test UUIDs match");
+	assert_false(bt_uuid_cmp(&u.uuid, BT_UUID_DECLARE_16(0x0001)) == 0);
 
 	/* Compare UUID 128 bits */
-	zassert_false(bt_uuid_cmp(&u.uuid, &le_128.uuid) == 0,
-		     "Test UUIDs match");
+	assert_false(bt_uuid_cmp(&u.uuid, &le_128.uuid) == 0);
 
 	/* Compare swapped UUID 16 bits */
-	zassert_true(bt_uuid_cmp(&u.uuid, BT_UUID_DECLARE_16(0x0100)) == 0,
-		     "Test UUIDs don't match");
+	assert_true(bt_uuid_cmp(&u.uuid, BT_UUID_DECLARE_16(0x0100)) == 0);
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(test_uuid_create_case),
+	};
+
+	return cmocka_run_group_tests_name("bt_uuid_create", tests, NULL, NULL);
 }

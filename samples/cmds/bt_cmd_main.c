@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2026
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -11,14 +27,14 @@ int main(int argc, char *argv[])
 {
 	struct bt_shell sh;
 	int _argc = 0;
-	char* _argv[32];
-	char* buffer = NULL;
-	char* saveptr;
+	char *_argv[32];
+	char *buffer = NULL;
+	char *saveptr;
 	int ret = 0;
 	size_t len, size = 0;
 
-    bt_stack_init_once();
-    bt_shell_init(&sh);
+	bt_stack_init_once();
+	bt_shell_init(&sh);
 
 	while (1) {
 		bt_shell_fprintf_print("openblue> ");
@@ -26,12 +42,14 @@ int main(int argc, char *argv[])
 
 		memset(_argv, 0, sizeof(_argv));
 		len = getline(&buffer, &size, stdin);
-		if (-1 == len)
+		if (-1 == len) {
 			goto end;
+		}
 
 		buffer[len] = '\0';
-		if (buffer[len - 1] == '\n')
+		if (buffer[len - 1] == '\n') {
 			buffer[len - 1] = '\0';
+		}
 
 		if (buffer[0] == '!') {
 #ifdef CONFIG_SYSTEM_SYSTEM
@@ -41,7 +59,7 @@ int main(int argc, char *argv[])
 		}
 
 		saveptr = NULL;
-		char* tmpstr = buffer;
+		char *tmpstr = buffer;
 
 		while ((tmpstr = strtok_r(tmpstr, " ", &saveptr)) != NULL) {
 			_argv[_argc] = tmpstr;
@@ -64,12 +82,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
-return 0;
+	return 0;
 
 end:
 	free(buffer);
-	if (ret)
+	if (ret) {
 		bt_shell_cmds_show(&sh);
+	}
 
 	return 0;
 }

@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2016 Intel Corporation
+ * Copyright (C) 2026
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef __BASE_BUF_H__
 #define __BASE_BUF_H__
 
@@ -1078,7 +1085,7 @@ struct bt_buf_pool {
 
 #define BT_BUF_POOL_INITIALIZER(_pool, _alloc, _bufs, _count, _ud_size, _destroy)                  \
 	{                                                                                          \
-		.free = BT_QUEUE_INITIALIZER(_pool.free), .lock = {}, .buf_count = _count,          \
+		.free = BT_QUEUE_INITIALIZER(_pool.free), .lock = {}, .buf_count = _count,         \
 		.uninit_count = _count, .user_data_size = _ud_size, .destroy = _destroy,           \
 		.alloc = _alloc, .__bufs = (struct bt_buf *)_bufs,                                 \
 	}

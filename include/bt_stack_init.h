@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2026
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef __INCLUDE_BT_STACK_INIT_H__
 #define __INCLUDE_BT_STACK_INIT_H__
 
@@ -44,8 +60,8 @@ struct stack_init_entry {
  * is kept only as local metadata so call sites do not need to be rewritten all at
  * once while the runtime uses an explicit init table from `core/stack_init.c`.
  */
-#define STACK_INIT(fn, level, prio)                                                        \
-	static const struct stack_init_entry __maybe_unused __stack_init_entry_##fn = {      \
+#define STACK_INIT(fn, level, prio)                                                                \
+	static const struct stack_init_entry __maybe_unused __stack_init_entry_##fn = {            \
 		(fn), (uint16_t)(prio), (uint16_t)(level), #fn}
 
 /* Public API: run all registered initializers */

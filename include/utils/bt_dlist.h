@@ -32,7 +32,6 @@
 extern "C" {
 #endif
 
-
 struct _dnode {
 	union {
 		struct _dnode *head; /* ptr to head of list (bt_dlist_t) */
@@ -53,7 +52,6 @@ typedef struct _dnode bt_dlist_t;
  */
 typedef struct _dnode bt_dnode_t;
 
-
 /**
  * @brief Provide the primitive to iterate on a list
  * Note: the loop is unsafe and thus __dn should not be removed
@@ -69,9 +67,8 @@ typedef struct _dnode bt_dnode_t;
  * @param __dl A pointer on a bt_dlist_t to iterate on
  * @param __dn A bt_dnode_t pointer to peek each node of the list
  */
-#define BT_DLIST_FOR_EACH_NODE(__dl, __dn)				\
-	for (__dn = bt_dlist_peek_head(__dl); __dn != NULL;		\
-	     __dn = bt_dlist_peek_next(__dl, __dn))
+#define BT_DLIST_FOR_EACH_NODE(__dl, __dn)                                                         \
+	for (__dn = bt_dlist_peek_head(__dl); __dn != NULL; __dn = bt_dlist_peek_next(__dl, __dn))
 
 /**
  * @brief Provide the primitive to iterate on a list, from a node in the list
@@ -93,11 +90,9 @@ typedef struct _dnode bt_dnode_t;
  * @param __dn A bt_dnode_t pointer to peek each node of the list;
  *             it contains the starting node, or NULL to start from the head
  */
-#define BT_DLIST_ITERATE_FROM_NODE(__dl, __dn) \
-	for (__dn = __dn ? bt_dlist_peek_next_no_check(__dl, __dn) \
-			 : bt_dlist_peek_head(__dl); \
-	     __dn != NULL; \
-	     __dn = bt_dlist_peek_next(__dl, __dn))
+#define BT_DLIST_ITERATE_FROM_NODE(__dl, __dn)                                                     \
+	for (__dn = __dn ? bt_dlist_peek_next_no_check(__dl, __dn) : bt_dlist_peek_head(__dl);     \
+	     __dn != NULL; __dn = bt_dlist_peek_next(__dl, __dn))
 
 /**
  * @brief Provide the primitive to safely iterate on a list
@@ -115,11 +110,9 @@ typedef struct _dnode bt_dnode_t;
  * @param __dn A bt_dnode_t pointer to peek each node of the list
  * @param __dns A bt_dnode_t pointer for the loop to run safely
  */
-#define BT_DLIST_FOR_EACH_NODE_SAFE(__dl, __dn, __dns)			\
-	for ((__dn) = bt_dlist_peek_head(__dl),			\
-		     (__dns) = bt_dlist_peek_next((__dl), (__dn));	\
-	     (__dn) != NULL; (__dn) = (__dns),				\
-		     (__dns) = bt_dlist_peek_next(__dl, __dn))
+#define BT_DLIST_FOR_EACH_NODE_SAFE(__dl, __dn, __dns)                                             \
+	for ((__dn) = bt_dlist_peek_head(__dl), (__dns) = bt_dlist_peek_next((__dl), (__dn));      \
+	     (__dn) != NULL; (__dn) = (__dns), (__dns) = bt_dlist_peek_next(__dl, __dn))
 
 /**
  * @brief Provide the primitive to resolve the container of a list node
@@ -129,7 +122,7 @@ typedef struct _dnode bt_dnode_t;
  * @param __cn Container struct type pointer
  * @param __n The field name of bt_dnode_t within the container struct
  */
-#define BT_DLIST_CONTAINER(__dn, __cn, __n) \
+#define BT_DLIST_CONTAINER(__dn, __cn, __n)                                                        \
 	(((__dn) != NULL) ? CONTAINER_OF(__dn, __typeof__(*(__cn)), __n) : NULL)
 /**
  * @brief Provide the primitive to peek container of the list head
@@ -138,7 +131,7 @@ typedef struct _dnode bt_dnode_t;
  * @param __cn Container struct type pointer
  * @param __n The field name of bt_dnode_t within the container struct
  */
-#define BT_DLIST_PEEK_HEAD_CONTAINER(__dl, __cn, __n) \
+#define BT_DLIST_PEEK_HEAD_CONTAINER(__dl, __cn, __n)                                              \
 	BT_DLIST_CONTAINER(bt_dlist_peek_head(__dl), __cn, __n)
 
 /**
@@ -148,10 +141,10 @@ typedef struct _dnode bt_dnode_t;
  * @param __cn Container struct type pointer
  * @param __n The field name of bt_dnode_t within the container struct
  */
-#define BT_DLIST_PEEK_NEXT_CONTAINER(__dl, __cn, __n) \
-	(((__cn) != NULL) ? \
-	 BT_DLIST_CONTAINER(bt_dlist_peek_next((__dl), &((__cn)->__n)),	\
-				      __cn, __n) : NULL)
+#define BT_DLIST_PEEK_NEXT_CONTAINER(__dl, __cn, __n)                                              \
+	(((__cn) != NULL)                                                                          \
+		 ? BT_DLIST_CONTAINER(bt_dlist_peek_next((__dl), &((__cn)->__n)), __cn, __n)       \
+		 : NULL)
 
 /**
  * @brief Provide the primitive to iterate on a list under a container
@@ -167,9 +160,8 @@ typedef struct _dnode bt_dnode_t;
  * @param __cn A container struct type pointer to peek each entry of the list
  * @param __n The field name of bt_dnode_t within the container struct
  */
-#define BT_DLIST_FOR_EACH_CONTAINER(__dl, __cn, __n)			\
-	for ((__cn) = BT_DLIST_PEEK_HEAD_CONTAINER(__dl, __cn, __n);     \
-	     (__cn) != NULL;                                              \
+#define BT_DLIST_FOR_EACH_CONTAINER(__dl, __cn, __n)                                               \
+	for ((__cn) = BT_DLIST_PEEK_HEAD_CONTAINER(__dl, __cn, __n); (__cn) != NULL;               \
 	     (__cn) = BT_DLIST_PEEK_NEXT_CONTAINER(__dl, __cn, __n))
 
 /**
@@ -187,11 +179,11 @@ typedef struct _dnode bt_dnode_t;
  * @param __cns A container struct type pointer for the loop to run safely
  * @param __n The field name of bt_dnode_t within the container struct
  */
-#define BT_DLIST_FOR_EACH_CONTAINER_SAFE(__dl, __cn, __cns, __n)	\
-	for ((__cn) = BT_DLIST_PEEK_HEAD_CONTAINER(__dl, __cn, __n),	\
-	     (__cns) = BT_DLIST_PEEK_NEXT_CONTAINER(__dl, __cn, __n);    \
-	     (__cn) != NULL; (__cn) = (__cns),				\
-	     (__cns) = BT_DLIST_PEEK_NEXT_CONTAINER(__dl, __cn, __n))
+#define BT_DLIST_FOR_EACH_CONTAINER_SAFE(__dl, __cn, __cns, __n)                                   \
+	for ((__cn) = BT_DLIST_PEEK_HEAD_CONTAINER(__dl, __cn, __n),                               \
+	    (__cns) = BT_DLIST_PEEK_NEXT_CONTAINER(__dl, __cn, __n);                               \
+	     (__cn) != NULL;                                                                       \
+	     (__cn) = (__cns), (__cns) = BT_DLIST_PEEK_NEXT_CONTAINER(__dl, __cn, __n))
 
 /**
  * @brief initialize list to its empty state
@@ -208,7 +200,13 @@ static inline void bt_dlist_init(bt_dlist_t *list)
 /**
  * @brief Static initializer for a doubly-linked list
  */
-#define BT_DLIST_STATIC_INIT(ptr_to_list) { {(ptr_to_list)}, {(ptr_to_list)} }
+#define BT_DLIST_STATIC_INIT(ptr_to_list)                                                          \
+	{                                                                                          \
+		{(ptr_to_list)},                                                                   \
+		{                                                                                  \
+			(ptr_to_list)                                                              \
+		}                                                                                  \
+	}
 
 /**
  * @brief initialize node to its state when not in a list
@@ -331,7 +329,7 @@ static inline bt_dnode_t *bt_dlist_peek_head_not_empty(const bt_dlist_t *list)
  */
 
 static inline bt_dnode_t *bt_dlist_peek_next_no_check(const bt_dlist_t *list,
-							const bt_dnode_t *node)
+						      const bt_dnode_t *node)
 {
 	return (node == list->tail) ? NULL : node->next;
 }
@@ -346,8 +344,7 @@ static inline bt_dnode_t *bt_dlist_peek_next_no_check(const bt_dlist_t *list,
  * or NULL (when node comes from reading the head of an empty list).
  */
 
-static inline bt_dnode_t *bt_dlist_peek_next(const bt_dlist_t *list,
-					       const bt_dnode_t *node)
+static inline bt_dnode_t *bt_dlist_peek_next(const bt_dlist_t *list, const bt_dnode_t *node)
 {
 	return (node != NULL) ? bt_dlist_peek_next_no_check(list, node) : NULL;
 }
@@ -365,7 +362,7 @@ static inline bt_dnode_t *bt_dlist_peek_next(const bt_dlist_t *list,
  */
 
 static inline bt_dnode_t *bt_dlist_peek_prev_no_check(const bt_dlist_t *list,
-							const bt_dnode_t *node)
+						      const bt_dnode_t *node)
 {
 	return (node == list->head) ? NULL : node->prev;
 }
@@ -381,8 +378,7 @@ static inline bt_dnode_t *bt_dlist_peek_prev_no_check(const bt_dlist_t *list,
  * 	   list).
  */
 
-static inline bt_dnode_t *bt_dlist_peek_prev(const bt_dlist_t *list,
-					       const bt_dnode_t *node)
+static inline bt_dnode_t *bt_dlist_peek_prev(const bt_dlist_t *list, const bt_dnode_t *node)
 {
 	return (node != NULL) ? bt_dlist_peek_prev_no_check(list, node) : NULL;
 }
@@ -474,7 +470,7 @@ static inline void bt_dlist_insert(bt_dnode_t *successor, bt_dnode_t *node)
  */
 
 static inline void bt_dlist_insert_at(bt_dlist_t *list, bt_dnode_t *node,
-	int (*cond)(bt_dnode_t *node, void *data), void *data)
+				      int (*cond)(bt_dnode_t *node, void *data), void *data)
 {
 	if (bt_dlist_is_empty(list)) {
 		bt_dlist_append(list, node);

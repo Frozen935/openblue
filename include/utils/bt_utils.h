@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2026
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef __INCLUDE_UTIL_MACRO_H__
 #define __INCLUDE_UTIL_MACRO_H__
 
@@ -94,44 +110,62 @@
 #define UTIL_LISTIFY(LEN, F, sep, ...) __UTIL_CAT(UTIL_LISTIFY_, LEN)(F, sep, __VA_ARGS__)
 
 #define UTIL_LISTIFY_0(F, sep, ...)
-#define UTIL_LISTIFY_1(F, sep, ...)  F(0, __VA_ARGS__)
-#define UTIL_LISTIFY_2(F, sep, ...)  UTIL_LISTIFY_1(F, sep, __VA_ARGS__) __DEBRACKET sep F(1, __VA_ARGS__)
-#define UTIL_LISTIFY_3(F, sep, ...)  UTIL_LISTIFY_2(F, sep, __VA_ARGS__) __DEBRACKET sep F(2, __VA_ARGS__)
-#define UTIL_LISTIFY_4(F, sep, ...)  UTIL_LISTIFY_3(F, sep, __VA_ARGS__) __DEBRACKET sep F(3, __VA_ARGS__)
-#define UTIL_LISTIFY_5(F, sep, ...)  UTIL_LISTIFY_4(F, sep, __VA_ARGS__) __DEBRACKET sep F(4, __VA_ARGS__)
-#define UTIL_LISTIFY_6(F, sep, ...)  UTIL_LISTIFY_5(F, sep, __VA_ARGS__) __DEBRACKET sep F(5, __VA_ARGS__)
-#define UTIL_LISTIFY_7(F, sep, ...)  UTIL_LISTIFY_6(F, sep, __VA_ARGS__) __DEBRACKET sep F(6, __VA_ARGS__)
-#define UTIL_LISTIFY_8(F, sep, ...)  UTIL_LISTIFY_7(F, sep, __VA_ARGS__) __DEBRACKET sep F(7, __VA_ARGS__)
-#define UTIL_LISTIFY_9(F, sep, ...)  UTIL_LISTIFY_8(F, sep, __VA_ARGS__) __DEBRACKET sep F(8, __VA_ARGS__)
-#define UTIL_LISTIFY_10(F, sep, ...) UTIL_LISTIFY_9(F, sep, __VA_ARGS__) __DEBRACKET sep F(9, __VA_ARGS__)
-#define UTIL_LISTIFY_11(F, sep, ...) UTIL_LISTIFY_10(F, sep, __VA_ARGS__) __DEBRACKET sep F(10, __VA_ARGS__)
-#define UTIL_LISTIFY_12(F, sep, ...) UTIL_LISTIFY_11(F, sep, __VA_ARGS__) __DEBRACKET sep F(11, __VA_ARGS__)
-#define UTIL_LISTIFY_13(F, sep, ...) UTIL_LISTIFY_12(F, sep, __VA_ARGS__) __DEBRACKET sep F(12, __VA_ARGS__)
-#define UTIL_LISTIFY_14(F, sep, ...) UTIL_LISTIFY_13(F, sep, __VA_ARGS__) __DEBRACKET sep F(13, __VA_ARGS__)
-#define UTIL_LISTIFY_15(F, sep, ...) UTIL_LISTIFY_14(F, sep, __VA_ARGS__) __DEBRACKET sep F(14, __VA_ARGS__)
-#define UTIL_LISTIFY_16(F, sep, ...) UTIL_LISTIFY_15(F, sep, __VA_ARGS__) __DEBRACKET sep F(15, __VA_ARGS__)
-#define UTIL_LISTIFY_17(F, sep, ...) UTIL_LISTIFY_16(F, sep, __VA_ARGS__) __DEBRACKET sep F(16, __VA_ARGS__)
-#define UTIL_LISTIFY_18(F, sep, ...) UTIL_LISTIFY_17(F, sep, __VA_ARGS__) __DEBRACKET sep F(17, __VA_ARGS__)
-#define UTIL_LISTIFY_19(F, sep, ...) UTIL_LISTIFY_18(F, sep, __VA_ARGS__) __DEBRACKET sep F(18, __VA_ARGS__)
-#define UTIL_LISTIFY_20(F, sep, ...) UTIL_LISTIFY_19(F, sep, __VA_ARGS__) __DEBRACKET sep F(19, __VA_ARGS__)
+#define UTIL_LISTIFY_1(F, sep, ...) F(0, __VA_ARGS__)
+#define UTIL_LISTIFY_2(F, sep, ...)                                                                \
+	UTIL_LISTIFY_1(F, sep, __VA_ARGS__) __DEBRACKET sep F(1, __VA_ARGS__)
+#define UTIL_LISTIFY_3(F, sep, ...)                                                                \
+	UTIL_LISTIFY_2(F, sep, __VA_ARGS__) __DEBRACKET sep F(2, __VA_ARGS__)
+#define UTIL_LISTIFY_4(F, sep, ...)                                                                \
+	UTIL_LISTIFY_3(F, sep, __VA_ARGS__) __DEBRACKET sep F(3, __VA_ARGS__)
+#define UTIL_LISTIFY_5(F, sep, ...)                                                                \
+	UTIL_LISTIFY_4(F, sep, __VA_ARGS__) __DEBRACKET sep F(4, __VA_ARGS__)
+#define UTIL_LISTIFY_6(F, sep, ...)                                                                \
+	UTIL_LISTIFY_5(F, sep, __VA_ARGS__) __DEBRACKET sep F(5, __VA_ARGS__)
+#define UTIL_LISTIFY_7(F, sep, ...)                                                                \
+	UTIL_LISTIFY_6(F, sep, __VA_ARGS__) __DEBRACKET sep F(6, __VA_ARGS__)
+#define UTIL_LISTIFY_8(F, sep, ...)                                                                \
+	UTIL_LISTIFY_7(F, sep, __VA_ARGS__) __DEBRACKET sep F(7, __VA_ARGS__)
+#define UTIL_LISTIFY_9(F, sep, ...)                                                                \
+	UTIL_LISTIFY_8(F, sep, __VA_ARGS__) __DEBRACKET sep F(8, __VA_ARGS__)
+#define UTIL_LISTIFY_10(F, sep, ...)                                                               \
+	UTIL_LISTIFY_9(F, sep, __VA_ARGS__) __DEBRACKET sep F(9, __VA_ARGS__)
+#define UTIL_LISTIFY_11(F, sep, ...)                                                               \
+	UTIL_LISTIFY_10(F, sep, __VA_ARGS__) __DEBRACKET sep F(10, __VA_ARGS__)
+#define UTIL_LISTIFY_12(F, sep, ...)                                                               \
+	UTIL_LISTIFY_11(F, sep, __VA_ARGS__) __DEBRACKET sep F(11, __VA_ARGS__)
+#define UTIL_LISTIFY_13(F, sep, ...)                                                               \
+	UTIL_LISTIFY_12(F, sep, __VA_ARGS__) __DEBRACKET sep F(12, __VA_ARGS__)
+#define UTIL_LISTIFY_14(F, sep, ...)                                                               \
+	UTIL_LISTIFY_13(F, sep, __VA_ARGS__) __DEBRACKET sep F(13, __VA_ARGS__)
+#define UTIL_LISTIFY_15(F, sep, ...)                                                               \
+	UTIL_LISTIFY_14(F, sep, __VA_ARGS__) __DEBRACKET sep F(14, __VA_ARGS__)
+#define UTIL_LISTIFY_16(F, sep, ...)                                                               \
+	UTIL_LISTIFY_15(F, sep, __VA_ARGS__) __DEBRACKET sep F(15, __VA_ARGS__)
+#define UTIL_LISTIFY_17(F, sep, ...)                                                               \
+	UTIL_LISTIFY_16(F, sep, __VA_ARGS__) __DEBRACKET sep F(16, __VA_ARGS__)
+#define UTIL_LISTIFY_18(F, sep, ...)                                                               \
+	UTIL_LISTIFY_17(F, sep, __VA_ARGS__) __DEBRACKET sep F(17, __VA_ARGS__)
+#define UTIL_LISTIFY_19(F, sep, ...)                                                               \
+	UTIL_LISTIFY_18(F, sep, __VA_ARGS__) __DEBRACKET sep F(18, __VA_ARGS__)
+#define UTIL_LISTIFY_20(F, sep, ...)                                                               \
+	UTIL_LISTIFY_19(F, sep, __VA_ARGS__) __DEBRACKET sep F(19, __VA_ARGS__)
 
-#define __NUM_VA_ARGS_IMPL( \
-	 _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, \
-	 _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, N, ...) N
-#define NUM_VA_ARGS(...) \
-	__NUM_VA_ARGS_IMPL(__VA_ARGS__, \
-		20, 19, 18, 17, 16, 15, 14, 13, 12, 11, \
-		10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+#define __NUM_VA_ARGS_IMPL(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16,  \
+			   _17, _18, _19, _20, N, ...)                                             \
+	N
+#define NUM_VA_ARGS(...)                                                                           \
+	__NUM_VA_ARGS_IMPL(__VA_ARGS__, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, \
+			   4, 3, 2, 1, 0)
 
-#define FOR_EACH_1(F, sep, x) F(x)
-#define FOR_EACH_2(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_1(F, sep, __VA_ARGS__)
-#define FOR_EACH_3(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_2(F, sep, __VA_ARGS__)
-#define FOR_EACH_4(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_3(F, sep, __VA_ARGS__)
-#define FOR_EACH_5(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_4(F, sep, __VA_ARGS__)
-#define FOR_EACH_6(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_5(F, sep, __VA_ARGS__)
-#define FOR_EACH_7(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_6(F, sep, __VA_ARGS__)
-#define FOR_EACH_8(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_7(F, sep, __VA_ARGS__)
-#define FOR_EACH_9(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_8(F, sep, __VA_ARGS__)
+#define FOR_EACH_1(F, sep, x)       F(x)
+#define FOR_EACH_2(F, sep, x, ...)  F(x) __DEBRACKET sep FOR_EACH_1(F, sep, __VA_ARGS__)
+#define FOR_EACH_3(F, sep, x, ...)  F(x) __DEBRACKET sep FOR_EACH_2(F, sep, __VA_ARGS__)
+#define FOR_EACH_4(F, sep, x, ...)  F(x) __DEBRACKET sep FOR_EACH_3(F, sep, __VA_ARGS__)
+#define FOR_EACH_5(F, sep, x, ...)  F(x) __DEBRACKET sep FOR_EACH_4(F, sep, __VA_ARGS__)
+#define FOR_EACH_6(F, sep, x, ...)  F(x) __DEBRACKET sep FOR_EACH_5(F, sep, __VA_ARGS__)
+#define FOR_EACH_7(F, sep, x, ...)  F(x) __DEBRACKET sep FOR_EACH_6(F, sep, __VA_ARGS__)
+#define FOR_EACH_8(F, sep, x, ...)  F(x) __DEBRACKET sep FOR_EACH_7(F, sep, __VA_ARGS__)
+#define FOR_EACH_9(F, sep, x, ...)  F(x) __DEBRACKET sep FOR_EACH_8(F, sep, __VA_ARGS__)
 #define FOR_EACH_10(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_9(F, sep, __VA_ARGS__)
 #define FOR_EACH_11(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_10(F, sep, __VA_ARGS__)
 #define FOR_EACH_12(F, sep, x, ...) F(x) __DEBRACKET sep FOR_EACH_11(F, sep, __VA_ARGS__)
@@ -146,7 +180,7 @@
 
 #define FOR_EACH(F, sep, ...) __UTIL_CAT(FOR_EACH_, NUM_VA_ARGS(__VA_ARGS__))(F, sep, __VA_ARGS__)
 
-#define REVERSE_ARGS(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) \
+#define REVERSE_ARGS(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16)        \
 	a16, a15, a14, a13, a12, a11, a10, a9, a8, a7, a6, a5, a4, a3, a2, a1
 
 #define __UTIL_DO_CONCAT(x, y) x##y
@@ -157,6 +191,6 @@
 #endif
 
 #define __UTILS_STRINGIFY(x) #x
-#define UTILS_STRINGIFY(s) __UTILS_STRINGIFY(s)
+#define UTILS_STRINGIFY(s)   __UTILS_STRINGIFY(s)
 
 #endif /* __INCLUDE_UTIL_MACRO_H__ */

@@ -101,7 +101,8 @@ struct bt_hci_driver_api {
 	int (*close)(const struct bt_hci_transport *transport);
 	int (*send)(const struct bt_hci_transport *transport, struct bt_buf *buf);
 #if defined(CONFIG_BT_HCI_SETUP)
-	int (*setup)(const struct bt_hci_transport *transport, const struct bt_hci_setup_params *param);
+	int (*setup)(const struct bt_hci_transport *transport,
+		     const struct bt_hci_setup_params *param);
 #endif /* defined(CONFIG_BT_HCI_SETUP) */
 };
 
@@ -186,7 +187,8 @@ static inline int bt_hci_send(const struct bt_hci_transport *transport, struct b
  *
  * @return 0 on success or negative POSIX error number on failure.
  */
-static inline int bt_hci_setup(const struct bt_hci_transport *transport, struct bt_hci_setup_params *params)
+static inline int bt_hci_setup(const struct bt_hci_transport *transport,
+			       struct bt_hci_setup_params *params)
 {
 	const struct bt_hci_driver_api *api = transport->api;
 

@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2026
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <stdint.h>
 #include <string.h>
 #include <setjmp.h>
@@ -76,8 +92,8 @@ static void test_bt_poll_signal_wait_wakeup(void **state)
 	};
 	os_thread_t th;
 
-	assert_int_equal(
-		os_thread_create(&th, signal_thread, &arg, "poll_sig", OS_PRIORITY(0), 0), 0);
+	assert_int_equal(os_thread_create(&th, signal_thread, &arg, "poll_sig", OS_PRIORITY(0), 0),
+			 0);
 	assert_int_equal(bt_poll(&event, 1, OS_SECONDS(1)), 0);
 	assert_true((event.state & BT_POLL_STATE_SIGNALED) != 0U);
 	assert_int_equal(sig.result, 456);
@@ -102,8 +118,7 @@ static void test_bt_poll_queue_data_available(void **state)
 	bt_queue_init(&queue);
 	bt_poll_event_init(&event, BT_POLL_TYPE_DATA_AVAILABLE, BT_POLL_MODE_NOTIFY_ONLY, &queue);
 
-	assert_int_equal(
-		os_thread_create(&th, queue_thread, &arg, "poll_q", OS_PRIORITY(0), 0), 0);
+	assert_int_equal(os_thread_create(&th, queue_thread, &arg, "poll_q", OS_PRIORITY(0), 0), 0);
 	assert_int_equal(bt_poll(&event, 1, OS_SECONDS(1)), 0);
 	assert_true((event.state & BT_POLL_STATE_DATA_AVAILABLE) != 0U);
 

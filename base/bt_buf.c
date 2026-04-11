@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2017 Nordic Semiconductor ASA
+ * Copyright (c) 2015 Intel Corporation
+ * Copyright (C) 2026
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <errno.h>

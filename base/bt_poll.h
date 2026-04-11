@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2016, Wind River Systems, Inc.
+ * Copyright (C) 2026
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef __BASE_POLL_H__
 #define __BASE_POLL_H__
 
@@ -118,10 +125,9 @@ struct bt_poll_signal {
 	int result;
 };
 
-#define BT_POLL_SIGNAL_INITIALIZER(obj)                                                             \
+#define BT_POLL_SIGNAL_INITIALIZER(obj)                                                            \
 	{                                                                                          \
-		.poll_events = BT_DLIST_STATIC_INIT(&obj.poll_events), .signaled = 0,             \
-		.result = 0,                                                                       \
+		.poll_events = BT_DLIST_STATIC_INIT(&obj.poll_events), .signaled = 0, .result = 0, \
 	}
 /**
  * @brief Poll Event
@@ -157,8 +163,8 @@ struct bt_poll_event {
 
 	/** per-type data */
 	union {
-		/* The typed_* fields below are used by BT_POLL_EVENT_*INITIALIZER() macros to ensure
-		 * type safety of polled objects.
+		/* The typed_* fields below are used by BT_POLL_EVENT_*INITIALIZER() macros to
+		 * ensure type safety of polled objects.
 		 */
 		void *obj, *typed_BT_POLL_TYPE_IGNORE;
 		struct bt_poll_signal *signal, *typed_BT_POLL_TYPE_SIGNAL;
@@ -166,18 +172,18 @@ struct bt_poll_event {
 	};
 };
 
-#define BT_POLL_EVENT_INITIALIZER(_event_type, _event_mode, _event_obj)                             \
+#define BT_POLL_EVENT_INITIALIZER(_event_type, _event_mode, _event_obj)                            \
 	{                                                                                          \
-		.poller = NULL, .type = _event_type, .state = BT_POLL_STATE_NOT_READY,              \
+		.poller = NULL, .type = _event_type, .state = BT_POLL_STATE_NOT_READY,             \
 		.mode = _event_mode, .unused = 0,                                                  \
 		{                                                                                  \
 			.typed_##_event_type = _event_obj,                                         \
 		},                                                                                 \
 	}
 
-#define BT_POLL_EVENT_STATIC_INITIALIZER(_event_type, _event_mode, _event_obj, event_tag)           \
+#define BT_POLL_EVENT_STATIC_INITIALIZER(_event_type, _event_mode, _event_obj, event_tag)          \
 	{                                                                                          \
-		.tag = event_tag, .type = _event_type, .state = BT_POLL_STATE_NOT_READY,            \
+		.tag = event_tag, .type = _event_type, .state = BT_POLL_STATE_NOT_READY,           \
 		.mode = _event_mode, .unused = 0,                                                  \
 		{                                                                                  \
 			.typed_##_event_type = _event_obj,                                         \

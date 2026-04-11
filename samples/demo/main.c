@@ -1,18 +1,33 @@
+/*
+ * Copyright (C) 2026
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 
 #include "shim/include/preinclude.h"
 #include <bluetooth/bluetooth.h>
 
-
 static void ready_cb(int err)
 {
-    if (err) {
-        LOG_INF("Bluetooth enable failed: %d", err);
-        return;
-    }
+	if (err) {
+		LOG_INF("Bluetooth enable failed: %d", err);
+		return;
+	}
 
-    LOG_INF("Bluetooth ready");
+	LOG_INF("Bluetooth ready");
 }
 
 int main(void)
@@ -21,15 +36,15 @@ int main(void)
 	setvbuf(stderr, NULL, _IONBF, 0);
 	LOG_INF("Hello World!");
 
-    bt_stack_init_once();
+	bt_stack_init_once();
 
-    bt_enable(ready_cb);
+	bt_enable(ready_cb);
 
-    LOG_INF("Bluetooth enabled");
+	LOG_INF("Bluetooth enabled");
 
-    while (1) {
-        os_sleep_ms(1000);
-    }
+	while (1) {
+		os_sleep_ms(1000);
+	}
 
 	return 0;
 }

@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2020 Nordic Semiconductor ASA
+ * Copyright (C) 2026
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <stdint.h>
 
@@ -513,7 +519,7 @@ void bt_work_queue_run(struct bt_work_q *queue, const struct bt_work_queue_confi
 }
 
 void bt_work_queue_start(struct bt_work_q *queue, size_t stack_size, int prio,
-			  const struct bt_work_queue_config *cfg)
+			 const struct bt_work_queue_config *cfg)
 {
 	__ASSERT_NO_MSG(queue);
 	__ASSERT_NO_MSG(!flag_test(&queue->flags, BT_WORK_QUEUE_STARTED_BIT));
@@ -534,8 +540,8 @@ void bt_work_queue_start(struct bt_work_q *queue, size_t stack_size, int prio,
 	 */
 	flags_set(&queue->flags, flags);
 
-	(void)os_thread_create(&queue->thread, work_queue_main, queue, cfg ? cfg->name : NULL,
-			       prio, stack_size);
+	(void)os_thread_create(&queue->thread, work_queue_main, queue, cfg ? cfg->name : NULL, prio,
+			       stack_size);
 
 	if ((cfg != NULL) && (cfg->name != NULL)) {
 		os_thread_name_set(&queue->thread, cfg->name);

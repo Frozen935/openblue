@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2016, Wind River Systems, Inc.
+ * Copyright (C) 2026
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef __BASE_WORK_H__
 #define __BASE_WORK_H__
 
@@ -67,7 +74,7 @@ struct bt_work {
 	uint32_t flags;
 };
 
-#define BT_WORK_INITIALIZER(work_handler)                                                           \
+#define BT_WORK_INITIALIZER(work_handler)                                                          \
 	{                                                                                          \
 		.handler = (work_handler),                                                         \
 	}
@@ -164,7 +171,7 @@ int bt_work_cancel(struct bt_work *work);
 bool bt_work_cancel_sync(struct bt_work *work, struct bt_work_sync *sync);
 void bt_work_queue_init(struct bt_work_q *queue);
 void bt_work_queue_start(struct bt_work_q *queue, size_t stack_size, int prio,
-			  const struct bt_work_queue_config *cfg);
+			 const struct bt_work_queue_config *cfg);
 void bt_work_queue_run(struct bt_work_q *queue, const struct bt_work_queue_config *cfg);
 int bt_work_queue_drain(struct bt_work_q *queue, bool plug);
 int bt_work_queue_unplug(struct bt_work_q *queue);

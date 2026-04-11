@@ -24,7 +24,7 @@
 
 #define BTPROTO_HCI      1
 #define HCI_CHANNEL_USER 1
-#define HCIDEVDOWN  0x400448ca
+#define HCIDEVDOWN       0x400448ca
 
 struct sockaddr_hci {
 	sa_family_t hci_family;

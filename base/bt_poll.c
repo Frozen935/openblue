@@ -198,6 +198,7 @@ void bt_poll_event_init(struct bt_poll_event *event, uint32_t type, int mode, vo
 int bt_poll(struct bt_poll_event *events, int num_events, os_timeout_t timeout)
 {
 	int events_registered;
+	int ret = 0;
 	struct bt_poller poller;
 
 	os_sem_init(&poller.sem, 0, 1);
@@ -223,16 +224,16 @@ int bt_poll(struct bt_poll_event *events, int num_events, os_timeout_t timeout)
 		return 0;
 	}
 
-	poller.is_polling = false;
-
 	if (TIMEOUT_EQ(timeout, OS_TIMEOUT_NO_WAIT)) {
+		poller.is_polling = false;
+		clear_event_registrations(events, events_registered);
 		os_mutex_unlock(&lock);
 
 		return 0;
 	}
-
-	int ret = os_sem_take(&poller.sem, timeout);
 	os_mutex_unlock(&lock);
+
+	ret = os_sem_take(&poller.sem, timeout);
 
 	/*
 	 * Clear all event registrations. If events happen while we're in this
@@ -245,6 +246,7 @@ int bt_poll(struct bt_poll_event *events, int num_events, os_timeout_t timeout)
 	 */
 
 	os_mutex_lock(&lock, OS_TIMEOUT_FOREVER);
+	poller.is_polling = false;
 	clear_event_registrations(events, events_registered);
 	os_mutex_unlock(&lock);
 

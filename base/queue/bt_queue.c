@@ -9,6 +9,7 @@ void bt_queue_init(struct bt_queue *queue)
 		return;
 	}
 	bt_slist_init(&queue->list);
+	bt_dlist_init(&queue->poll_events);
 	/* Initialize lock and cond */
 	(void)os_mutex_init(&queue->lock);
 	(void)os_cond_init(&queue->cond);

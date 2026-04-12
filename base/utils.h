@@ -142,16 +142,11 @@ struct uuid {
 
 /* TODO: deprecated, use dynamic register instead */
 #ifndef STRUCT_SECTION_ITERABLE
-#define STRUCT_SECTION_ITERABLE(struct_type, _name)                                                \
-	__attribute__((used, section("openblue_iter_" #struct_type))) struct struct_type _name
+#define STRUCT_SECTION_ITERABLE(struct_type, _name) struct struct_type _name
 #endif
 
 #ifndef STRUCT_SECTION_FOREACH
-#define STRUCT_SECTION_FOREACH(struct_type, var)                                                   \
-	extern struct struct_type __start_openblue_iter_##struct_type[];                           \
-	extern struct struct_type __stop_openblue_iter_##struct_type[];                            \
-	for (struct struct_type *var = __start_openblue_iter_##struct_type;                        \
-	     var < __stop_openblue_iter_##struct_type; ++var)
+#define STRUCT_SECTION_FOREACH(struct_type, var) for (struct struct_type *var = NULL; false;)
 #endif
 
 int char2hex(char c, uint8_t *x);

@@ -10,17 +10,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <zephyr/bluetooth/audio/audio.h>
-#include <zephyr/bluetooth/audio/bap.h>
-#include <zephyr/bluetooth/conn.h>
-#include <zephyr/bluetooth/hci_types.h>
-#include <zephyr/bluetooth/iso.h>
+#include <bluetooth/audio/audio.h>
+#include <bluetooth/audio/bap.h>
+#include <bluetooth/conn.h>
+#include <bluetooth/hci_types.h>
+#include <bluetooth/iso.h>
 #include <zephyr/sys/__assert.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/slist.h>
 #include <zephyr/sys/util.h>
-#include <zephyr/ztest_assert.h>
-#include <sys/errno.h>
 
 #include "audio/bap_endpoint.h"
 #include "audio/bap_iso.h"

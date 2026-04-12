@@ -10,6 +10,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <cmocka.h>
 
 #include <zephyr/bluetooth/gap.h>
 #include <zephyr/bluetooth/iso.h>
@@ -22,8 +27,6 @@
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/sys/util_macro.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test.h>
 #include <sys/types.h>
 
 #include "bap_unicast_server.h"
@@ -33,6 +36,8 @@
 #include "iso.h"
 
 #include "test_common.h"
+
+#define fixture (get_fixture(state))
 
 struct test_ase_control_params_fixture {
 	struct bt_conn conn;
@@ -46,7 +51,7 @@ static void *test_ase_control_params_setup(void)
 	struct test_ase_control_params_fixture *fixture;
 
 	fixture = malloc(sizeof(*fixture));
-	zassert_not_null(fixture);
+	assert_non_null(fixture);
 
 	return fixture;
 }
@@ -63,10 +68,10 @@ static void test_ase_control_params_before(void *f)
 	ARG_UNUSED(fixture);
 
 	err = bt_bap_unicast_server_register(&param);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	test_conn_init(&fixture->conn);
 	fixture->ase_cp = test_ase_control_point_get();
@@ -84,13 +89,13 @@ static void test_ase_control_params_after(void *f)
 	int err;
 
 	err = bt_bap_unicast_server_unregister_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	/* Sleep to trigger any pending state changes from unregister_cb */
 	k_sleep(K_SECONDS(1));
 
 	err = bt_bap_unicast_server_unregister();
-	zassert_equal(err, 0, "Unexpected err response %d", err);
+	assert_int_equal(err, 0);
 }
 
 static void test_ase_control_params_teardown(void *f)
@@ -100,18 +105,56 @@ static void test_ase_control_params_teardown(void *f)
 	free(fixture);
 }
 
-ZTEST_SUITE(test_ase_control_params, NULL, test_ase_control_params_setup,
-	    test_ase_control_params_before, test_ase_control_params_after,
-	    test_ase_control_params_teardown);
 
-ZTEST_F(test_ase_control_params, test_sink_ase_control_operation_zero_length_write)
+
+static struct test_ase_control_params_fixture *get_fixture(void **state)
+{
+	assert_non_null(state);
+	assert_non_null(*state);
+
+	return *state;
+}
+
+static int test_ase_control_params_case_setup(void **state)
+{
+	void *fixture_local = NULL;
+
+	test_mocks_init();
+
+	fixture_local = test_ase_control_params_setup();
+
+	*state = fixture_local;
+
+	test_ase_control_params_before(fixture_local);
+
+	return 0;
+}
+
+static int test_ase_control_params_case_teardown(void **state)
+{
+	void *fixture_local = state != NULL ? *state : NULL;
+
+
+	test_ase_control_params_after(fixture_local);
+
+	test_mocks_cleanup();
+
+	test_ase_control_params_teardown(fixture_local);
+
+	if (state != NULL) {
+		*state = NULL;
+	}
+
+	return 0;
+}
+
+static void test_sink_ase_control_operation_zero_length_write(void **state)
 {
 	uint8_t buf[] = {};
 	ssize_t ret;
 
 	ret = fixture->ase_cp->write(&fixture->conn, fixture->ase_cp, (void *)buf, 0, 0, 0);
-	zassert_true(ret < 0, "ase_cp_attr->write returned unexpected (err 0x%02x)",
-		     (uint8_t)BT_GATT_ERR(ret));
+	assert_true(ret < 0);
 }
 
 static void test_expect_unsupported_opcode(struct test_ase_control_params_fixture *fixture,
@@ -136,12 +179,12 @@ static void test_expect_unsupported_opcode(struct test_ase_control_params_fixtur
 					     fixture->ase_cp, data_expected, sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_unsupported_opcode_0x00)
+static void test_unsupported_opcode_0x00(void **state)
 {
 	test_expect_unsupported_opcode(fixture, 0x00);
 }
 
-ZTEST_F(test_ase_control_params, test_unsupported_opcode_rfu)
+static void test_unsupported_opcode_rfu(void **state)
 {
 	test_expect_unsupported_opcode(fixture, 0x09);
 }
@@ -178,7 +221,7 @@ static void test_codec_configure_expect_invalid_length(
  *   - "If the Response_Code value is 0x01 or 0x02, Number_of_ASEs shall be set to 0xFF."
  *   - ASE Control Point notification is correctly formatted
  */
-ZTEST_F(test_ase_control_params, test_codec_configure_number_of_ases_0x00)
+static void test_codec_configure_number_of_ases_0x00(void **state)
 {
 	const uint8_t buf[] = {
 		0x01,           /* Opcode = Config Codec */
@@ -195,14 +238,14 @@ ZTEST_F(test_ase_control_params, test_codec_configure_number_of_ases_0x00)
 	test_codec_configure_expect_invalid_length(fixture, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_codec_configure_number_of_ases_above_max)
+static void test_codec_configure_number_of_ases_above_max(void **state)
 {
 	const uint16_t ase_cnt = CONFIG_BT_ASCS_MAX_ASE_SNK_COUNT +
 				 CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT + 1;
 
 	/* Skip if number of ASEs configured is high enough to support any value in the write req */
 	if (ase_cnt > UINT8_MAX) {
-		ztest_test_skip();
+		skip();
 	}
 
 	const uint8_t buf[] = {
@@ -236,7 +279,7 @@ ZTEST_F(test_ase_control_params, test_codec_configure_number_of_ases_above_max)
  *   - "If the Response_Code value is 0x01 or 0x02, Number_of_ASEs shall be set to 0xFF."
  *   - ASE Control Point notification is correctly formatted
  */
-ZTEST_F(test_ase_control_params, test_codec_configure_too_many_parameter_arrays)
+static void test_codec_configure_too_many_parameter_arrays(void **state)
 {
 	const uint8_t buf[] = {
 		0x01,           /* Opcode = Config Codec */
@@ -277,7 +320,7 @@ ZTEST_F(test_ase_control_params, test_codec_configure_too_many_parameter_arrays)
  *   - "If the Response_Code value is 0x01 or 0x02, Number_of_ASEs shall be set to 0xFF."
  *   - ASE Control Point notification is correctly formatted
  */
-ZTEST_F(test_ase_control_params, test_codec_specific_configuration_too_short)
+static void test_codec_specific_configuration_too_short(void **state)
 {
 	const uint8_t buf[] = {
 		0x01,           /* Opcode = Config Codec */
@@ -313,7 +356,7 @@ ZTEST_F(test_ase_control_params, test_codec_specific_configuration_too_short)
  *   - "If the Response_Code value is 0x01 or 0x02, Number_of_ASEs shall be set to 0xFF."
  *   - ASE Control Point notification is correctly formatted
  */
-ZTEST_F(test_ase_control_params, test_codec_specific_configuration_too_long)
+static void test_codec_specific_configuration_too_long(void **state)
 {
 	const uint8_t buf[] = {
 		0x01,           /* Opcode = Config Codec */
@@ -343,7 +386,7 @@ ZTEST_F(test_ase_control_params, test_codec_specific_configuration_too_long)
  *  Expected behaviour:
  *   - Correctly formatted ASE Control Point notification is sent with Invalid ASE_ID response code.
  */
-ZTEST_F(test_ase_control_params, test_codec_configure_invalid_ase_id_0x00)
+static void test_codec_configure_invalid_ase_id_0x00(void **state)
 {
 	const uint8_t ase_id_invalid = 0x00;
 	const uint8_t buf[] = {
@@ -391,11 +434,11 @@ static int unicast_server_cb_config_custom_fake(struct bt_conn *conn, const stru
 	return 0;
 }
 
-ZTEST_F(test_ase_control_params, test_codec_configure_invalid_ase_id_unavailable)
+static void test_codec_configure_invalid_ase_id_unavailable(void **state)
 {
 	/* Test requires support for at least 2 ASEs */
 	if (CONFIG_BT_ASCS_MAX_ASE_SNK_COUNT + CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT < 2) {
-		ztest_test_skip();
+		skip();
 	}
 
 	const uint8_t ase_id_valid = 0x01;
@@ -468,18 +511,18 @@ static void test_target_latency_out_of_range(struct test_ase_control_params_fixt
 					     fixture->ase_cp, data_expected, sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_target_latency_out_of_range_0x00)
+static void test_target_latency_out_of_range_0x00(void **state)
 {
 	/* TODO: Remove once resolved */
-	Z_TEST_SKIP_IFNDEF(BUG_55794);
+	if (!IS_ENABLED(BUG_55794)) { skip(); }
 
 	test_target_latency_out_of_range(fixture, 0x00);
 }
 
-ZTEST_F(test_ase_control_params, test_target_latency_out_of_range_0x04)
+static void test_target_latency_out_of_range_0x04(void **state)
 {
 	/* TODO: Remove once resolved */
-	Z_TEST_SKIP_IFNDEF(BUG_55794);
+	if (!IS_ENABLED(BUG_55794)) { skip(); }
 
 	test_target_latency_out_of_range(fixture, 0x04);
 }
@@ -512,18 +555,18 @@ static void test_target_phy_out_of_range(struct test_ase_control_params_fixture 
 					     fixture->ase_cp, data_expected, sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_target_phy_out_of_range_0x00)
+static void test_target_phy_out_of_range_0x00(void **state)
 {
 	/* TODO: Remove once resolved */
-	Z_TEST_SKIP_IFNDEF(BUG_55794);
+	if (!IS_ENABLED(BUG_55794)) { skip(); }
 
 	test_target_phy_out_of_range(fixture, 0x00);
 }
 
-ZTEST_F(test_ase_control_params, test_target_phy_out_of_range_0x04)
+static void test_target_phy_out_of_range_0x04(void **state)
 {
 	/* TODO: Remove once resolved */
-	Z_TEST_SKIP_IFNDEF(BUG_55794);
+	if (!IS_ENABLED(BUG_55794)) { skip(); }
 
 	test_target_phy_out_of_range(fixture, 0x04);
 }
@@ -549,7 +592,7 @@ static void test_config_qos_expect_invalid_length(struct bt_conn *conn, uint8_t 
 					     sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_config_qos_number_of_ases_0x00)
+static void test_config_qos_number_of_ases_0x00(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -571,14 +614,14 @@ ZTEST_F(test_ase_control_params, test_config_qos_number_of_ases_0x00)
 					      &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_config_qos_number_of_ases_above_max)
+static void test_config_qos_number_of_ases_above_max(void **state)
 {
 	const uint16_t ase_cnt = CONFIG_BT_ASCS_MAX_ASE_SNK_COUNT +
 				 CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT + 1;
 
 	/* Skip if number of ASEs configured is high enough to support any value in the write req */
 	if (ase_cnt > UINT8_MAX) {
-		ztest_test_skip();
+		skip();
 	}
 
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
@@ -601,7 +644,7 @@ ZTEST_F(test_ase_control_params, test_config_qos_number_of_ases_above_max)
 					      &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_config_qos_too_short)
+static void test_config_qos_too_short(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -624,7 +667,7 @@ ZTEST_F(test_ase_control_params, test_config_qos_too_short)
 					      &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_config_qos_too_long)
+static void test_config_qos_too_long(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -667,7 +710,7 @@ static void test_enable_expect_invalid_length(struct bt_conn *conn, uint8_t ase_
 					     sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_enable_number_of_ases_0x00)
+static void test_enable_number_of_ases_0x00(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -681,14 +724,14 @@ ZTEST_F(test_ase_control_params, test_enable_number_of_ases_0x00)
 					  buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_enable_number_of_ases_above_max)
+static void test_enable_number_of_ases_above_max(void **state)
 {
 	const uint16_t ase_cnt = CONFIG_BT_ASCS_MAX_ASE_SNK_COUNT +
 				 CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT + 1;
 
 	/* Skip if number of ASEs configured is high enough to support any value in the write req */
 	if (ase_cnt > UINT8_MAX) {
-		ztest_test_skip();
+		skip();
 	}
 
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
@@ -703,7 +746,7 @@ ZTEST_F(test_ase_control_params, test_enable_number_of_ases_above_max)
 					  buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_enable_too_long)
+static void test_enable_too_long(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -718,7 +761,7 @@ ZTEST_F(test_ase_control_params, test_enable_too_long)
 					  buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_enable_too_short)
+static void test_enable_too_short(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -731,7 +774,7 @@ ZTEST_F(test_ase_control_params, test_enable_too_short)
 					  buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_enable_metadata_too_short)
+static void test_enable_metadata_too_short(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -746,11 +789,11 @@ ZTEST_F(test_ase_control_params, test_enable_metadata_too_short)
 					  buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_enable_invalid_ase_id)
+static void test_enable_invalid_ase_id(void **state)
 {
 	/* Test requires support for at least 2 ASEs */
 	if (CONFIG_BT_ASCS_MAX_ASE_SNK_COUNT + CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT < 2) {
-		ztest_test_skip();
+		skip();
 	}
 
 	const uint8_t ase_id_valid = 0x01;
@@ -785,7 +828,7 @@ ZTEST_F(test_ase_control_params, test_enable_invalid_ase_id)
 					     fixture->ase_cp, data_expected, sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_enable_metadata_prohibited_context)
+static void test_enable_metadata_prohibited_context(void **state)
 {
 	const uint8_t ase_id_valid = 0x01;
 	const uint8_t buf[] = {
@@ -829,7 +872,7 @@ static void test_receiver_start_ready_expect_invalid_length(struct bt_conn *conn
 	test_preamble_state_enabling(conn, ase_id, stream);
 
 	err = mock_bt_iso_accept(conn, 0x01, 0x01, &chan);
-	zassert_equal(0, err, "Failed to connect iso: err %d", err);
+	assert_int_equal(0, err);
 
 	ase_cp->write(conn, ase_cp, buf, len, 0, 0);
 
@@ -837,12 +880,12 @@ static void test_receiver_start_ready_expect_invalid_length(struct bt_conn *conn
 					     sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_receiver_start_ready_number_of_ases_0x00)
+static void test_receiver_start_ready_number_of_ases_0x00(void **state)
 {
 	const struct bt_gatt_attr *ase;
 	uint8_t ase_id;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
 
 	test_ase_src_get(1, &ase);
 	zassume_not_null(ase);
@@ -858,16 +901,16 @@ ZTEST_F(test_ase_control_params, test_receiver_start_ready_number_of_ases_0x00)
 							&fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_receiver_start_ready_number_of_ases_above_max)
+static void test_receiver_start_ready_number_of_ases_above_max(void **state)
 {
 	const uint16_t ase_cnt = CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT + 1;
 	const struct bt_gatt_attr *ase;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
 
 	/* Skip if number of ASEs configured is high enough to support any value in the write req */
 	if (ase_cnt > UINT8_MAX) {
-		ztest_test_skip();
+		skip();
 	}
 
 	test_ase_src_get(1, &ase);
@@ -884,12 +927,12 @@ ZTEST_F(test_ase_control_params, test_receiver_start_ready_number_of_ases_above_
 							&fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_receiver_start_ready_too_long)
+static void test_receiver_start_ready_too_long(void **state)
 {
 	const struct bt_gatt_attr *ase;
 	uint8_t ase_id;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
 
 	test_ase_src_get(1, &ase);
 	zassume_not_null(ase);
@@ -906,7 +949,7 @@ ZTEST_F(test_ase_control_params, test_receiver_start_ready_too_long)
 							&fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_receiver_start_ready_too_short)
+static void test_receiver_start_ready_too_short(void **state)
 {
 	const uint8_t buf[] = {
 		0x04,           /* Opcode = Receiver Start Ready */
@@ -915,7 +958,7 @@ ZTEST_F(test_ase_control_params, test_receiver_start_ready_too_short)
 	const struct bt_gatt_attr *ase;
 	uint8_t ase_id;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
 
 	test_ase_src_get(1, &ase);
 	zassume_not_null(ase);
@@ -946,7 +989,7 @@ static void test_disable_expect_invalid_length(struct bt_conn *conn, uint8_t ase
 					     sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_disable_number_of_ases_0x00)
+static void test_disable_number_of_ases_0x00(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -959,14 +1002,14 @@ ZTEST_F(test_ase_control_params, test_disable_number_of_ases_0x00)
 					   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_disable_number_of_ases_above_max)
+static void test_disable_number_of_ases_above_max(void **state)
 {
 	const uint16_t ase_cnt = CONFIG_BT_ASCS_MAX_ASE_SNK_COUNT +
 				 CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT + 1;
 
 	/* Skip if number of ASEs configured is high enough to support any value in the write req */
 	if (ase_cnt > UINT8_MAX) {
-		ztest_test_skip();
+		skip();
 	}
 
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
@@ -980,7 +1023,7 @@ ZTEST_F(test_ase_control_params, test_disable_number_of_ases_above_max)
 					   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_disable_too_long)
+static void test_disable_too_long(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -994,7 +1037,7 @@ ZTEST_F(test_ase_control_params, test_disable_too_long)
 					   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_disable_too_short)
+static void test_disable_too_short(void **state)
 {
 	uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -1028,12 +1071,12 @@ static void test_receiver_stop_ready_expect_invalid_length(struct bt_conn *conn,
 					     sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_receiver_stop_ready_number_of_ases_0x00)
+static void test_receiver_stop_ready_number_of_ases_0x00(void **state)
 {
 	const struct bt_gatt_attr *ase;
 	uint8_t ase_id;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
 
 	test_ase_src_get(1, &ase);
 	zassume_not_null(ase);
@@ -1049,16 +1092,16 @@ ZTEST_F(test_ase_control_params, test_receiver_stop_ready_number_of_ases_0x00)
 						       &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_receiver_stop_ready_number_of_ases_above_max)
+static void test_receiver_stop_ready_number_of_ases_above_max(void **state)
 {
 	const uint16_t ase_cnt = CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT + 1;
 	const struct bt_gatt_attr *ase;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
 
 	/* Skip if number of ASEs configured is high enough to support any value in the write req */
 	if (ase_cnt > UINT8_MAX) {
-		ztest_test_skip();
+		skip();
 	}
 
 	test_ase_src_get(1, &ase);
@@ -1075,12 +1118,12 @@ ZTEST_F(test_ase_control_params, test_receiver_stop_ready_number_of_ases_above_m
 						       &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_receiver_stop_ready_too_long)
+static void test_receiver_stop_ready_too_long(void **state)
 {
 	const struct bt_gatt_attr *ase;
 	uint8_t ase_id;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
 
 	test_ase_src_get(1, &ase);
 	zassume_not_null(ase);
@@ -1097,7 +1140,7 @@ ZTEST_F(test_ase_control_params, test_receiver_stop_ready_too_long)
 						       &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_receiver_stop_ready_too_short)
+static void test_receiver_stop_ready_too_short(void **state)
 {
 	const uint8_t buf[] = {
 		0x06,           /* Opcode = Receiver Stop Ready */
@@ -1106,7 +1149,7 @@ ZTEST_F(test_ase_control_params, test_receiver_stop_ready_too_short)
 	const struct bt_gatt_attr *ase;
 	uint8_t ase_id;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
 
 	test_ase_src_get(1, &ase);
 	zassume_not_null(ase);
@@ -1137,7 +1180,7 @@ static void test_update_metadata_expect_invalid_length(struct bt_conn *conn, uin
 					     sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_update_metadata_number_of_ases_0x00)
+static void test_update_metadata_number_of_ases_0x00(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -1151,14 +1194,14 @@ ZTEST_F(test_ase_control_params, test_update_metadata_number_of_ases_0x00)
 						   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_update_metadata_number_of_ases_above_max)
+static void test_update_metadata_number_of_ases_above_max(void **state)
 {
 	const uint16_t ase_cnt = CONFIG_BT_ASCS_MAX_ASE_SNK_COUNT +
 				 CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT + 1;
 
 	/* Skip if number of ASEs configured is high enough to support any value in the write req */
 	if (ase_cnt > UINT8_MAX) {
-		ztest_test_skip();
+		skip();
 	}
 
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
@@ -1173,7 +1216,7 @@ ZTEST_F(test_ase_control_params, test_update_metadata_number_of_ases_above_max)
 						   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_update_metadata_too_long)
+static void test_update_metadata_too_long(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -1188,7 +1231,7 @@ ZTEST_F(test_ase_control_params, test_update_metadata_too_long)
 						   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_update_metadata_too_short)
+static void test_update_metadata_too_short(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -1201,7 +1244,7 @@ ZTEST_F(test_ase_control_params, test_update_metadata_too_short)
 						   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_update_metadata_metadata_too_short)
+static void test_update_metadata_metadata_too_short(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -1216,11 +1259,11 @@ ZTEST_F(test_ase_control_params, test_update_metadata_metadata_too_short)
 						   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_update_metadata_invalid_ase_id)
+static void test_update_metadata_invalid_ase_id(void **state)
 {
 	/* Test requires support for at least 2 ASEs */
 	if (CONFIG_BT_ASCS_MAX_ASE_SNK_COUNT + CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT < 2) {
-		ztest_test_skip();
+		skip();
 	}
 
 	const uint8_t ase_id_valid = 0x01;
@@ -1276,7 +1319,7 @@ static void test_release_expect_invalid_length(struct bt_conn *conn, uint8_t ase
 					     sizeof(data_expected));
 }
 
-ZTEST_F(test_ase_control_params, test_release_number_of_ases_0x00)
+static void test_release_number_of_ases_0x00(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -1289,14 +1332,14 @@ ZTEST_F(test_ase_control_params, test_release_number_of_ases_0x00)
 					   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_release_number_of_ases_above_max)
+static void test_release_number_of_ases_above_max(void **state)
 {
 	const uint16_t ase_cnt = CONFIG_BT_ASCS_MAX_ASE_SNK_COUNT +
 				 CONFIG_BT_ASCS_MAX_ASE_SRC_COUNT + 1;
 
 	/* Skip if number of ASEs configured is high enough to support any value in the write req */
 	if (ase_cnt > UINT8_MAX) {
-		ztest_test_skip();
+		skip();
 	}
 
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
@@ -1310,7 +1353,7 @@ ZTEST_F(test_ase_control_params, test_release_number_of_ases_above_max)
 					   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_release_too_long)
+static void test_release_too_long(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -1324,7 +1367,7 @@ ZTEST_F(test_ase_control_params, test_release_too_long)
 					   &fixture->stream, buf, sizeof(buf));
 }
 
-ZTEST_F(test_ase_control_params, test_release_too_short)
+static void test_release_too_short(void **state)
 {
 	const uint8_t ase_id = test_ase_id_get(fixture->ase);
 	const uint8_t buf[] = {
@@ -1335,3 +1378,68 @@ ZTEST_F(test_ase_control_params, test_release_too_short)
 	test_release_expect_invalid_length(&fixture->conn, ase_id, fixture->ase_cp,
 					   &fixture->stream, buf, sizeof(buf));
 }
+
+static int run_test_ase_control_params(void)
+{
+	const struct CMUnitTest test_ase_control_params_tests[] = {
+		cmocka_unit_test_setup_teardown(test_sink_ase_control_operation_zero_length_write, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_unsupported_opcode_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_unsupported_opcode_rfu, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_codec_configure_number_of_ases_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_codec_configure_number_of_ases_above_max, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_codec_configure_too_many_parameter_arrays, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_codec_specific_configuration_too_short, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_codec_specific_configuration_too_long, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_codec_configure_invalid_ase_id_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_codec_configure_invalid_ase_id_unavailable, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_target_latency_out_of_range_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_target_latency_out_of_range_0x04, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_target_phy_out_of_range_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_target_phy_out_of_range_0x04, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_config_qos_number_of_ases_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_config_qos_number_of_ases_above_max, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_config_qos_too_short, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_config_qos_too_long, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_enable_number_of_ases_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_enable_number_of_ases_above_max, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_enable_too_long, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_enable_too_short, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_enable_metadata_too_short, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_enable_invalid_ase_id, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_enable_metadata_prohibited_context, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_receiver_start_ready_number_of_ases_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_receiver_start_ready_number_of_ases_above_max, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_receiver_start_ready_too_long, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_receiver_start_ready_too_short, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_disable_number_of_ases_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_disable_number_of_ases_above_max, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_disable_too_long, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_disable_too_short, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_receiver_stop_ready_number_of_ases_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_receiver_stop_ready_number_of_ases_above_max, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_receiver_stop_ready_too_long, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_receiver_stop_ready_too_short, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_update_metadata_number_of_ases_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_update_metadata_number_of_ases_above_max, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_update_metadata_too_long, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_update_metadata_too_short, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_update_metadata_metadata_too_short, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_update_metadata_invalid_ase_id, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_release_number_of_ases_0x00, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_release_number_of_ases_above_max, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_release_too_long, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+		cmocka_unit_test_setup_teardown(test_release_too_short, test_ase_control_params_case_setup, test_ase_control_params_case_teardown),
+	};
+
+	return cmocka_run_group_tests_name("test_ase_control_params", test_ase_control_params_tests, NULL, NULL);
+}
+
+int run_test_ase_control_params_tests(void)
+{
+	int result = 0;
+
+	result |= run_test_ase_control_params();
+
+	return result;
+}
+

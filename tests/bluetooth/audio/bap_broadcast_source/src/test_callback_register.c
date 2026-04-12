@@ -7,92 +7,94 @@
  */
 
 #include <errno.h>
+#include <stdarg.h>
 #include <stddef.h>
+#include <setjmp.h>
 
-#include <zephyr/bluetooth/audio/bap.h>
-#include <zephyr/fff.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test.h>
+#include <cmocka.h>
 
-#include "bap_broadcast_source.h"
+#include <bluetooth/audio/bap.h>
 
-#define FFF_GLOBALS
+#define check_equal(expected, actual, ...) assert_int_equal((expected), (actual))
 
-static void mock_init_rule_before(const struct ztest_unit_test *test, void *fixture)
+extern struct bt_bap_broadcast_source_cb mock_bap_broadcast_source_cb;
+extern void mock_bap_broadcast_source_init(void);
+
+int callback_test_case_setup(void **state)
 {
+	(void)state;
 	mock_bap_broadcast_source_init();
+	return 0;
 }
 
-ZTEST_RULE(mock_rule, mock_init_rule_before, NULL);
-
-static void bap_broadcast_source_test_cb_register_suite_after(void *f)
+int callback_test_case_teardown(void **state)
 {
-	bt_bap_broadcast_source_unregister_cb(&mock_bap_broadcast_source_cb);
+	(void)state;
+	(void)bt_bap_broadcast_source_unregister_cb(&mock_bap_broadcast_source_cb);
+	return 0;
 }
-
-ZTEST_SUITE(bap_broadcast_source_test_cb_register_suite, NULL, NULL, NULL,
-	    bap_broadcast_source_test_cb_register_suite_after, NULL);
-
-static ZTEST(bap_broadcast_source_test_cb_register_suite, test_broadcast_source_register_cb)
+void test_broadcast_source_register_cb(void **state)
 {
+	(void)state;
 	int err;
 
 	err = bt_bap_broadcast_source_register_cb(&mock_bap_broadcast_source_cb);
-	zassert_equal(0, err, "Unexpected return value %d", err);
+	check_equal(0, err, "Unexpected return value %d", err);
 }
 
-static ZTEST(bap_broadcast_source_test_cb_register_suite,
-	     test_broadcast_source_register_cb_inval_param_null)
+void test_broadcast_source_register_cb_inval_param_null(void **state)
 {
+	(void)state;
 	int err;
 
 	err = bt_bap_broadcast_source_register_cb(NULL);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	check_equal(err, -EINVAL, "Unexpected return value %d", err);
 }
 
-static ZTEST(bap_broadcast_source_test_cb_register_suite,
-	     test_broadcast_source_register_cb_inval_double_register)
+void test_broadcast_source_register_cb_inval_double_register(void **state)
 {
+	(void)state;
 	int err;
 
 	err = bt_bap_broadcast_source_register_cb(&mock_bap_broadcast_source_cb);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	check_equal(err, 0, "Unexpected return value %d", err);
 
 	err = bt_bap_broadcast_source_register_cb(&mock_bap_broadcast_source_cb);
-	zassert_equal(err, -EEXIST, "Unexpected return value %d", err);
+	check_equal(err, -EEXIST, "Unexpected return value %d", err);
 }
 
-static ZTEST(bap_broadcast_source_test_cb_register_suite, test_broadcast_source_unregister_cb)
+void test_broadcast_source_unregister_cb(void **state)
 {
+	(void)state;
 	int err;
 
 	err = bt_bap_broadcast_source_register_cb(&mock_bap_broadcast_source_cb);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	check_equal(err, 0, "Unexpected return value %d", err);
 
 	err = bt_bap_broadcast_source_unregister_cb(&mock_bap_broadcast_source_cb);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	check_equal(err, 0, "Unexpected return value %d", err);
 }
 
-static ZTEST(bap_broadcast_source_test_cb_register_suite,
-	     test_broadcast_source_unregister_cb_inval_param_null)
+void test_broadcast_source_unregister_cb_inval_param_null(void **state)
 {
+	(void)state;
 	int err;
 
 	err = bt_bap_broadcast_source_unregister_cb(NULL);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	check_equal(err, -EINVAL, "Unexpected return value %d", err);
 }
 
-static ZTEST(bap_broadcast_source_test_cb_register_suite,
-	     test_broadcast_source_unregister_cb_inval_double_unregister)
+void test_broadcast_source_unregister_cb_inval_double_unregister(void **state)
 {
+	(void)state;
 	int err;
 
 	err = bt_bap_broadcast_source_register_cb(&mock_bap_broadcast_source_cb);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	check_equal(err, 0, "Unexpected return value %d", err);
 
 	err = bt_bap_broadcast_source_unregister_cb(&mock_bap_broadcast_source_cb);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	check_equal(err, 0, "Unexpected return value %d", err);
 
 	err = bt_bap_broadcast_source_unregister_cb(&mock_bap_broadcast_source_cb);
-	zassert_equal(err, -ENOENT, "Unexpected return value %d", err);
+	check_equal(err, -ENOENT, "Unexpected return value %d", err);
 }

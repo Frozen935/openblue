@@ -7,10 +7,15 @@
 #ifndef MOCKS_BAP_UNICAST_SERVER_EXPECTS_H_
 #define MOCKS_BAP_UNICAST_SERVER_EXPECTS_H_
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <cmocka.h>
+
 #include <zephyr/bluetooth/audio/audio.h>
 #include <zephyr/bluetooth/audio/bap.h>
 #include <zephyr/bluetooth/conn.h>
-#include <zephyr/ztest_assert.h>
 
 #include "bap_unicast_server.h"
 #include "expects_util.h"
@@ -24,26 +29,20 @@ static inline void expect_bt_bap_unicast_server_cb_config_called(
 {
 	const char *func_name = "bt_bap_unicast_server_cb.config";
 
-	zexpect_call_count(func_name,
+	expect_call_count(func_name,
 		expected_count, mock_bap_unicast_server_cb_config_fake.call_count);
 
 	for (unsigned int i = 0; i < mock_bap_unicast_server_cb_config_fake.call_count; i++) {
-		zassert_equal_ptr(conns[i],
-			mock_bap_unicast_server_cb_config_fake.arg0_history[i],
-			"'%s()' was called with incorrect 'conn[%i]' value", func_name, i);
+		assert_ptr_equal(conns[i], mock_bap_unicast_server_cb_config_fake.arg0_history[i]);
 		if (eps) {
-			zassert_equal_ptr(eps[i],
-				mock_bap_unicast_server_cb_config_fake.arg1_history[i],
-				"'%s()' was called with incorrect 'ep[%i]' value", func_name, i);
+			assert_ptr_equal(eps[i], mock_bap_unicast_server_cb_config_fake.arg1_history[i]);
 		}
-		zassert_equal(dirs[i],
-			mock_bap_unicast_server_cb_config_fake.arg2_history[i],
-			"'%s()' was called with incorrect 'dir[%i]' value", func_name, i);
+		assert_int_equal(dirs[i], mock_bap_unicast_server_cb_config_fake.arg2_history[i]);
 	}
 
 	if (codec) {
 		/* TODO */
-		zassert_unreachable("Not implemented");
+		fail_msg("Not implemented");
 	}
 }
 
@@ -55,21 +54,17 @@ static inline void expect_bt_bap_unicast_server_cb_reconfig_called(
 {
 	const char *func_name = "bt_bap_unicast_server_cb.reconfig";
 
-	zexpect_call_count(func_name,
+	expect_call_count(func_name,
 		expected_count, mock_bap_unicast_server_cb_reconfig_fake.call_count);
 
 	for (unsigned int i = 0; i < mock_bap_unicast_server_cb_reconfig_fake.call_count; i++) {
-		zassert_equal_ptr(streams[i],
-			mock_bap_unicast_server_cb_reconfig_fake.arg0_history[i],
-			"'%s()' was called with incorrect 'stream[%i]' value", func_name, i);
-		zassert_equal(dirs[i],
-			mock_bap_unicast_server_cb_reconfig_fake.arg1_history[i],
-			"'%s()' was called with incorrect 'dir[%i]' value", func_name, i);
+		assert_ptr_equal(streams[i], mock_bap_unicast_server_cb_reconfig_fake.arg0_history[i]);
+		assert_int_equal(dirs[i], mock_bap_unicast_server_cb_reconfig_fake.arg1_history[i]);
 	}
 
 	if (codec) {
 		/* TODO */
-		zassert_unreachable("Not implemented");
+		fail_msg("Not implemented");
 	}
 }
 
@@ -80,18 +75,16 @@ static inline void expect_bt_bap_unicast_server_cb_qos_called(
 {
 	const char *func_name = "bt_bap_unicast_server_cb.qos";
 
-	zexpect_call_count(func_name,
+	expect_call_count(func_name,
 		expected_count, mock_bap_unicast_server_cb_qos_fake.call_count);
 
 	for (unsigned int i = 0; i < mock_bap_unicast_server_cb_qos_fake.call_count; i++) {
-		zassert_equal_ptr(streams[i],
-			mock_bap_unicast_server_cb_qos_fake.arg0_history[i],
-			"'%s()' was called with incorrect 'stream[%i]' value", func_name, i);
+		assert_ptr_equal(streams[i], mock_bap_unicast_server_cb_qos_fake.arg0_history[i]);
 	}
 
 	if (qos) {
 		/* TODO */
-		zassert_unreachable("Not implemented");
+		fail_msg("Not implemented");
 	}
 }
 
@@ -103,23 +96,21 @@ static inline void expect_bt_bap_unicast_server_cb_enable_called(
 {
 	const char *func_name = "bt_bap_unicast_server_cb.enable";
 
-	zexpect_call_count(func_name,
+	expect_call_count(func_name,
 		expected_count, mock_bap_unicast_server_cb_enable_fake.call_count);
 
 	for (unsigned int i = 0; i < mock_bap_unicast_server_cb_enable_fake.call_count; i++) {
-		zassert_equal_ptr(streams[i],
-			mock_bap_unicast_server_cb_enable_fake.arg0_history[i],
-			"'%s()' was called with incorrect 'stream[%i]' value", func_name, i);
+		assert_ptr_equal(streams[i], mock_bap_unicast_server_cb_enable_fake.arg0_history[i]);
 	}
 
 	if (meta) {
 		/* TODO */
-		zassert_unreachable("Not implemented");
+		fail_msg("Not implemented");
 	}
 
 	if (meta_len) {
 		/* TODO */
-		zassert_unreachable("Not implemented");
+		fail_msg("Not implemented");
 	}
 }
 
@@ -131,23 +122,21 @@ static inline void expect_bt_bap_unicast_server_cb_metadata_called(
 {
 	const char *func_name = "bt_bap_unicast_server_cb.enable";
 
-	zexpect_call_count(func_name,
+	expect_call_count(func_name,
 		expected_count, mock_bap_unicast_server_cb_metadata_fake.call_count);
 
 	for (unsigned int i = 0; i < mock_bap_unicast_server_cb_metadata_fake.call_count; i++) {
-		zassert_equal_ptr(streams[i],
-			mock_bap_unicast_server_cb_metadata_fake.arg0_history[i],
-			"'%s()' was called with incorrect 'stream[%i]' value", func_name, i);
+		assert_ptr_equal(streams[i], mock_bap_unicast_server_cb_metadata_fake.arg0_history[i]);
 	}
 
 	if (meta) {
 		/* TODO */
-		zassert_unreachable("Not implemented");
+		fail_msg("Not implemented");
 	}
 
 	if (meta_len) {
 		/* TODO */
-		zassert_unreachable("Not implemented");
+		fail_msg("Not implemented");
 	}
 }
 
@@ -157,13 +146,11 @@ static inline void expect_bt_bap_unicast_server_cb_disable_called(
 {
 	const char *func_name = "bt_bap_unicast_server_cb.disable";
 
-	zexpect_call_count(func_name,
+	expect_call_count(func_name,
 		expected_count, mock_bap_unicast_server_cb_disable_fake.call_count);
 
 	for (unsigned int i = 0; i < mock_bap_unicast_server_cb_disable_fake.call_count; i++) {
-		zassert_equal_ptr(streams[i],
-			mock_bap_unicast_server_cb_disable_fake.arg0_history[i],
-			"'%s()' was called with incorrect 'stream[%i]' value", func_name, i);
+		assert_ptr_equal(streams[i], mock_bap_unicast_server_cb_disable_fake.arg0_history[i]);
 	}
 }
 
@@ -173,13 +160,11 @@ static inline void expect_bt_bap_unicast_server_cb_release_called(
 {
 	const char *func_name = "bt_bap_unicast_server_cb.release";
 
-	zexpect_call_count(func_name,
+	expect_call_count(func_name,
 		expected_count, mock_bap_unicast_server_cb_release_fake.call_count);
 
 	for (unsigned int i = 0; i < mock_bap_unicast_server_cb_release_fake.call_count; i++) {
-		zassert_equal_ptr(streams[i],
-			mock_bap_unicast_server_cb_release_fake.arg0_history[i],
-			"'%s()' was called with incorrect 'stream[%i]' value", func_name, i);
+		assert_ptr_equal(streams[i], mock_bap_unicast_server_cb_release_fake.arg0_history[i]);
 	}
 }
 
@@ -189,13 +174,11 @@ static inline void expect_bt_bap_unicast_server_cb_start_called(
 {
 	const char *func_name = "bt_bap_unicast_server_cb.start";
 
-	zexpect_call_count(func_name,
+	expect_call_count(func_name,
 		expected_count, mock_bap_unicast_server_cb_start_fake.call_count);
 
 	for (unsigned int i = 0; i < mock_bap_unicast_server_cb_start_fake.call_count; i++) {
-		zassert_equal_ptr(streams[i],
-			mock_bap_unicast_server_cb_start_fake.arg0_history[i],
-			"'%s()' was called with incorrect 'stream[%i]' value", func_name, i);
+		assert_ptr_equal(streams[i], mock_bap_unicast_server_cb_start_fake.arg0_history[i]);
 	}
 }
 
@@ -205,13 +188,11 @@ static inline void expect_bt_bap_unicast_server_cb_stop_called(
 {
 	const char *func_name = "bt_bap_unicast_server_cb.stop";
 
-	zexpect_call_count(func_name,
+	expect_call_count(func_name,
 		expected_count, mock_bap_unicast_server_cb_stop_fake.call_count);
 
 	for (unsigned int i = 0; i < mock_bap_unicast_server_cb_stop_fake.call_count; i++) {
-		zassert_equal_ptr(streams[i],
-			mock_bap_unicast_server_cb_stop_fake.arg0_history[i],
-			"'%s()' was called with incorrect 'stream[%i]' value", func_name, i);
+		assert_ptr_equal(streams[i], mock_bap_unicast_server_cb_stop_fake.arg0_history[i]);
 	}
 }
 

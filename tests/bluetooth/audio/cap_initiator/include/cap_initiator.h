@@ -8,9 +8,9 @@
 #define MOCKS_CAP_INITIATOR_H_
 #include <stdint.h>
 
-#include <zephyr/bluetooth/audio/cap.h>
-#include <zephyr/bluetooth/audio/csip.h>
-#include <zephyr/bluetooth/bluetooth.h>
+#include <bluetooth/audio/cap.h>
+#include <bluetooth/audio/csip.h>
+#include <bluetooth/bluetooth.h>
 #include <zephyr/fff.h>
 
 extern const struct bt_cap_initiator_cb mock_cap_initiator_cb;

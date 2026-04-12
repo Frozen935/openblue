@@ -9,8 +9,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <zephyr/bluetooth/addr.h>
-#include <zephyr/bluetooth/conn.h>
+#include <bluetooth/addr.h>
+#include <bluetooth/conn.h>
 #include <zephyr/fff.h>
 #include <zephyr/sys/iterable_sections.h>
 

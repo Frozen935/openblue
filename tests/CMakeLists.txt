@@ -13,7 +13,7 @@ if(NOT CMOCKA_INCLUDE_DIR OR NOT CMOCKA_LIBRARY)
 endif()
 
 function(openblue_add_native_test target source rel_output_dir)
-  add_executable(${target} ${source})
+  add_executable(${target} ${source} ${ARGN})
   target_link_libraries(${target} PRIVATE openblue Threads::Threads ${CMOCKA_LIBRARY} rt)
   target_include_directories(${target} PRIVATE
     ${CMAKE_SOURCE_DIR}
@@ -35,3 +35,9 @@ add_subdirectory(base)
 add_subdirectory(osdep)
 
 add_subdirectory(bluetooth)
+add_subdirectory(bluetooth/audio/ccp_call_control_server)
+add_subdirectory(bluetooth/audio/ccp_call_control_client)
+add_subdirectory(bluetooth/audio/ascs)
+add_subdirectory(bluetooth/audio/bap_broadcast_source)
+add_subdirectory(bluetooth/audio/cap_initiator)
+add_subdirectory(bluetooth/gatt)

@@ -7,17 +7,19 @@
  */
 
 #include <stddef.h>
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdint.h>
 
-#include <zephyr/bluetooth/audio/audio.h>
-#include <zephyr/bluetooth/audio/bap.h>
-#include <zephyr/bluetooth/audio/bap_lc3_preset.h>
-#include <zephyr/bluetooth/audio/cap.h>
-#include <zephyr/bluetooth/conn.h>
-#include <zephyr/bluetooth/hci_types.h>
+#include <cmocka.h>
+
+#include <bluetooth/audio/audio.h>
+#include <bluetooth/audio/bap.h>
+#include <bluetooth/audio/bap_lc3_preset.h>
+#include <bluetooth/audio/cap.h>
+#include <bluetooth/conn.h>
+#include <bluetooth/hci_types.h>
 #include <zephyr/fff.h>
-#include <zephyr/sys/printk.h>
-#include <zephyr/ztest_assert.h>
 
 #include "audio/bap_endpoint.h"
 #include "cap_initiator.h"
@@ -61,13 +63,13 @@ void test_unicast_set_state(struct bt_cap_stream *cap_stream, struct bt_conn *co
 		return;
 	}
 
-	zassert_not_null(cap_stream);
-	zassert_not_null(conn);
-	zassert_not_null(ep);
-	zassert_not_null(preset);
+	assert_non_null(cap_stream);
+	assert_non_null(conn);
+	assert_non_null(ep);
+	assert_non_null(preset);
 
 	err = bt_bap_stream_config(conn, &cap_stream->bap_stream, ep, &preset->codec_cfg);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	bap_stream->conn = conn;
 	bap_stream->ep = ep;
@@ -92,12 +94,12 @@ void mock_discover(
 	int err;
 
 	err = bt_bap_unicast_client_register_cb(&unicast_client_cb);
-	zassert_equal(0, err, "Unexpected return value %d", err);
+	assert_int_equal(0, err);
 
 	for (int i = 0U; i < CONFIG_BT_MAX_CONN; i++) {
 		RESET_FAKE(mock_bap_discover_endpoint);
 		err = bt_bap_unicast_client_discover(&conns[i], BT_AUDIO_DIR_SINK);
-		zassert_equal(0, err, "Unexpected return value %d", err);
+		assert_int_equal(0, err);
 
 		/* TODO: use callback to populate eps */
 
@@ -106,17 +108,14 @@ void mock_discover(
 				   mock_bap_discover_endpoint_fake.call_count);
 		for (size_t j = 0U; j < mock_bap_discover_endpoint_fake.call_count; j++) {
 			/* Verify conn */
-			zassert_equal(mock_bap_discover_endpoint_fake.arg0_history[j], &conns[i],
-				      "%p", mock_bap_discover_endpoint_fake.arg0_history[j]);
+			assert_ptr_equal(mock_bap_discover_endpoint_fake.arg0_history[j], &conns[i]);
 
 			/* Verify dir */
-			zassert_equal(mock_bap_discover_endpoint_fake.arg1_history[j],
-				      BT_AUDIO_DIR_SINK, "%d",
-				      mock_bap_discover_endpoint_fake.arg1_history[j]);
+			assert_int_equal(mock_bap_discover_endpoint_fake.arg1_history[j],
+					 BT_AUDIO_DIR_SINK);
 
 			/* Verify and store ep */
-			zassert_not_equal(mock_bap_discover_endpoint_fake.arg2_history[j], NULL,
-					  "%p", mock_bap_discover_endpoint_fake.arg2_history[j]);
+			assert_non_null(mock_bap_discover_endpoint_fake.arg2_history[j]);
 
 			snk_eps[conns[i].index][j] =
 				mock_bap_discover_endpoint_fake.arg2_history[j];
@@ -124,24 +123,21 @@ void mock_discover(
 
 		RESET_FAKE(mock_bap_discover_endpoint);
 		err = bt_bap_unicast_client_discover(&conns[i], BT_AUDIO_DIR_SOURCE);
-		zassert_equal(0, err, "Unexpected return value %d", err);
+		assert_int_equal(0, err);
 
 		zexpect_call_count("unicast_client_cb.bap_discover_endpoint",
 				   CONFIG_BT_BAP_UNICAST_CLIENT_ASE_SRC_COUNT,
 				   mock_bap_discover_endpoint_fake.call_count);
 		for (size_t j = 0U; j < mock_bap_discover_endpoint_fake.call_count; j++) {
 			/* Verify conn */
-			zassert_equal(mock_bap_discover_endpoint_fake.arg0_history[j], &conns[i],
-				      "%p", mock_bap_discover_endpoint_fake.arg0_history[j]);
+			assert_ptr_equal(mock_bap_discover_endpoint_fake.arg0_history[j], &conns[i]);
 
 			/* Verify dir */
-			zassert_equal(mock_bap_discover_endpoint_fake.arg1_history[j],
-				      BT_AUDIO_DIR_SOURCE, "%d",
-				      mock_bap_discover_endpoint_fake.arg1_history[j]);
+			assert_int_equal(mock_bap_discover_endpoint_fake.arg1_history[j],
+					 BT_AUDIO_DIR_SOURCE);
 
 			/* Verify and store ep */
-			zassert_not_equal(mock_bap_discover_endpoint_fake.arg2_history[j], NULL,
-					  "%p", mock_bap_discover_endpoint_fake.arg2_history[j]);
+			assert_non_null(mock_bap_discover_endpoint_fake.arg2_history[j]);
 
 			src_eps[conns[i].index][j] =
 				mock_bap_discover_endpoint_fake.arg2_history[j];
@@ -150,5 +146,5 @@ void mock_discover(
 
 	/* We don't need the callbacks anymore */
 	err = bt_bap_unicast_client_unregister_cb(&unicast_client_cb);
-	zassert_equal(0, err, "Unexpected return value %d", err);
+	assert_int_equal(0, err);
 }

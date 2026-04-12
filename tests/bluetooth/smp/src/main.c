@@ -1,57 +1,64 @@
-/* main.c - Application main entry point */
-
 /*
  * Copyright (c) 2024 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
+#include <stdarg.h>
 #include <stddef.h>
-#include <zephyr/ztest.h>
+#include <setjmp.h>
+#include <string.h>
 
-#include <zephyr/bluetooth/bluetooth.h>
-#include <zephyr/bluetooth/conn.h>
-#include <../subsys/bluetooth/host/smp.h>
+#include <cmocka.h>
 
-ZTEST_SUITE(test_smp, NULL, NULL, NULL, NULL, NULL);
+#include <bluetooth/conn.h>
+#include <bluetooth/host/smp.h>
 
-ZTEST(test_smp, test_bt_smp_err_to_str)
+static void test_bt_smp_err_to_str(void **state)
 {
+	(void)state;
+
 	/* Test a couple of entries */
-	zassert_str_equal(bt_smp_err_to_str(0x00),
-			  "BT_SMP_ERR_SUCCESS");
-	zassert_str_equal(bt_smp_err_to_str(0x0a),
-			  "BT_SMP_ERR_INVALID_PARAMS");
-	zassert_str_equal(bt_smp_err_to_str(0x0F),
-			  "BT_SMP_ERR_KEY_REJECTED");
+	assert_string_equal(bt_smp_err_to_str(0x00), "BT_SMP_ERR_SUCCESS");
+	assert_string_equal(bt_smp_err_to_str(0x0a), "BT_SMP_ERR_INVALID_PARAMS");
+	assert_string_equal(bt_smp_err_to_str(0x0F), "BT_SMP_ERR_KEY_REJECTED");
 
 	/* Test entries that are not used */
-	zassert_mem_equal(bt_smp_err_to_str(0x10),
-			  "(unknown)", strlen("(unknown)"));
-	zassert_mem_equal(bt_smp_err_to_str(0xFF),
-			  "(unknown)", strlen("(unknown)"));
+	assert_memory_equal(bt_smp_err_to_str(0x10), "(unknown)", strlen("(unknown)"));
+	assert_memory_equal(bt_smp_err_to_str(0xFF), "(unknown)", strlen("(unknown)"));
 
 	for (uint16_t i = 0; i <= UINT8_MAX; i++) {
-		zassert_not_null(bt_smp_err_to_str(i), ": %d", i);
+		assert_non_null(bt_smp_err_to_str((uint8_t)i));
 	}
 }
 
-ZTEST(test_smp, test_bt_security_err_to_str)
+static void test_bt_security_err_to_str(void **state)
 {
+	(void)state;
+
 	/* Test a couple of entries */
-	zassert_str_equal(bt_security_err_to_str(BT_SECURITY_ERR_AUTH_FAIL),
-			  "BT_SECURITY_ERR_AUTH_FAIL");
-	zassert_str_equal(bt_security_err_to_str(BT_SECURITY_ERR_KEY_REJECTED),
-			  "BT_SECURITY_ERR_KEY_REJECTED");
-	zassert_str_equal(bt_security_err_to_str(BT_SECURITY_ERR_UNSPECIFIED),
-			  "BT_SECURITY_ERR_UNSPECIFIED");
+	assert_string_equal(bt_security_err_to_str(BT_SECURITY_ERR_AUTH_FAIL),
+			   "BT_SECURITY_ERR_AUTH_FAIL");
+	assert_string_equal(bt_security_err_to_str(BT_SECURITY_ERR_KEY_REJECTED),
+			   "BT_SECURITY_ERR_KEY_REJECTED");
+	assert_string_equal(bt_security_err_to_str(BT_SECURITY_ERR_UNSPECIFIED),
+			   "BT_SECURITY_ERR_UNSPECIFIED");
 
 	/* Test outside range */
-	zassert_str_equal(bt_security_err_to_str(BT_SECURITY_ERR_UNSPECIFIED + 1),
-			  "(unknown)");
+	assert_string_equal(bt_security_err_to_str(BT_SECURITY_ERR_UNSPECIFIED + 1),
+			   "(unknown)");
 
 	for (uint16_t i = 0; i <= UINT8_MAX; i++) {
-		zassert_not_null(bt_security_err_to_str(i), ": %d", i);
+		assert_non_null(bt_security_err_to_str((enum bt_security_err)i));
 	}
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(test_bt_smp_err_to_str),
+		cmocka_unit_test(test_bt_security_err_to_str),
+	};
+
+	return cmocka_run_group_tests_name("bt_smp", tests, NULL, NULL);
 }

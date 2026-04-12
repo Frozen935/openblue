@@ -5,18 +5,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
-#include <errno.h>
-#include <zephyr/types.h>
-#include <zephyr/kernel.h>
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/conn.h>
+#include <bluetooth/classic/rfcomm.h>
+#include <bluetooth/classic/sdp.h>
 
-#include <zephyr/bluetooth/bluetooth.h>
-#include <zephyr/bluetooth/conn.h>
-#include <zephyr/bluetooth/classic/rfcomm.h>
-#include <zephyr/bluetooth/classic/sdp.h>
+#include <utils/bt_utils.h>
 
-#include <zephyr/shell/shell.h>
+#include "common/bt_shell_private.h"
 
 static struct bt_sdp_attribute spp_attrs_large[] = {
 	BT_SDP_NEW_SERVICE,
@@ -232,26 +233,32 @@ static struct bt_sdp_record spp_rec[MAX_SDP_RECORD_COUNT] = {
 
 static bool sdp_rec_reg[MAX_SDP_RECORD_COUNT];
 
-static int cmd_register_sdp(const struct shell *sh, size_t argc, char *argv[])
+static int cmd_register_sdp(const struct bt_shell *sh, size_t argc, char *argv[])
 {
 	int err;
 	uint8_t index;
 
 	index = strtoul(argv[1], NULL, 16);
+	if (index >= ARRAY_SIZE(spp_rec)) {
+		bt_shell_error("Invalid SDP record %u", index);
+		return -EINVAL;
+	}
+
 	if (sdp_rec_reg[index]) {
-		shell_error(sh, "The SDP record %d has been installed", index);
+		bt_shell_error("The SDP record %d has been installed", index);
 	}
 
 	err = bt_sdp_register_service(&spp_rec[index]);
 	if (err) {
-		shell_error(sh, "Register SDP record failed (err %d)", err);
+		bt_shell_error("Register SDP record failed (err %d)", err);
 	} else {
 		sdp_rec_reg[index] = true;
 	}
+	(void)sh;
 	return err;
 }
 
-static int cmd_register_sdp_all(const struct shell *sh, size_t argc, char *argv[])
+static int cmd_register_sdp_all(const struct bt_shell *sh, size_t argc, char *argv[])
 {
 	int err;
 
@@ -259,34 +266,43 @@ static int cmd_register_sdp_all(const struct shell *sh, size_t argc, char *argv[
 		if (!sdp_rec_reg[i]) {
 			err = bt_sdp_register_service(&spp_rec[i]);
 			if (err) {
-				shell_error(sh, "Register SDP record failed (err %d)", err);
+				bt_shell_error("Register SDP record failed (err %d)", err);
 			} else {
 				sdp_rec_reg[i] = true;
 			}
 		}
 	}
+	(void)sh;
+	(void)argc;
+	(void)argv;
 	return 0;
 }
 
-static int cmd_register_sdp_large(const struct shell *sh, size_t argc, char *argv[])
+static int cmd_register_sdp_large(const struct bt_shell *sh, size_t argc, char *argv[])
 {
 	int err;
 
 	err = bt_sdp_register_service(&spp_rec_large);
 	if (err) {
-		shell_error(sh, "Register SDP large record failed (err %d)", err);
+		bt_shell_error("Register SDP large record failed (err %d)", err);
 	}
+	(void)sh;
+	(void)argc;
+	(void)argv;
 	return 0;
 }
 
-static int cmd_register_sdp_large_valid(const struct shell *sh, size_t argc, char *argv[])
+static int cmd_register_sdp_large_valid(const struct bt_shell *sh, size_t argc, char *argv[])
 {
 	int err;
 
 	err = bt_sdp_register_service(&spp_rec_large_valid);
 	if (err) {
-		shell_error(sh, "Register SDP large record failed (err %d)", err);
+		bt_shell_error("Register SDP large record failed (err %d)", err);
 	}
+	(void)sh;
+	(void)argc;
+	(void)argv;
 	return 0;
 }
 
@@ -355,37 +371,40 @@ static struct bt_sdp_attribute spp_attrs_uuid128[] = {
 
 static struct bt_sdp_record spp_rec_uuid128 = BT_SDP_RECORD(spp_attrs_uuid128);
 
-static int cmd_register_sdp_uuid128(const struct shell *sh, size_t argc, char *argv[])
+static int cmd_register_sdp_uuid128(const struct bt_shell *sh, size_t argc, char *argv[])
 {
 	int err;
 
 	err = bt_sdp_register_service(&spp_rec_uuid128);
 	if (err) {
-		shell_error(sh, "Register SDP uuid128 failed (err %d)", err);
+		bt_shell_error("Register SDP uuid128 failed (err %d)", err);
 	}
+	(void)sh;
+	(void)argc;
+	(void)argv;
 	return 0;
 }
 
-SHELL_STATIC_SUBCMD_SET_CREATE(sdp_server_cmds,
-	SHELL_CMD_ARG(register_sdp, NULL, "<SDP Record Index>", cmd_register_sdp, 2, 0),
-	SHELL_CMD_ARG(register_sdp_all, NULL, "", cmd_register_sdp_all, 1, 0),
-	SHELL_CMD_ARG(register_sdp_large, NULL, "", cmd_register_sdp_large, 1, 0),
-	SHELL_CMD_ARG(register_sdp_large_valid, NULL, "", cmd_register_sdp_large_valid, 1, 0),
-	SHELL_CMD_ARG(register_sdp_uuid128, NULL, "", cmd_register_sdp_uuid128, 1, 0),
-	SHELL_SUBCMD_SET_END
+BT_SHELL_STATIC_SUBCMD_SET_CREATE(sdp_server_cmds,
+	BT_SHELL_CMD_ARG(register_sdp, NULL, "<SDP Record Index>", cmd_register_sdp, 2, 0),
+	BT_SHELL_CMD_ARG(register_sdp_all, NULL, "", cmd_register_sdp_all, 1, 0),
+	BT_SHELL_CMD_ARG(register_sdp_large, NULL, "", cmd_register_sdp_large, 1, 0),
+	BT_SHELL_CMD_ARG(register_sdp_large_valid, NULL, "", cmd_register_sdp_large_valid, 1, 0),
+	BT_SHELL_CMD_ARG(register_sdp_uuid128, NULL, "", cmd_register_sdp_uuid128, 1, 0),
+	BT_SHELL_SUBCMD_SET_END
 );
 
-static int cmd_default_handler(const struct shell *sh, size_t argc, char **argv)
+static int cmd_default_handler(const struct bt_shell *sh, size_t argc, char **argv)
 {
 	if (argc == 1) {
-		shell_help(sh);
-		return SHELL_CMD_HELP_PRINTED;
+		bt_shell_help(sh);
+		return BT_SHELL_CMD_HELP_PRINTED;
 	}
 
-	shell_error(sh, "%s unknown parameter: %s", argv[0], argv[1]);
+	bt_shell_error("%s unknown parameter: %s", argv[0], argv[1]);
 
 	return -EINVAL;
 }
 
-SHELL_CMD_REGISTER(sdp_server, &sdp_server_cmds, "Bluetooth classic SDP server shell commands",
-		   cmd_default_handler);
+BT_SHELL_CMD_REGISTER(sdp_server, &sdp_server_cmds,
+		      "Bluetooth classic SDP server shell commands", cmd_default_handler);

@@ -20,8 +20,6 @@
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/sys/util_macro.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test.h>
 
 #include "bap_unicast_server.h"
 #include "bap_stream.h"
@@ -39,25 +37,52 @@ static void ascs_register_test_suite_after(void *f)
 	(void)bt_bap_unicast_server_unregister();
 }
 
-ZTEST_SUITE(ascs_register_test_suite, NULL, NULL, NULL, ascs_register_test_suite_after, NULL);
 
-static ZTEST(ascs_register_test_suite, test_cb_register_without_ascs_registered)
+
+static int ascs_register_test_suite_case_setup(void **state)
+{
+	void *fixture_local = NULL;
+
+	test_mocks_init();
+
+	*state = fixture_local;
+
+	return 0;
+}
+
+static int ascs_register_test_suite_case_teardown(void **state)
+{
+	void *fixture_local = state != NULL ? *state : NULL;
+
+
+	ascs_register_test_suite_after(fixture_local);
+
+	test_mocks_cleanup();
+
+	if (state != NULL) {
+		*state = NULL;
+	}
+
+	return 0;
+}
+
+static void test_cb_register_without_ascs_registered(void **state)
 {
 	int err;
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, -ENOTSUP, "Unexpected err response %d", err);
+	assert_int_equal(err, -ENOTSUP);
 }
 
-static ZTEST(ascs_register_test_suite, test_ascs_register_with_null_param)
+static void test_ascs_register_with_null_param(void **state)
 {
 	int err;
 
 	err = bt_bap_unicast_server_register(NULL);
-	zassert_equal(err, -EINVAL, "Unexpected err response %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST(ascs_register_test_suite, test_ascs_register_twice)
+static void test_ascs_register_twice(void **state)
 {
 	int err;
 	struct bt_bap_unicast_server_register_param param = {
@@ -67,17 +92,17 @@ static ZTEST(ascs_register_test_suite, test_ascs_register_twice)
 
 	/* Setup already registered once, so calling once here should be sufficient */
 	err = bt_bap_unicast_server_register(&param);
-	zassert_equal(err, 0, "Unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	/* Setup already registered once, so calling once here should be sufficient */
 	err = bt_bap_unicast_server_register(&param);
-	zassert_equal(err, -EALREADY, "Unexpected err response %d", err);
+	assert_int_equal(err, -EALREADY);
 
 	err = bt_bap_unicast_server_unregister();
-	zassert_equal(err, 0, "Unexpected err response %d", err);
+	assert_int_equal(err, 0);
 }
 
-static ZTEST(ascs_register_test_suite, test_ascs_register_too_many_sinks)
+static void test_ascs_register_too_many_sinks(void **state)
 {
 	int err;
 	struct bt_bap_unicast_server_register_param param = {
@@ -86,10 +111,10 @@ static ZTEST(ascs_register_test_suite, test_ascs_register_too_many_sinks)
 	};
 
 	err = bt_bap_unicast_server_register(&param);
-	zassert_equal(err, -EINVAL, "Unexpected err response %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST(ascs_register_test_suite, test_ascs_register_too_many_sources)
+static void test_ascs_register_too_many_sources(void **state)
 {
 	int err;
 	struct bt_bap_unicast_server_register_param param = {
@@ -98,19 +123,19 @@ static ZTEST(ascs_register_test_suite, test_ascs_register_too_many_sources)
 	};
 
 	err = bt_bap_unicast_server_register(&param);
-	zassert_equal(err, -EINVAL, "Unexpected err response %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST(ascs_register_test_suite, test_ascs_register_zero_ases)
+static void test_ascs_register_zero_ases(void **state)
 {
 	int err;
 	struct bt_bap_unicast_server_register_param param = {0, 0};
 
 	err = bt_bap_unicast_server_register(&param);
-	zassert_equal(err, -EINVAL, "Unexpected err response %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST(ascs_register_test_suite, test_ascs_register_fewer_than_max_ases)
+static void test_ascs_register_fewer_than_max_ases(void **state)
 {
 	int err;
 	struct bt_bap_unicast_server_register_param param = {
@@ -119,18 +144,18 @@ static ZTEST(ascs_register_test_suite, test_ascs_register_fewer_than_max_ases)
 	};
 
 	err = bt_bap_unicast_server_register(&param);
-	zassert_equal(err, 0, "Unexpected err response %d", err);
+	assert_int_equal(err, 0);
 }
 
-static ZTEST(ascs_register_test_suite, test_ascs_unregister_without_register)
+static void test_ascs_unregister_without_register(void **state)
 {
 	int err;
 
 	err = bt_bap_unicast_server_unregister();
-	zassert_equal(err, -EALREADY, "Unexpected err response %d", err);
+	assert_int_equal(err, -EALREADY);
 }
 
-static ZTEST(ascs_register_test_suite, test_ascs_unregister_with_cbs_registered)
+static void test_ascs_unregister_with_cbs_registered(void **state)
 {
 	struct bt_bap_unicast_server_register_param param = {
 		CONFIG_BT_ASCS_MAX_ASE_SNK_COUNT,
@@ -139,18 +164,45 @@ static ZTEST(ascs_register_test_suite, test_ascs_unregister_with_cbs_registered)
 	int err;
 
 	err = bt_bap_unicast_server_register(&param);
-	zassert_equal(err, 0, "Unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "Unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	/* Not valid to unregister while callbacks are still registered */
 	err = bt_bap_unicast_server_unregister();
-	zassert_equal(err, -EAGAIN, "Unexpected err response %d", err);
+	assert_int_equal(err, -EAGAIN);
 
 	err = bt_bap_unicast_server_unregister_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "Unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_bap_unicast_server_unregister();
-	zassert_equal(err, 0, "Unexpected err response %d", err);
+	assert_int_equal(err, 0);
 }
+
+static int run_ascs_register_test_suite(void)
+{
+	const struct CMUnitTest ascs_register_test_suite_tests[] = {
+		cmocka_unit_test_setup_teardown(test_cb_register_without_ascs_registered, ascs_register_test_suite_case_setup, ascs_register_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_ascs_register_with_null_param, ascs_register_test_suite_case_setup, ascs_register_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_ascs_register_twice, ascs_register_test_suite_case_setup, ascs_register_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_ascs_register_too_many_sinks, ascs_register_test_suite_case_setup, ascs_register_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_ascs_register_too_many_sources, ascs_register_test_suite_case_setup, ascs_register_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_ascs_register_zero_ases, ascs_register_test_suite_case_setup, ascs_register_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_ascs_register_fewer_than_max_ases, ascs_register_test_suite_case_setup, ascs_register_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_ascs_unregister_without_register, ascs_register_test_suite_case_setup, ascs_register_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_ascs_unregister_with_cbs_registered, ascs_register_test_suite_case_setup, ascs_register_test_suite_case_teardown),
+	};
+
+	return cmocka_run_group_tests_name("ascs_register_test_suite", ascs_register_test_suite_tests, NULL, NULL);
+}
+
+int run_test_ase_register_tests(void)
+{
+	int result = 0;
+
+	result |= run_ascs_register_test_suite();
+
+	return result;
+}
+

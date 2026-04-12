@@ -10,8 +10,8 @@
 #include <stdint.h>
 
 
-#include <zephyr/bluetooth/audio/csip.h>
-#include <zephyr/bluetooth/conn.h>
+#include <bluetooth/audio/csip.h>
+#include <bluetooth/conn.h>
 
 static struct bt_csip_set_coordinator_cb *csip_cb;
 

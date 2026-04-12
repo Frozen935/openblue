@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.20.0)
-set(NO_QEMU_SERIAL_BT_SERVER 1)
 
-find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(bluetooth)
+openblue_add_native_test(test_bt_classic_rfcomm_s
+                         "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c"
+                         "bluetooth/classic/rfcomm_s"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/src/rfcomm_s.c")
 
-FILE(GLOB app_sources src/*.c)
-target_sources(app PRIVATE ${app_sources})
+target_sources(test_bt_classic_rfcomm_s PRIVATE
+  ${CMAKE_SOURCE_DIR}/bluetooth/common/bt_shell_private.c
+  ${CMAKE_SOURCE_DIR}/tests/bluetooth/classic/classic_shell_host.c
+)

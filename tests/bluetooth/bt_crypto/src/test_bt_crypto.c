@@ -2,18 +2,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/ztest_assert.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
 
 #include <stdint.h>
 #include <string.h>
 
-#include <zephyr/ztest.h>
+#include <cmocka.h>
+
 #include "bt_crypto.h"
 
-ZTEST_SUITE(bt_crypto, NULL, NULL, NULL, NULL, NULL);
+#include <host/crypto.h>
 
-ZTEST(bt_crypto, test_result_aes_cmac)
+static int setup(void **state)
 {
+	(void)state;
+
+	assert_int_equal(bt_crypto_init(), 0);
+
+	return 0;
+}
+
+static void test_result_aes_cmac(void **state)
+{
+	(void)state;
+
 	static const uint8_t key[] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
 				      0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
 	static const uint8_t M[] = {
@@ -34,20 +48,22 @@ ZTEST(bt_crypto, test_result_aes_cmac)
 	uint8_t res[16];
 
 	bt_crypto_aes_cmac(key, M, 0, res);
-	zassert_mem_equal(res, exp_mac1, 16);
+	assert_memory_equal(res, exp_mac1, 16);
 
 	bt_crypto_aes_cmac(key, M, 16, res);
-	zassert_mem_equal(res, exp_mac2, 16);
+	assert_memory_equal(res, exp_mac2, 16);
 
 	bt_crypto_aes_cmac(key, M, 40, res);
-	zassert_mem_equal(res, exp_mac3, 16);
+	assert_memory_equal(res, exp_mac3, 16);
 
 	bt_crypto_aes_cmac(key, M, 64, res);
-	zassert_mem_equal(res, exp_mac4, 16);
+	assert_memory_equal(res, exp_mac4, 16);
 }
 
-ZTEST(bt_crypto, test_result_f4)
+static void test_result_f4(void **state)
 {
+	(void)state;
+
 	uint8_t u[32] = {0xe6, 0x9d, 0x35, 0x0e, 0x48, 0x01, 0x03, 0xcc, 0xdb, 0xfd, 0xf4,
 			 0xac, 0x11, 0x91, 0xf4, 0xef, 0xb9, 0xa5, 0xf9, 0xe9, 0xa7, 0x83,
 			 0x2c, 0x5e, 0x2c, 0xbe, 0x97, 0xf2, 0xd2, 0x03, 0xb0, 0x20};
@@ -63,11 +79,13 @@ ZTEST(bt_crypto, test_result_f4)
 	uint8_t res[16];
 
 	bt_crypto_f4(u, v, x, z, res);
-	zassert_mem_equal(res, exp_res, 16);
+	assert_memory_equal(res, exp_res, 16);
 }
 
-ZTEST(bt_crypto, test_result_f5)
+static void test_result_f5(void **state)
 {
+	(void)state;
+
 	uint8_t w[32] = {0x98, 0xa6, 0xbf, 0x73, 0xf3, 0x34, 0x8d, 0x86, 0xf1, 0x66, 0xf8,
 			 0xb4, 0x13, 0x6b, 0x79, 0x99, 0x9b, 0x7d, 0x39, 0x0a, 0xa6, 0x10,
 			 0x10, 0x34, 0x05, 0xad, 0xc8, 0x57, 0xa3, 0x34, 0x02, 0xec};
@@ -85,12 +103,14 @@ ZTEST(bt_crypto, test_result_f5)
 	uint8_t mackey[16], ltk[16];
 
 	bt_crypto_f5(w, n1, n2, &a1, &a2, mackey, ltk);
-	zassert_mem_equal(mackey, exp_mackey, 16);
-	zassert_mem_equal(ltk, exp_ltk, 16);
+	assert_memory_equal(mackey, exp_mackey, 16);
+	assert_memory_equal(ltk, exp_ltk, 16);
 }
 
-ZTEST(bt_crypto, test_result_f6)
+static void test_result_f6(void **state)
 {
+	(void)state;
+
 	uint8_t w[16] = {0x20, 0x6e, 0x63, 0xce, 0x20, 0x6a, 0x3f, 0xfd,
 			 0x02, 0x4a, 0x08, 0xa1, 0x76, 0xf1, 0x65, 0x29};
 	uint8_t n1[16] = {0xab, 0xae, 0x2b, 0x71, 0xec, 0xb2, 0xff, 0xff,
@@ -108,11 +128,13 @@ ZTEST(bt_crypto, test_result_f6)
 	uint8_t res[16];
 
 	bt_crypto_f6(w, n1, n2, r, io_cap, &a1, &a2, res);
-	zassert_mem_equal(res, exp_res, 16);
+	assert_memory_equal(res, exp_res, 16);
 }
 
-ZTEST(bt_crypto, test_result_g2)
+static void test_result_g2(void **state)
 {
+	(void)state;
+
 	uint8_t u[32] = {0xe6, 0x9d, 0x35, 0x0e, 0x48, 0x01, 0x03, 0xcc, 0xdb, 0xfd, 0xf4,
 			 0xac, 0x11, 0x91, 0xf4, 0xef, 0xb9, 0xa5, 0xf9, 0xe9, 0xa7, 0x83,
 			 0x2c, 0x5e, 0x2c, 0xbe, 0x97, 0xf2, 0xd2, 0x03, 0xb0, 0x20};
@@ -128,11 +150,13 @@ ZTEST(bt_crypto, test_result_g2)
 	uint32_t res;
 
 	bt_crypto_g2(u, v, x, y, &res);
-	zassert_equal(res, exp_res);
+	assert_int_equal(res, exp_res);
 }
 
-ZTEST(bt_crypto, test_result_h6)
+static void test_result_h6(void **state)
 {
+	(void)state;
+
 	uint8_t w[16] = {0x9b, 0x7d, 0x39, 0x0a, 0xa6, 0x10, 0x10, 0x34,
 			 0x05, 0xad, 0xc8, 0x57, 0xa3, 0x34, 0x02, 0xec};
 	uint8_t key_id[4] = {0x72, 0x62, 0x65, 0x6c};
@@ -142,11 +166,13 @@ ZTEST(bt_crypto, test_result_h6)
 	uint8_t res[16];
 
 	bt_crypto_h6(w, key_id, res);
-	zassert_mem_equal(res, exp_res, 16);
+	assert_memory_equal(res, exp_res, 16);
 }
 
-ZTEST(bt_crypto, test_result_h7)
+static void test_result_h7(void **state)
 {
+	(void)state;
+
 	uint8_t salt[16] = {0x31, 0x70, 0x6d, 0x74, 0x00, 0x00, 0x00, 0x00,
 			    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	uint8_t w[16] = {0x9b, 0x7d, 0x39, 0x0a, 0xa6, 0x10, 0x10, 0x34,
@@ -157,11 +183,13 @@ ZTEST(bt_crypto, test_result_h7)
 	uint8_t res[16];
 
 	bt_crypto_h7(salt, w, res);
-	zassert_mem_equal(res, exp_res, 16);
+	assert_memory_equal(res, exp_res, 16);
 }
 
-ZTEST(bt_crypto, test_result_h8)
+static void test_result_h8(void **state)
 {
+	(void)state;
+
 	uint8_t k[16] = {0x9b, 0x7d, 0x39, 0x0a, 0xa6, 0x10, 0x10, 0x34,
 			 0x05, 0xad, 0xc8, 0x57, 0xa3, 0x34, 0x02, 0xec};
 	uint8_t s[16] = {0xba, 0xd5, 0x9e, 0x2f, 0xc1, 0x44, 0x70, 0x9b,
@@ -173,5 +201,21 @@ ZTEST(bt_crypto, test_result_h8)
 	uint8_t res[16];
 
 	bt_crypto_h8(k, s, key_id, res);
-	zassert_mem_equal(res, exp_res, 16);
+	assert_memory_equal(res, exp_res, 16);
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(test_result_aes_cmac),
+		cmocka_unit_test(test_result_f4),
+		cmocka_unit_test(test_result_f5),
+		cmocka_unit_test(test_result_f6),
+		cmocka_unit_test(test_result_g2),
+		cmocka_unit_test(test_result_h6),
+		cmocka_unit_test(test_result_h7),
+		cmocka_unit_test(test_result_h8),
+	};
+
+	return cmocka_run_group_tests_name("bt_crypto", tests, setup, NULL);
 }

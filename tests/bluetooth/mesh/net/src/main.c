@@ -4,11 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/net_buf.h>
-#include <zephyr/bluetooth/mesh.h>
-#include <zephyr/sys/util.h>
-#include <zephyr/sys/byteorder.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <cmocka.h>
+
+#include <base/bt_buf.h>
+#include <base/byteorder.h>
+#include <bluetooth/mesh.h>
 #include <errno.h>
 #include <string.h>
 #include "crypto.h"
@@ -33,7 +37,7 @@ int bt_mesh_net_obfuscate(uint8_t *pdu, uint32_t iv_index, const struct bt_mesh_
 }
 
 /* Mocked decryption function. */
-int bt_mesh_net_decrypt(const struct bt_mesh_key *key, struct net_buf_simple *buf,
+int bt_mesh_net_decrypt(const struct bt_mesh_key *key, struct bt_buf_simple *buf,
 			uint32_t iv_index, enum bt_mesh_nonce_type type)
 {
 	ARG_UNUSED(key);
@@ -58,11 +62,11 @@ static struct bt_mesh_subnet test_subnet_1 = { .net_idx = 0x0001 };
 static struct bt_mesh_subnet test_subnet_2 = { .net_idx = 0x0002 };
 
 /* Minimalistic mock credential finder: pick subnet by NID and invoke callback once. */
-bool bt_mesh_net_cred_find(struct bt_mesh_net_rx *rx, struct net_buf_simple *in,
-				struct net_buf_simple *out,
+bool bt_mesh_net_cred_find(struct bt_mesh_net_rx *rx, struct bt_buf_simple *in,
+				struct bt_buf_simple *out,
 				bool (*cb)(struct bt_mesh_net_rx *rx,
-					struct net_buf_simple *in,
-					struct net_buf_simple *out,
+					struct bt_buf_simple *in,
+					struct bt_buf_simple *out,
 					const struct bt_mesh_net_cred *cred))
 {
 	struct bt_mesh_net_cred cred = { 0 };
@@ -91,8 +95,6 @@ bool bt_mesh_net_cred_find(struct bt_mesh_net_rx *rx, struct net_buf_simple *in,
 /**** Mocked functions - end ****/
 
 /**** Tests ****/
-
-ZTEST_SUITE(bt_mesh_net_msg_cache, NULL, NULL, NULL, NULL, NULL);
 
 /* Helper to build a minimal Network PDU: 9-byte header + 1B payload + 8B MIC. */
 static void build_pdu(uint8_t *dst, uint8_t nid, uint8_t ttl, uint32_t seq,
@@ -125,14 +127,16 @@ static void build_pdu(uint8_t *dst, uint8_t nid, uint8_t ttl, uint32_t seq,
  * the third PDU is rejected. Inorder to bypass 'check_dup()' function, the test builds PDUs with
  * different MICs, and PDU builder function is coded in a way that the MICs are different.
  */
-ZTEST(bt_mesh_net_msg_cache, test_cache_differentiates_by_net_idx)
+static void test_cache_differentiates_by_net_idx(void **state)
 {
+	(void)state;
+
 		uint8_t pdu1[18];
 		uint8_t pdu2[18];
 		uint8_t pdu3[18];
 		uint8_t out_buf[18];
-		struct net_buf_simple in = { 0 };
-		struct net_buf_simple out = { 0 };
+		struct bt_buf_simple in = { 0 };
+		struct bt_buf_simple out = { 0 };
 		struct bt_mesh_net_rx rx = { 0 };
 
 		/* Same SRC and SEQ across PDUs */
@@ -155,22 +159,31 @@ ZTEST(bt_mesh_net_msg_cache, test_cache_differentiates_by_net_idx)
 		build_pdu(pdu3, 0x11, 5, seq, src, dst, 0x04);
 
 		/* First PDU: expect success */
-		net_buf_simple_init_with_data(&in, pdu1, sizeof(pdu1));
-		net_buf_simple_init_with_data(&out, out_buf, sizeof(out_buf));
+		bt_buf_simple_init_with_data(&in, pdu1, sizeof(pdu1));
+		bt_buf_simple_init_with_data(&out, out_buf, sizeof(out_buf));
 
 		int err = bt_mesh_net_decode(&in, BT_MESH_NET_IF_ADV, &rx, &out);
 
-		zassert_equal(err, 0, "First PDU decode failed: %d", err);
+		assert_int_equal(err, 0);
 
 		/* Second PDU: expect success (not duplicate) */
-		net_buf_simple_init_with_data(&in, pdu2, sizeof(pdu2));
-		net_buf_simple_reset(&out);
+		bt_buf_simple_init_with_data(&in, pdu2, sizeof(pdu2));
+		bt_buf_simple_reset(&out);
 		err = bt_mesh_net_decode(&in, BT_MESH_NET_IF_ADV, &rx, &out);
-		zassert_equal(err, 0, "Second PDU decode (different net_idx) failed: %d", err);
+		assert_int_equal(err, 0);
 
 		/* Decode third PDU with same NID/net_idx: expect -ENOENT due to cache duplicate */
-		net_buf_simple_init_with_data(&in, pdu3, sizeof(pdu3));
-		net_buf_simple_reset(&out);
+		bt_buf_simple_init_with_data(&in, pdu3, sizeof(pdu3));
+		bt_buf_simple_reset(&out);
 		err = bt_mesh_net_decode(&in, BT_MESH_NET_IF_ADV, &rx, &out);
-		zassert_equal(err, -ENOENT, "Third PDU (same net_idx) not rejected: %d", err);
+		assert_int_equal(err, -ENOENT);
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(test_cache_differentiates_by_net_idx),
+	};
+
+	return cmocka_run_group_tests_name("bt_mesh_net_msg_cache", tests, NULL, NULL);
 }

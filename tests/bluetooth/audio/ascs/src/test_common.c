@@ -6,7 +6,10 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <setjmp.h>
 #include <stdint.h>
+
+#include <cmocka.h>
 
 #include <zephyr/bluetooth/att.h>
 #include <zephyr/bluetooth/gap.h>
@@ -22,7 +25,6 @@
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/sys/util_macro.h>
 #include <zephyr/syscalls/kernel.h>
-#include <zephyr/ztest_assert.h>
 #include <sys/types.h>
 
 #include "bap_unicast_server.h"
@@ -89,7 +91,7 @@ const struct bt_gatt_attr *test_ase_control_point_get(void)
 					  BT_UUID_ASCS_ASE_CP, NULL, 1, attr_found, &attr);
 	}
 
-	zassert_not_null(attr, "ASE Control Point not found");
+	assert_non_null(attr);
 
 	return attr;
 
@@ -129,8 +131,7 @@ uint8_t test_ase_id_get(const struct bt_gatt_attr *ase)
 	ssize_t ret;
 
 	ret = ase->read(NULL, ase, &hdr, sizeof(hdr), 0);
-	zassert_false(ret < 0, "ase->read returned unexpected (err 0x%02x)",
-		      (uint8_t)BT_GATT_ERR(ret));
+	assert_false(ret < 0);
 
 	return hdr.ase_id;
 }
@@ -177,8 +178,7 @@ void test_ase_control_client_config_codec(struct bt_conn *conn, uint8_t ase_id,
 	mock_bap_unicast_server_cb_config_fake.custom_fake = unicast_server_cb_config_custom_fake;
 
 	ret = attr->write(conn, attr, (void *)buf, sizeof(buf), 0, 0);
-	zassert_false(ret < 0, "cp_attr->write returned unexpected (err 0x%02x)",
-		      (uint8_t)BT_GATT_ERR(ret));
+	assert_false(ret < 0);
 
 	stream_allocated = NULL;
 
@@ -205,8 +205,7 @@ void test_ase_control_client_config_qos(struct bt_conn *conn, uint8_t ase_id)
 	ssize_t ret;
 
 	ret = attr->write(conn, attr, (void *)buf, sizeof(buf), 0, 0);
-	zassert_false(ret < 0, "attr->write returned unexpected (err 0x%02x)",
-		      (uint8_t)BT_GATT_ERR(ret));
+	assert_false(ret < 0);
 
 	test_drain_syswq(); /* Ensure that state transitions are completed */
 }
@@ -223,8 +222,7 @@ void test_ase_control_client_enable(struct bt_conn *conn, uint8_t ase_id)
 	ssize_t ret;
 
 	ret = attr->write(conn, attr, (void *)buf, sizeof(buf), 0, 0);
-	zassert_false(ret < 0, "attr->write returned unexpected (err 0x%02x)",
-		      (uint8_t)BT_GATT_ERR(ret));
+	assert_false(ret < 0);
 
 	test_drain_syswq(); /* Ensure that state transitions are completed */
 }
@@ -240,8 +238,7 @@ void test_ase_control_client_disable(struct bt_conn *conn, uint8_t ase_id)
 	ssize_t ret;
 
 	ret = attr->write(conn, attr, (void *)buf, sizeof(buf), 0, 0);
-	zassert_false(ret < 0, "attr->write returned unexpected (err 0x%02x)",
-		      (uint8_t)BT_GATT_ERR(ret));
+	assert_false(ret < 0);
 
 	test_drain_syswq(); /* Ensure that state transitions are completed */
 }
@@ -257,8 +254,7 @@ void test_ase_control_client_release(struct bt_conn *conn, uint8_t ase_id)
 	ssize_t ret;
 
 	ret = attr->write(conn, attr, (void *)buf, sizeof(buf), 0, 0);
-	zassert_false(ret < 0, "attr->write returned unexpected (err 0x%02x)",
-		      (uint8_t)BT_GATT_ERR(ret));
+	assert_false(ret < 0);
 
 	test_drain_syswq(); /* Ensure that state transitions are completed */
 }
@@ -276,8 +272,7 @@ void test_ase_control_client_update_metadata(struct bt_conn *conn, uint8_t ase_i
 	ssize_t ret;
 
 	ret = attr->write(conn, attr, (void *)buf, sizeof(buf), 0, 0);
-	zassert_false(ret < 0, "attr->write returned unexpected (err 0x%02x)",
-		      (uint8_t)BT_GATT_ERR(ret));
+	assert_false(ret < 0);
 
 	test_drain_syswq(); /* Ensure that state transitions are completed */
 }
@@ -293,8 +288,7 @@ void test_ase_control_client_receiver_start_ready(struct bt_conn *conn, uint8_t 
 	ssize_t ret;
 
 	ret = attr->write(conn, attr, (void *)buf, sizeof(buf), 0, 0);
-	zassert_false(ret < 0, "attr->write returned unexpected (err 0x%02x)",
-		      (uint8_t)BT_GATT_ERR(ret));
+	assert_false(ret < 0);
 
 	test_drain_syswq(); /* Ensure that state transitions are completed */
 }
@@ -310,8 +304,7 @@ void test_ase_control_client_receiver_stop_ready(struct bt_conn *conn, uint8_t a
 	ssize_t ret;
 
 	ret = attr->write(conn, attr, (void *)buf, sizeof(buf), 0, 0);
-	zassert_false(ret < 0, "attr->write returned unexpected (err 0x%02x)",
-		      (uint8_t)BT_GATT_ERR(ret));
+	assert_false(ret < 0);
 
 	test_drain_syswq(); /* Ensure that state transitions are completed */
 }
@@ -351,13 +344,13 @@ void test_preamble_state_streaming(struct bt_conn *conn, uint8_t ase_id,
 	test_ase_control_client_enable(conn, ase_id);
 
 	err = mock_bt_iso_accept(conn, 0x01, 0x01, chan);
-	zassert_equal(0, err, "Failed to connect iso: err %d", err);
+	assert_int_equal(0, err);
 
 	if (source) {
 		test_ase_control_client_receiver_start_ready(conn, ase_id);
 	} else {
 		err = bt_bap_stream_start(stream);
-		zassert_equal(0, err, "bt_bap_stream_start err %d", err);
+		assert_int_equal(0, err);
 	}
 
 	test_drain_syswq(); /* Ensure that state transitions are completed */
@@ -375,7 +368,7 @@ void test_preamble_state_disabling(struct bt_conn *conn, uint8_t ase_id,
 	test_ase_control_client_enable(conn, ase_id);
 
 	err = mock_bt_iso_accept(conn, 0x01, 0x01, chan);
-	zassert_equal(0, err, "Failed to connect iso: err %d", err);
+	assert_int_equal(0, err);
 
 	test_ase_control_client_receiver_start_ready(conn, ase_id);
 	test_ase_control_client_disable(conn, ase_id);
@@ -407,5 +400,5 @@ void test_drain_syswq(void)
 {
 	const int err = k_work_queue_drain(&k_sys_work_q, false);
 
-	zassert_true(err >= 0, "Failed to drain system workqueue: %d", err);
+	assert_true(err >= 0);
 }

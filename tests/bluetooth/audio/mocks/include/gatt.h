@@ -10,8 +10,8 @@
 #include <stdint.h>
 
 #include <zephyr/fff.h>
-#include <zephyr/bluetooth/conn.h>
-#include <zephyr/bluetooth/gatt.h>
+#include <bluetooth/conn.h>
+#include <bluetooth/gatt.h>
 
 void mock_bt_gatt_init(void);
 void mock_bt_gatt_cleanup(void);

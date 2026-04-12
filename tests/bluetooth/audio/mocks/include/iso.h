@@ -8,9 +8,9 @@
 #define MOCKS_ISO_H_
 #include <stdint.h>
 
-#include <zephyr/autoconf.h>
-#include <zephyr/bluetooth/conn.h>
-#include <zephyr/bluetooth/iso.h>
+#include <autoconf.h>
+#include <bluetooth/conn.h>
+#include <bluetooth/iso.h>
 #include <zephyr/fff.h>
 
 #if defined(CONFIG_BT_BAP_BROADCAST_SOURCE)

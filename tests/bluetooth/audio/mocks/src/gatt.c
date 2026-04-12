@@ -6,25 +6,28 @@
  */
 
 #include <errno.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <setjmp.h>
 #include <string.h>
 #include <sys/types.h>
 
-#include <zephyr/autoconf.h>
-#include <zephyr/bluetooth/att.h>
-#include <zephyr/bluetooth/conn.h>
-#include <zephyr/bluetooth/gatt.h>
-#include <zephyr/bluetooth/uuid.h>
+#include <cmocka.h>
+
+#include <autoconf.h>
+#include <bluetooth/att.h>
+#include <bluetooth/conn.h>
+#include <bluetooth/gatt.h>
+#include <bluetooth/uuid.h>
 #include <zephyr/fff.h>
 #include <zephyr/sys/__assert.h>
 #include <zephyr/sys/iterable_sections.h>
 #include <zephyr/sys/slist.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/types.h>
-#include <zephyr/ztest_test.h>
-#include <zephyr/ztest_assert.h>
 
 #include "gatt.h"
 #include "conn.h"
@@ -50,28 +53,28 @@ static sys_slist_t db;
 ssize_t bt_gatt_attr_read_service(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf,
 				  uint16_t len, uint16_t offset)
 {
-	zassert_unreachable("Unexpected call to '%s()' occurred", __func__);
+	fail_msg("Unexpected call to '%s()' occurred", __func__);
 	return 0;
 }
 
 ssize_t bt_gatt_attr_read_chrc(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf,
 			       uint16_t len, uint16_t offset)
 {
-	zassert_unreachable("Unexpected call to '%s()' occurred", __func__);
+	fail_msg("Unexpected call to '%s()' occurred", __func__);
 	return 0;
 }
 
 ssize_t bt_gatt_attr_read_ccc(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf,
 			      uint16_t len, uint16_t offset)
 {
-	zassert_unreachable("Unexpected call to '%s()' occurred", __func__);
+	fail_msg("Unexpected call to '%s()' occurred", __func__);
 	return 0;
 }
 
 ssize_t bt_gatt_attr_write_ccc(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 			       const void *buf, uint16_t len, uint16_t offset, uint8_t flags)
 {
-	zassert_unreachable("Unexpected call to '%s()' occurred", __func__);
+	fail_msg("Unexpected call to '%s()' occurred", __func__);
 	return 0;
 }
 
@@ -136,22 +139,22 @@ static struct bt_uuid *uuid_deep_copy(const struct bt_uuid *uuid)
 	switch (uuid->type) {
 	case BT_UUID_TYPE_16:
 		copy = malloc(sizeof(struct bt_uuid_16));
-		zassert_not_null(copy);
+		assert_non_null(copy);
 		memcpy(copy, uuid, sizeof(struct bt_uuid_16));
 		break;
 	case BT_UUID_TYPE_32:
 		copy = malloc(sizeof(struct bt_uuid_32));
-		zassert_not_null(copy);
+		assert_non_null(copy);
 		memcpy(copy, uuid, sizeof(struct bt_uuid_32));
 		break;
 	case BT_UUID_TYPE_128:
 		copy = malloc(sizeof(struct bt_uuid_128));
-		zassert_not_null(copy);
+		assert_non_null(copy);
 		memcpy(copy, uuid, sizeof(struct bt_uuid_128));
 		break;
 	default:
 		copy = NULL;
-		zassert_unreachable("Unexpected uuid->type 0x%02x", uuid->type);
+		fail_msg("Unexpected uuid->type 0x%02x", uuid->type);
 	}
 
 	return copy;
@@ -162,7 +165,7 @@ static struct bt_gatt_notify_params *notify_params_deep_copy(struct bt_gatt_noti
 	struct bt_gatt_notify_params *copy;
 
 	copy = malloc(sizeof(*params));
-	zassert_not_null(copy);
+	assert_non_null(copy);
 
 	memcpy(copy, params, sizeof(*params));
 
@@ -178,12 +181,10 @@ int bt_gatt_notify_cb(struct bt_conn *conn, struct bt_gatt_notify_params *params
 	struct bt_gatt_notify_params *copy;
 	int err;
 
-	zassert_not_null(params, "'%s()' was called with incorrect '%s' value", __func__, "params");
+	assert_non_null(params);
 
 	/* Either params->uuid, params->attr, or both has to be provided */
-	zassert_true(params->uuid != NULL || params->attr != NULL,
-		     "'%s()' was called with incorrect '%s' value", __func__,
-		     "params->uuid or params->attr");
+	assert_true(params->uuid != NULL || params->attr != NULL);
 
 	copy = notify_params_deep_copy(params);
 
@@ -484,18 +485,14 @@ ssize_t bt_gatt_attr_read(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 
 int bt_gatt_discover(struct bt_conn *conn, struct bt_gatt_discover_params *params)
 {
-	zassert_not_null(conn, "'%s()' was called with incorrect '%s' value", __func__, "conn");
-	zassert_not_null(params, "'%s()' was called with incorrect '%s' value", __func__, "params");
-	zassert_not_null(params->func, "'%s()' was called with incorrect '%s' value", __func__,
-			 "params->func");
-	zassert_between_inclusive(
-		params->start_handle, BT_ATT_FIRST_ATTRIBUTE_HANDLE, BT_ATT_LAST_ATTRIBUTE_HANDLE,
-		"'%s()' was called with incorrect '%s' value", __func__, "params->start_handle");
-	zassert_between_inclusive(
-		params->end_handle, BT_ATT_FIRST_ATTRIBUTE_HANDLE, BT_ATT_LAST_ATTRIBUTE_HANDLE,
-		"'%s()' was called with incorrect '%s' value", __func__, "params->end_handle");
-	zassert_true(params->start_handle <= params->end_handle,
-		     "'%s()' was called with incorrect '%s' value", __func__, "params->end_handle");
+	assert_non_null(conn);
+	assert_non_null(params);
+	assert_non_null(params->func);
+	assert_true(params->start_handle >= BT_ATT_FIRST_ATTRIBUTE_HANDLE);
+	assert_true(params->start_handle <= BT_ATT_LAST_ATTRIBUTE_HANDLE);
+	assert_true(params->end_handle >= BT_ATT_FIRST_ATTRIBUTE_HANDLE);
+	assert_true(params->end_handle <= BT_ATT_LAST_ATTRIBUTE_HANDLE);
+	assert_true(params->start_handle <= params->end_handle);
 
 	struct bt_gatt_service_val value;
 	struct bt_uuid_16 uuid;

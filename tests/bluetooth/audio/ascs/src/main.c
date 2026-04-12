@@ -12,6 +12,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <cmocka.h>
 #include <string.h>
 
 #include <zephyr/bluetooth/gap.h>
@@ -28,11 +33,8 @@
 #include <zephyr/net_buf.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/sys/util_macro.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test.h>
 #include <sys/types.h>
 
-#include "assert.h"
 #include "bap_unicast_server.h"
 #include "bap_unicast_server_expects.h"
 #include "bap_stream.h"
@@ -44,19 +46,9 @@
 
 #include "test_common.h"
 
+#define fixture (get_fixture(state))
+
 DEFINE_FFF_GLOBALS;
-
-static void mock_init_rule_before(const struct ztest_unit_test *test, void *fixture)
-{
-	test_mocks_init();
-}
-
-static void mock_destroy_rule_after(const struct ztest_unit_test *test, void *fixture)
-{
-	test_mocks_cleanup();
-}
-
-ZTEST_RULE(mock_rule, mock_init_rule_before, mock_destroy_rule_after);
 
 struct ascs_test_suite_fixture {
 	const struct bt_gatt_attr *ase_cp;
@@ -79,7 +71,7 @@ static void ascs_test_suite_fixture_init(struct ascs_test_suite_fixture *fixture
 	memset(fixture, 0, sizeof(*fixture));
 
 	err = bt_bap_unicast_server_register(&param);
-	zassert_equal(err, 0, "Unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	fixture->ase_cp = test_ase_control_point_get();
 
@@ -101,7 +93,7 @@ static void *ascs_test_suite_setup(void)
 	struct ascs_test_suite_fixture *fixture;
 
 	fixture = malloc(sizeof(*fixture));
-	zassert_not_null(fixture);
+	assert_non_null(fixture);
 
 	return fixture;
 }
@@ -123,54 +115,93 @@ static void ascs_test_suite_after(void *f)
 
 	/* If any of these fails, it's a fatal error for any tests running afterwards */
 	err = bt_bap_unicast_server_unregister_cb(&mock_bap_unicast_server_cb);
-	zassert_true(err == 0 || err == -EALREADY, "Unexpected err response %d", err);
+	assert_true(err == 0 || err == -EALREADY);
 
 	/* Sleep to trigger any pending state changes from unregister_cb */
 	k_sleep(K_SECONDS(1));
 
 	err = bt_bap_unicast_server_unregister();
-	zassert_equal(err, 0, "Unexpected err response %d", err);
+	assert_int_equal(err, 0);
 }
 
-ZTEST_SUITE(ascs_test_suite, NULL, ascs_test_suite_setup, ascs_test_suite_before,
-	    ascs_test_suite_after, ascs_test_suite_teardown);
 
-ZTEST_F(ascs_test_suite, test_has_sink_ase_chrc)
+
+static struct ascs_test_suite_fixture *get_fixture(void **state)
 {
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SNK);
+	assert_non_null(state);
+	assert_non_null(*state);
 
-	zassert_not_null(fixture->ase_snk.attr);
+	return *state;
 }
 
-ZTEST_F(ascs_test_suite, test_has_source_ase_chrc)
+static int ascs_test_suite_case_setup(void **state)
 {
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	void *fixture_local = NULL;
 
-	zassert_not_null(fixture->ase_src.attr);
+	test_mocks_init();
+
+	fixture_local = ascs_test_suite_setup();
+
+	*state = fixture_local;
+
+	ascs_test_suite_before(fixture_local);
+
+	return 0;
 }
 
-ZTEST_F(ascs_test_suite, test_has_control_point_chrc)
+static int ascs_test_suite_case_teardown(void **state)
 {
-	zassert_not_null(fixture->ase_cp);
+	void *fixture_local = state != NULL ? *state : NULL;
+
+
+	ascs_test_suite_after(fixture_local);
+
+	test_mocks_cleanup();
+
+	ascs_test_suite_teardown(fixture_local);
+
+	if (state != NULL) {
+		*state = NULL;
+	}
+
+	return 0;
 }
 
-ZTEST_F(ascs_test_suite, test_sink_ase_read_state_idle)
+static void test_has_sink_ase_chrc(void **state)
+{
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SNK)) { skip(); }
+
+	assert_non_null(fixture->ase_snk.attr);
+}
+
+static void test_has_source_ase_chrc(void **state)
+{
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
+
+	assert_non_null(fixture->ase_src.attr);
+}
+
+static void test_has_control_point_chrc(void **state)
+{
+	assert_non_null(fixture->ase_cp);
+}
+
+static void test_sink_ase_read_state_idle(void **state)
 {
 	const struct bt_gatt_attr *ase = fixture->ase_snk.attr;
 	struct bt_conn *conn = &fixture->conn;
 	struct test_ase_chrc_value_hdr hdr = { 0xff };
 	ssize_t ret;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SNK);
-	zexpect_not_null(fixture->ase_snk.attr);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SNK)) { skip(); }
+	assert_non_null(fixture->ase_snk.attr);
 
 	ret = ase->read(conn, ase, &hdr, sizeof(hdr), 0);
-	zassert_false(ret < 0, "attr->read returned unexpected (err 0x%02x)",
-		      (uint8_t)BT_GATT_ERR(ret));
-	zassert_equal(0x00, hdr.ase_state, "unexpected ASE_State 0x%02x", hdr.ase_state);
+	assert_false(ret < 0);
+	assert_int_equal(0x00, hdr.ase_state);
 }
 
-ZTEST_F(ascs_test_suite, test_release_ase_on_callback_unregister)
+static void test_release_ase_on_callback_unregister(void **state)
 {
 	const struct test_ase_chrc_value_hdr *hdr;
 	const struct bt_gatt_attr *ase;
@@ -188,11 +219,11 @@ ZTEST_F(ascs_test_suite, test_release_ase_on_callback_unregister)
 		ase_id = fixture->ase_src.id;
 	}
 
-	zexpect_not_null(ase);
-	zexpect_true(ase_id != 0x00);
+	assert_non_null(ase);
+	assert_true(ase_id != 0x00);
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	/* Set ASE to non-idle state */
 	test_ase_control_client_config_codec(conn, ase_id, stream);
@@ -214,10 +245,10 @@ ZTEST_F(ascs_test_suite, test_release_ase_on_callback_unregister)
 
 	notify_params = mock_bt_gatt_notify_cb_fake.arg1_val;
 	hdr = (void *)notify_params->data;
-	zassert_equal(0x00, hdr->ase_state, "unexpected ASE_State 0x%02x", hdr->ase_state);
+	assert_int_equal(0x00, hdr->ase_state);
 }
 
-ZTEST_F(ascs_test_suite, test_abort_client_operation_if_callback_not_registered)
+static void test_abort_client_operation_if_callback_not_registered(void **state)
 {
 	const struct test_ase_cp_chrc_value_param *param;
 	const struct test_ase_cp_chrc_value_hdr *hdr;
@@ -233,8 +264,8 @@ ZTEST_F(ascs_test_suite, test_abort_client_operation_if_callback_not_registered)
 		ase_id = fixture->ase_src.id;
 	}
 
-	zexpect_not_null(ase_cp);
-	zexpect_true(ase_id != 0x00);
+	assert_non_null(ase_cp);
+	assert_true(ase_id != 0x00);
 
 	/* Set ASE to non-idle state */
 	test_ase_control_client_config_codec(conn, ase_id, stream);
@@ -245,18 +276,16 @@ ZTEST_F(ascs_test_suite, test_abort_client_operation_if_callback_not_registered)
 
 	notify_params = mock_bt_gatt_notify_cb_fake.arg1_val;
 	hdr = (void *)notify_params->data;
-	zassert_equal(0x01, hdr->opcode, "unexpected Opcode 0x%02x", hdr->opcode);
-	zassert_equal(0x01, hdr->number_of_ases, "unexpected Number_of_ASEs 0x%02x",
-		      hdr->number_of_ases);
+	assert_int_equal(0x01, hdr->opcode);
+	assert_int_equal(0x01, hdr->number_of_ases);
 	param = (void *)hdr->params;
-	zassert_equal(ase_id, param->ase_id, "unexpected ASE_ID 0x%02x", param->ase_id);
+	assert_int_equal(ase_id, param->ase_id);
 	/* Expect Unspecified Error */
-	zassert_equal(0x0E, param->response_code, "unexpected Response_Code 0x%02x",
-		      param->response_code);
-	zassert_equal(0x00, param->reason, "unexpected Reason 0x%02x", param->reason);
+	assert_int_equal(0x0E, param->response_code);
+	assert_int_equal(0x00, param->reason);
 }
 
-ZTEST_F(ascs_test_suite, test_release_ase_on_acl_disconnection)
+static void test_release_ase_on_acl_disconnection(void **state)
 {
 	struct bt_bap_stream *stream = &fixture->stream;
 	struct bt_conn *conn = &fixture->conn;
@@ -273,11 +302,11 @@ ZTEST_F(ascs_test_suite, test_release_ase_on_acl_disconnection)
 		ase_id = fixture->ase_src.id;
 	}
 
-	zexpect_not_null(ase);
-	zexpect_true(ase_id != 0x00);
+	assert_non_null(ase);
+	assert_true(ase_id != 0x00);
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	/* Set ASE to non-idle state */
 	test_preamble_state_streaming(conn, ase_id, stream, &chan,
@@ -293,7 +322,7 @@ ZTEST_F(ascs_test_suite, test_release_ase_on_acl_disconnection)
 	mock_bt_iso_disconnected(chan, BT_HCI_ERR_CONN_TIMEOUT);
 }
 
-ZTEST_F(ascs_test_suite, test_release_ase_pair_on_acl_disconnection)
+static void test_release_ase_pair_on_acl_disconnection(void **state)
 {
 	const struct bt_gatt_attr *ase_snk, *ase_src;
 	struct bt_bap_stream snk_stream, src_stream;
@@ -303,25 +332,25 @@ ZTEST_F(ascs_test_suite, test_release_ase_pair_on_acl_disconnection)
 	int err;
 
 	if (CONFIG_BT_ASCS_MAX_ACTIVE_ASES < 2) {
-		ztest_test_skip();
+		skip();
 	}
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SNK);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SNK)) { skip(); }
 	memset(&snk_stream, 0, sizeof(snk_stream));
 	ase_snk = fixture->ase_snk.attr;
-	zexpect_not_null(ase_snk);
+	assert_non_null(ase_snk);
 	ase_snk_id = fixture->ase_snk.id;
-	zexpect_true(ase_snk_id != 0x00);
+	assert_true(ase_snk_id != 0x00);
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
 	memset(&src_stream, 0, sizeof(src_stream));
 	ase_src = fixture->ase_src.attr;
-	zexpect_not_null(ase_src);
+	assert_non_null(ase_src);
 	ase_src_id = fixture->ase_src.id;
-	zexpect_true(ase_src_id != 0x00);
+	assert_true(ase_src_id != 0x00);
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	test_ase_control_client_config_codec(conn, ase_snk_id, &snk_stream);
 	test_ase_control_client_config_qos(conn, ase_snk_id);
@@ -332,12 +361,12 @@ ZTEST_F(ascs_test_suite, test_release_ase_pair_on_acl_disconnection)
 	test_ase_control_client_enable(conn, ase_src_id);
 
 	err = mock_bt_iso_accept(conn, 0x01, 0x01, &chan);
-	zassert_equal(0, err, "Failed to connect iso: err %d", err);
+	assert_int_equal(0, err);
 
 	test_ase_control_client_receiver_start_ready(conn, ase_src_id);
 
 	err = bt_bap_stream_start(&snk_stream);
-	zassert_equal(0, err, "bt_bap_stream_start err %d", err);
+	assert_int_equal(0, err);
 
 	test_mocks_reset();
 
@@ -353,7 +382,7 @@ ZTEST_F(ascs_test_suite, test_release_ase_pair_on_acl_disconnection)
 	mock_bt_iso_disconnected(chan, BT_HCI_ERR_CONN_TIMEOUT);
 }
 
-ZTEST_F(ascs_test_suite, test_recv_in_streaming_state)
+static void test_recv_in_streaming_state(void **state)
 {
 	struct bt_bap_stream *stream = &fixture->stream;
 	struct bt_conn *conn = &fixture->conn;
@@ -366,10 +395,10 @@ ZTEST_F(ascs_test_suite, test_recv_in_streaming_state)
 	struct net_buf buf;
 	int err;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SNK);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SNK)) { skip(); }
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	test_preamble_state_streaming(conn, ase_id, stream, &chan, false);
 
@@ -379,7 +408,7 @@ ZTEST_F(ascs_test_suite, test_recv_in_streaming_state)
 	expect_bt_bap_stream_ops_recv_called(1, &stream, &info, &buf);
 }
 
-ZTEST_F(ascs_test_suite, test_recv_in_enabling_state)
+static void test_recv_in_enabling_state(void **state)
 {
 	struct bt_bap_stream *stream = &fixture->stream;
 	struct bt_conn *conn = &fixture->conn;
@@ -392,15 +421,15 @@ ZTEST_F(ascs_test_suite, test_recv_in_enabling_state)
 	struct net_buf buf;
 	int err;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SNK);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SNK)) { skip(); }
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	test_preamble_state_enabling(conn, ase_id, stream);
 
 	err = mock_bt_iso_accept(conn, 0x01, 0x01, &chan);
-	zassert_equal(0, err, "Failed to connect iso: err %d", err);
+	assert_int_equal(0, err);
 
 	test_mocks_reset();
 
@@ -410,7 +439,7 @@ ZTEST_F(ascs_test_suite, test_recv_in_enabling_state)
 	expect_bt_bap_stream_ops_recv_called(0, NULL, NULL, NULL);
 }
 
-ZTEST_F(ascs_test_suite, test_cis_link_loss_in_streaming_state)
+static void test_cis_link_loss_in_streaming_state(void **state)
 {
 	struct bt_bap_stream *stream = &fixture->stream;
 	struct bt_conn *conn = &fixture->conn;
@@ -426,11 +455,11 @@ ZTEST_F(ascs_test_suite, test_cis_link_loss_in_streaming_state)
 		ase = fixture->ase_src.attr;
 		ase_id = fixture->ase_src.id;
 	}
-	zexpect_not_null(ase);
-	zexpect_true(ase_id != 0x00);
+	assert_non_null(ase);
+	assert_true(ase_id != 0x00);
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	test_preamble_state_streaming(conn, ase_id, stream, &chan,
 				      !IS_ENABLED(CONFIG_BT_ASCS_ASE_SNK));
@@ -457,19 +486,19 @@ static void test_cis_link_loss_in_disabling_state(struct ascs_test_suite_fixture
 	uint8_t ase_id;
 	int err;
 
-	Z_TEST_SKIP_IFNDEF(CONFIG_BT_ASCS_ASE_SRC);
+	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SRC)) { skip(); }
 
 	ase = fixture->ase_src.attr;
 	ase_id = fixture->ase_src.id;
-	zexpect_not_null(ase);
-	zexpect_true(ase_id != 0x00);
+	assert_non_null(ase);
+	assert_true(ase_id != 0x00);
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	test_preamble_state_enabling(conn, ase_id, stream);
 	err = mock_bt_iso_accept(conn, 0x01, 0x01, &chan);
-	zassert_equal(0, err, "Failed to connect iso: err %d", err);
+	assert_int_equal(0, err);
 
 	if (streaming) {
 		test_ase_control_client_receiver_start_ready(conn, ase_id);
@@ -493,19 +522,19 @@ static void test_cis_link_loss_in_disabling_state(struct ascs_test_suite_fixture
 	expect_bt_bap_stream_ops_disconnected_called(1, (const struct bt_bap_stream **)&stream);
 }
 
-ZTEST_F(ascs_test_suite, test_cis_link_loss_in_disabling_state_v1)
+static void test_cis_link_loss_in_disabling_state_v1(void **state)
 {
 	/* Enabling -> Streaming -> Disabling */
 	test_cis_link_loss_in_disabling_state(fixture, true);
 }
 
-ZTEST_F(ascs_test_suite, test_cis_link_loss_in_disabling_state_v2)
+static void test_cis_link_loss_in_disabling_state_v2(void **state)
 {
 	/* Enabling -> Disabling */
 	test_cis_link_loss_in_disabling_state(fixture, false);
 }
 
-ZTEST_F(ascs_test_suite, test_cis_link_loss_in_enabling_state)
+static void test_cis_link_loss_in_enabling_state(void **state)
 {
 	struct bt_bap_stream *stream = &fixture->stream;
 	struct bt_conn *conn = &fixture->conn;
@@ -521,15 +550,15 @@ ZTEST_F(ascs_test_suite, test_cis_link_loss_in_enabling_state)
 		ase = fixture->ase_src.attr;
 		ase_id = fixture->ase_src.id;
 	}
-	zexpect_not_null(ase);
-	zexpect_true(ase_id != 0x00);
+	assert_non_null(ase);
+	assert_true(ase_id != 0x00);
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	test_preamble_state_enabling(conn, ase_id, stream);
 	err = mock_bt_iso_accept(conn, 0x01, 0x01, &chan);
-	zassert_equal(0, err, "Failed to connect iso: err %d", err);
+	assert_int_equal(0, err);
 
 	/* Mock CIS disconnection */
 	mock_bt_iso_disconnected(chan, BT_HCI_ERR_CONN_TIMEOUT);
@@ -542,7 +571,7 @@ ZTEST_F(ascs_test_suite, test_cis_link_loss_in_enabling_state)
 	expect_bt_bap_stream_ops_disconnected_called(1, (const struct bt_bap_stream **)&stream);
 
 	err = bt_bap_stream_disable(stream);
-	zassert_equal(0, err, "Failed to disable stream: err %d", err);
+	assert_int_equal(0, err);
 
 	test_drain_syswq(); /* Ensure that state transitions are completed */
 
@@ -555,7 +584,7 @@ ZTEST_F(ascs_test_suite, test_cis_link_loss_in_enabling_state)
 	}
 }
 
-ZTEST_F(ascs_test_suite, test_cis_link_loss_in_enabling_state_client_retries)
+static void test_cis_link_loss_in_enabling_state_client_retries(void **state)
 {
 	struct bt_bap_stream *stream = &fixture->stream;
 	struct bt_conn *conn = &fixture->conn;
@@ -571,15 +600,15 @@ ZTEST_F(ascs_test_suite, test_cis_link_loss_in_enabling_state_client_retries)
 		ase = fixture->ase_src.attr;
 		ase_id = fixture->ase_src.id;
 	}
-	zexpect_not_null(ase);
-	zexpect_true(ase_id != 0x00);
+	assert_non_null(ase);
+	assert_true(ase_id != 0x00);
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	test_preamble_state_enabling(conn, ase_id, stream);
 	err = mock_bt_iso_accept(conn, 0x01, 0x01, &chan);
-	zassert_equal(0, err, "Failed to connect iso: err %d", err);
+	assert_int_equal(0, err);
 	expect_bt_bap_stream_ops_connected_called(1, (const struct bt_bap_stream **)&stream);
 
 	/* Mock CIS disconnection */
@@ -594,12 +623,12 @@ ZTEST_F(ascs_test_suite, test_cis_link_loss_in_enabling_state_client_retries)
 
 	/* Client retries to establish CIS */
 	err = mock_bt_iso_accept(conn, 0x01, 0x01, &chan);
-	zassert_equal(0, err, "Failed to connect iso: err %d", err);
+	assert_int_equal(0, err);
 	if (!IS_ENABLED(CONFIG_BT_ASCS_ASE_SNK)) {
 		test_ase_control_client_receiver_start_ready(conn, ase_id);
 	} else {
 		err = bt_bap_stream_start(stream);
-		zassert_equal(0, err, "bt_bap_stream_start err %d", err);
+		assert_int_equal(0, err);
 	}
 
 	test_drain_syswq(); /* Ensure that state transitions are completed */
@@ -630,7 +659,7 @@ static int unicast_server_cb_config_custom_fake(struct bt_conn *conn, const stru
 	return 0;
 }
 
-ZTEST_F(ascs_test_suite, test_ase_state_notification_retry)
+static void test_ase_state_notification_retry(void **state)
 {
 	struct bt_bap_stream *stream = &fixture->stream;
 	struct bt_conn *conn = &fixture->conn;
@@ -647,14 +676,14 @@ ZTEST_F(ascs_test_suite, test_ase_state_notification_retry)
 		ase_id = fixture->ase_src.id;
 	}
 
-	zexpect_not_null(ase);
-	zassert_not_equal(ase_id, 0x00);
+	assert_non_null(ase);
+	assert_int_not_equal(ase_id, 0x00);
 
 	cp = test_ase_control_point_get();
-	zexpect_not_null(cp);
+	assert_non_null(cp);
 
 	err = bt_bap_unicast_server_register_cb(&mock_bap_unicast_server_cb);
-	zassert_equal(err, 0, "unexpected err response %d", err);
+	assert_int_equal(err, 0);
 
 	stream_allocated = stream;
 	mock_bap_unicast_server_cb_config_fake.custom_fake = unicast_server_cb_config_custom_fake;
@@ -682,10 +711,67 @@ ZTEST_F(ascs_test_suite, test_ase_state_notification_retry)
 	mock_bt_gatt_notify_cb_fake.return_val = 0;
 
 	err = bt_conn_get_info(conn, &info);
-	zassert_equal(err, 0);
+	assert_int_equal(err, 0);
 
 	/* Wait for ASE state notification retry */
 	k_sleep(K_USEC(info.le.interval_us));
 
 	expect_bt_bap_stream_ops_configured_called(1, &stream, NULL);
+}
+
+int run_test_ase_control_params_tests(void);
+int run_test_ase_register_tests(void);
+int run_test_ase_state_transition_tests(void);
+int run_test_ase_state_transition_invalid_tests(void);
+
+static int run_ascs_test_suite(void)
+{
+	const struct CMUnitTest ascs_test_suite_tests[] = {
+		cmocka_unit_test_setup_teardown(test_has_sink_ase_chrc, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_has_source_ase_chrc, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_has_control_point_chrc, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_sink_ase_read_state_idle, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_release_ase_on_callback_unregister, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_abort_client_operation_if_callback_not_registered, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_release_ase_on_acl_disconnection, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_release_ase_pair_on_acl_disconnection, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_recv_in_streaming_state, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_recv_in_enabling_state, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_cis_link_loss_in_streaming_state, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_cis_link_loss_in_disabling_state_v1, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_cis_link_loss_in_disabling_state_v2, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_cis_link_loss_in_enabling_state, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_cis_link_loss_in_enabling_state_client_retries, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+		cmocka_unit_test_setup_teardown(test_ase_state_notification_retry, ascs_test_suite_case_setup, ascs_test_suite_case_teardown),
+	};
+
+	return cmocka_run_group_tests_name("ascs_test_suite", ascs_test_suite_tests, NULL, NULL);
+}
+
+int run_ascs_main_tests(void)
+{
+	int result = 0;
+
+	result |= run_ascs_test_suite();
+
+	return result;
+}
+
+int main(void)
+{
+	int result = 0;
+
+
+	result |= run_ascs_main_tests();
+
+	result |= run_test_ase_control_params_tests();
+
+	result |= run_test_ase_register_tests();
+
+	result |= run_test_ase_state_transition_tests();
+
+	result |= run_test_ase_state_transition_invalid_tests();
+
+
+	return result;
 }

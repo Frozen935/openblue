@@ -10,9 +10,9 @@
 #include <stdint.h>
 
 
-#include <zephyr/bluetooth/addr.h>
-#include <zephyr/bluetooth/bluetooth.h>
-#include <zephyr/bluetooth/conn.h>
+#include <bluetooth/addr.h>
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/conn.h>
 #include <zephyr/fff.h>
 
 /* List of fakes used by this unit tester */

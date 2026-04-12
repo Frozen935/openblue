@@ -8,29 +8,28 @@
 
 #include <errno.h>
 #include <stdbool.h>
-#include <stdlib.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
 
-#include <zephyr/bluetooth/att.h>
-#include <zephyr/bluetooth/audio/audio.h>
-#include <zephyr/bluetooth/audio/pacs.h>
-#include <zephyr/bluetooth/bluetooth.h>
-#include <zephyr/bluetooth/gatt.h>
-#include <zephyr/bluetooth/uuid.h>
-#include <zephyr/fff.h>
-#include <zephyr/sys/util.h>
-#include <zephyr/sys/util_macro.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test.h>
+#include <cmocka.h>
 
-DEFINE_FFF_GLOBALS;
+#include <bluetooth/att.h>
+#include <bluetooth/audio/audio.h>
+#include <bluetooth/audio/pacs.h>
+#include <bluetooth/gatt.h>
+#include <bluetooth/uuid.h>
+#include <utils/bt_utils.h>
 
-static void pacs_test_suite_after(void *f)
+static int test_case_teardown(void **state)
 {
+	(void)state;
+
 	/* attempt to clean up after any failures */
 	(void)bt_pacs_unregister();
-}
 
-ZTEST_SUITE(pacs_test_suite, NULL, NULL, NULL, pacs_test_suite_after, NULL);
+	return 0;
+}
 
 /* Helper macro to define parameters ignoring unsupported features */
 #define PACS_REGISTER_PARAM(_snk_pac, _snk_loc, _src_pac, _src_loc)                                \
@@ -42,8 +41,9 @@ ZTEST_SUITE(pacs_test_suite, NULL, NULL, NULL, pacs_test_suite_after, NULL);
 		IF_ENABLED(CONFIG_BT_PAC_SRC_LOC, (.src_loc = (_src_loc),))                        \
 	}
 
-static ZTEST(pacs_test_suite, test_pacs_register)
+static void test_pacs_register(void **state)
 {
+	(void)state;
 	const struct bt_pacs_register_param pacs_params[] = {
 #if defined(CONFIG_BT_PAC_SNK)
 		/* valid snk_pac combinations */
@@ -71,117 +71,127 @@ static ZTEST(pacs_test_suite, test_pacs_register)
 		int err;
 
 		err = bt_pacs_register(&pacs_params[i]);
-		zassert_equal(err, 0, "[%zu]: Unexpected return value %d", i, err);
+		assert_int_equal(err, 0);
 
 #if defined(CONFIG_BT_PAC_SNK)
 		attr = bt_gatt_find_by_uuid(NULL, 0, BT_UUID_PACS_SNK);
 		if (pacs_params[i].snk_pac) {
-			zassert_not_null(attr, "[%zu]: Could not find sink PAC", i);
+			assert_non_null(attr);
 		} else {
-			zassert_is_null(attr, "[%zu]: Found unexpected sink PAC", i);
+			assert_null(attr);
 		}
-#endif /*CONFIG_BT_PAC_SNK */
+#endif /* CONFIG_BT_PAC_SNK */
 #if defined(CONFIG_BT_PAC_SNK_LOC)
 		attr = bt_gatt_find_by_uuid(NULL, 0, BT_UUID_PACS_SNK_LOC);
 		if (pacs_params[i].snk_loc) {
-			zassert_not_null(attr, "[%zu]: Could not find sink loc", i);
+			assert_non_null(attr);
 		} else {
-			zassert_is_null(attr, "[%zu]: Found unexpected sink loc", i);
+			assert_null(attr);
 		}
-#endif /*CONFIG_BT_PAC_SNK_LOC */
+#endif /* CONFIG_BT_PAC_SNK_LOC */
 #if defined(CONFIG_BT_PAC_SRC)
 		attr = bt_gatt_find_by_uuid(NULL, 0, BT_UUID_PACS_SRC);
 		if (pacs_params[i].src_pac) {
-			zassert_not_null(attr, "[%zu]: Could not find source PAC", i);
+			assert_non_null(attr);
 		} else {
-			zassert_is_null(attr, "[%zu]: Found unexpected source PAC", i);
+			assert_null(attr);
 		}
-#endif /*CONFIG_BT_PAC_SRC */
+#endif /* CONFIG_BT_PAC_SRC */
 #if defined(CONFIG_BT_PAC_SRC_LOC)
 		attr = bt_gatt_find_by_uuid(NULL, 0, BT_UUID_PACS_SRC_LOC);
 		if (pacs_params[i].src_loc) {
-			zassert_not_null(attr, "[%zu]: Could not find source loc", i);
+			assert_non_null(attr);
 		} else {
-			zassert_is_null(attr, "[%zu]: Found unexpected source loc", i);
+			assert_null(attr);
 		}
-#endif /*CONFIG_BT_PAC_SRC_LOC */
+#endif /* CONFIG_BT_PAC_SRC_LOC */
 
 		err = bt_pacs_unregister();
-		zassert_equal(err, 0, "[%zu]: Unexpected return value %d", i, err);
+		assert_int_equal(err, 0);
 
 		attr = bt_gatt_find_by_uuid(NULL, 0, BT_UUID_PACS_SNK);
-		zassert_is_null(attr, "[%zu]: Unexpected find of sink PAC", i);
+		assert_null(attr);
 
 		attr = bt_gatt_find_by_uuid(NULL, 0, BT_UUID_PACS_SNK_LOC);
-		zassert_is_null(attr, "[%zu]: Unexpected find of sink loc", i);
+		assert_null(attr);
 
 		attr = bt_gatt_find_by_uuid(NULL, 0, BT_UUID_PACS_SRC);
-		zassert_is_null(attr, "[%zu]: Unexpected find of source PAC", i);
+		assert_null(attr);
 
 		attr = bt_gatt_find_by_uuid(NULL, 0, BT_UUID_PACS_SRC_LOC);
-		zassert_is_null(attr, "[%zu]: Unexpected find of source loc", i);
+		assert_null(attr);
 	}
 }
 
-static ZTEST(pacs_test_suite, test_pacs_register_inval_null_param)
+static void test_pacs_register_inval_null_param(void **state)
 {
-	int err;
+	(void)state;
 
-	err = bt_pacs_register(NULL);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(bt_pacs_register(NULL), -EINVAL);
 }
 
-static ZTEST(pacs_test_suite, test_pacs_register_inval_double_register)
+static void test_pacs_register_inval_double_register(void **state)
 {
+	(void)state;
 	const struct bt_pacs_register_param pacs_param =
 		PACS_REGISTER_PARAM(true, true, true, true);
-	int err;
 
-	err = bt_pacs_register(&pacs_param);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
-
-	err = bt_pacs_register(&pacs_param);
-	zassert_equal(err, -EALREADY, "Unexpected return value %d", err);
+	assert_int_equal(bt_pacs_register(&pacs_param), 0);
+	assert_int_equal(bt_pacs_register(&pacs_param), -EALREADY);
 }
 
-static ZTEST(pacs_test_suite, test_pacs_register_inval_snk_loc_without_snk_pac)
+static void test_pacs_register_inval_snk_loc_without_snk_pac(void **state)
 {
+	(void)state;
 	const struct bt_pacs_register_param pacs_param =
 		PACS_REGISTER_PARAM(false, true, true, true);
-	int err;
 
 	if (!(IS_ENABLED(CONFIG_BT_PAC_SNK) && IS_ENABLED(CONFIG_BT_PAC_SNK_LOC))) {
-		ztest_test_skip();
+		skip();
 	}
 
-	err = bt_pacs_register(&pacs_param);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(bt_pacs_register(&pacs_param), -EINVAL);
 }
 
-static ZTEST(pacs_test_suite, test_pacs_register_inval_src_loc_without_src_pac)
+static void test_pacs_register_inval_src_loc_without_src_pac(void **state)
 {
+	(void)state;
 	const struct bt_pacs_register_param pacs_param =
 		PACS_REGISTER_PARAM(true, true, false, true);
-	int err;
 
 	if (!(IS_ENABLED(CONFIG_BT_PAC_SRC) && IS_ENABLED(CONFIG_BT_PAC_SRC_LOC))) {
-		ztest_test_skip();
+		skip();
 	}
 
-	err = bt_pacs_register(&pacs_param);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(bt_pacs_register(&pacs_param), -EINVAL);
 }
 
-static ZTEST(pacs_test_suite, test_pacs_register_inval_no_pac)
+static void test_pacs_register_inval_no_pac(void **state)
 {
+	(void)state;
 	const struct bt_pacs_register_param pacs_param =
 		PACS_REGISTER_PARAM(false, false, false, false);
-	int err;
 
 	if (!(IS_ENABLED(CONFIG_BT_PAC_SNK) && IS_ENABLED(CONFIG_BT_PAC_SNK_LOC))) {
-		ztest_test_skip();
+		skip();
 	}
 
-	err = bt_pacs_register(&pacs_param);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(bt_pacs_register(&pacs_param), -EINVAL);
+}
+
+int main(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_teardown(test_pacs_register, test_case_teardown),
+		cmocka_unit_test_teardown(test_pacs_register_inval_null_param, test_case_teardown),
+		cmocka_unit_test_teardown(test_pacs_register_inval_double_register,
+						 test_case_teardown),
+		cmocka_unit_test_teardown(test_pacs_register_inval_snk_loc_without_snk_pac,
+						 test_case_teardown),
+		cmocka_unit_test_teardown(test_pacs_register_inval_src_loc_without_src_pac,
+						 test_case_teardown),
+		cmocka_unit_test_teardown(test_pacs_register_inval_no_pac, test_case_teardown),
+	};
+
+	return cmocka_run_group_tests_name("bt_audio_pacs", tests, NULL, NULL);
 }

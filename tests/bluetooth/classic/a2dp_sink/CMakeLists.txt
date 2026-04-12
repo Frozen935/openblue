@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.20.0)
-set(NO_QEMU_SERIAL_BT_SERVER 1)
 
-find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(bluetooth)
-
-FILE(GLOB app_sources src/*.c)
-target_sources(app PRIVATE ${app_sources})
+openblue_add_native_test(test_bt_classic_a2dp_sink
+                         "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c"
+                         "bluetooth/classic/a2dp_sink"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/src/test_a2dp_sink.c")

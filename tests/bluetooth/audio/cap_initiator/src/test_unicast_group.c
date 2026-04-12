@@ -9,22 +9,21 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <zephyr/autoconf.h>
-#include <zephyr/bluetooth/audio/audio.h>
-#include <zephyr/bluetooth/audio/bap.h>
-#include <zephyr/bluetooth/audio/bap_lc3_preset.h>
-#include <zephyr/bluetooth/audio/cap.h>
-#include <zephyr/bluetooth/hci_types.h>
-#include <zephyr/bluetooth/iso.h>
-#include <zephyr/fff.h>
-#include <zephyr/sys/slist.h>
-#include <zephyr/sys/util.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test.h>
-#include <sys/errno.h>
+#include <cmocka.h>
+
+#include <autoconf.h>
+#include <bluetooth/audio/audio.h>
+#include <bluetooth/audio/bap.h>
+#include <bluetooth/audio/bap_lc3_preset.h>
+#include <bluetooth/audio/cap.h>
+#include <bluetooth/hci_types.h>
+#include <bluetooth/iso.h>
+#include <base/utils.h>
 
 #include "audio/bap_endpoint.h"
 #include "test_common.h"
@@ -35,41 +34,43 @@ struct cap_initiator_test_unicast_group_fixture {
 	struct bt_bap_qos_cfg *qos_cfg;
 };
 
-static void *cap_initiator_test_unicast_group_setup(void)
+static struct cap_initiator_test_unicast_group_fixture *group_fixture;
+
+static int cap_initiator_test_unicast_group_setup(void **state)
 {
-	struct cap_initiator_test_unicast_group_fixture *fixture;
+	group_fixture = calloc(1, sizeof(*group_fixture));
+	assert_non_null(group_fixture);
+	(void)state;
 
-	fixture = malloc(sizeof(*fixture));
-	zassert_not_null(fixture);
-
-	return fixture;
+	return 0;
 }
 
-static void cap_initiator_test_unicast_group_before(void *f)
+static int cap_initiator_test_unicast_group_before(void **state)
 {
-
-	struct cap_initiator_test_unicast_group_fixture *fixture = f;
+	struct cap_initiator_test_unicast_group_fixture *fixture = group_fixture;
 	struct bt_cap_unicast_group_stream_pair_param *pair_params;
 	struct bt_cap_unicast_group_stream_param *stream_params;
 	struct bt_cap_stream *cap_streams;
 	size_t pair_cnt = 0U;
 	size_t str_cnt = 0U;
 
-	memset(f, 0, sizeof(struct cap_initiator_test_unicast_group_fixture));
+	assert_non_null(fixture);
+	memset(fixture, 0, sizeof(*fixture));
+	test_mocks_init();
 
 	fixture->group_param = calloc(sizeof(struct bt_cap_unicast_group_param), 1);
-	zassert_not_null(fixture->group_param);
+	assert_non_null(fixture->group_param);
 	pair_params = calloc(sizeof(struct bt_cap_unicast_group_stream_pair_param),
 			     DIV_ROUND_UP(CONFIG_BT_BAP_UNICAST_CLIENT_GROUP_STREAM_COUNT, 2U));
-	zassert_not_null(pair_params);
+	assert_non_null(pair_params);
 	stream_params = calloc(sizeof(struct bt_cap_unicast_group_stream_param),
 			       CONFIG_BT_BAP_UNICAST_CLIENT_GROUP_STREAM_COUNT);
-	zassert_not_null(stream_params);
+	assert_non_null(stream_params);
 	cap_streams = calloc(sizeof(struct bt_cap_stream),
 			     CONFIG_BT_BAP_UNICAST_CLIENT_GROUP_STREAM_COUNT);
-	zassert_not_null(cap_streams);
+	assert_non_null(cap_streams);
 	fixture->qos_cfg = calloc(sizeof(struct bt_bap_qos_cfg), 1);
-	zassert_not_null(fixture->qos_cfg);
+	assert_non_null(fixture->qos_cfg);
 
 	*fixture->qos_cfg = BT_BAP_QOS_CFG_UNFRAMED(10000u, 40u, 2u, 10u, 40000u); /* 16_2_1 */
 
@@ -90,11 +91,14 @@ static void cap_initiator_test_unicast_group_before(void *f)
 	fixture->group_param->packing = BT_ISO_PACKING_SEQUENTIAL;
 	fixture->group_param->params_count = pair_cnt;
 	fixture->group_param->params = pair_params;
+	*state = fixture;
+
+	return 0;
 }
 
-static void cap_initiator_test_unicast_group_after(void *f)
+static int cap_initiator_test_unicast_group_after(void **state)
 {
-	struct cap_initiator_test_unicast_group_fixture *fixture = f;
+	struct cap_initiator_test_unicast_group_fixture *fixture = *state;
 	struct bt_cap_unicast_group_param *group_param;
 
 	/* In the case of a test failing, we delete the group so that subsequent tests won't fail */
@@ -109,115 +113,124 @@ static void cap_initiator_test_unicast_group_after(void *f)
 	free(group_param->params);
 	free(group_param);
 	free(fixture->qos_cfg);
+	test_mocks_cleanup();
+
+	return 0;
 }
 
-static void cap_initiator_test_unicast_group_teardown(void *f)
+static int cap_initiator_test_unicast_group_teardown(void **state)
 {
-	free(f);
+	free(group_fixture);
+	group_fixture = NULL;
+	(void)state;
+
+	return 0;
 }
 
-ZTEST_SUITE(cap_initiator_test_unicast_group, NULL, cap_initiator_test_unicast_group_setup,
-	    cap_initiator_test_unicast_group_before, cap_initiator_test_unicast_group_after,
-	    cap_initiator_test_unicast_group_teardown);
+static struct cap_initiator_test_unicast_group_fixture *get_fixture(void **state)
+{
+	assert_non_null(state);
+	assert_non_null(*state);
 
-static ZTEST_F(cap_initiator_test_unicast_group, test_initiator_unicast_group_create)
+	return *state;
+}
+
+#define fixture get_fixture(state)
+
+static void test_initiator_unicast_group_create(void **state)
 {
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_delete(fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_create_inval_null_param)
+static void test_initiator_unicast_group_create_inval_null_param(void **state)
 {
 	int err = 0;
 
+	(void)state;
 	err = bt_cap_unicast_group_create(NULL, &fixture->unicast_group);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_create_inval_null_rx_stream)
+static void test_initiator_unicast_group_create_inval_null_rx_stream(void **state)
 {
 	int err = 0;
 
 	if (fixture->group_param->params[0].rx_param->stream == NULL) {
-		ztest_test_skip();
+		skip();
 	}
 	fixture->group_param->params[0].rx_param->stream = NULL;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_create_inval_null_tx_stream)
+static void test_initiator_unicast_group_create_inval_null_tx_stream(void **state)
 {
 	int err = 0;
 
 	if (fixture->group_param->params[0].tx_param->stream == NULL) {
-		ztest_test_skip();
+		skip();
 	}
 	fixture->group_param->params[0].tx_param->stream = NULL;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_create_inval_too_many_streams)
+static void test_initiator_unicast_group_create_inval_too_many_streams(void **state)
 {
 	int err = 0;
 
+	(void)state;
 	fixture->group_param->params_count = CONFIG_BT_BAP_UNICAST_CLIENT_GROUP_STREAM_COUNT + 1;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group, test_initiator_unicast_group_reconfig)
+static void test_initiator_unicast_group_reconfig(void **state)
 {
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_reconfig(fixture->unicast_group, fixture->group_param);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_delete(fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_reconfig_inval_null_group)
+static void test_initiator_unicast_group_reconfig_inval_null_group(void **state)
 {
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_reconfig(NULL, fixture->group_param);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_reconfig_inval_null_param)
+static void test_initiator_unicast_group_reconfig_inval_null_param(void **state)
 {
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_reconfig(fixture->unicast_group, NULL);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group, test_initiator_unicast_group_add_streams)
+static void test_initiator_unicast_group_add_streams(void **state)
 {
 	struct bt_cap_stream stream = {0};
 	struct bt_cap_unicast_group_stream_param stream_param = {
@@ -230,17 +243,16 @@ static ZTEST_F(cap_initiator_test_unicast_group, test_initiator_unicast_group_ad
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_add_streams(fixture->unicast_group, &pair_param, 1);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_delete(fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_add_streams_inval_null_group)
+static void test_initiator_unicast_group_add_streams_inval_null_group(void **state)
 {
 	struct bt_cap_stream stream = {0};
 	struct bt_cap_unicast_group_stream_param stream_param = {
@@ -253,26 +265,24 @@ static ZTEST_F(cap_initiator_test_unicast_group,
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_add_streams(NULL, &pair_param, 1);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_add_streams_inval_null_param)
+static void test_initiator_unicast_group_add_streams_inval_null_param(void **state)
 {
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_add_streams(fixture->unicast_group, NULL, 1);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_add_streams_inval_0_param)
+static void test_initiator_unicast_group_add_streams_inval_0_param(void **state)
 {
 	struct bt_cap_stream stream = {0};
 	struct bt_cap_unicast_group_stream_param stream_param = {
@@ -285,49 +295,47 @@ static ZTEST_F(cap_initiator_test_unicast_group,
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_add_streams(fixture->unicast_group, &pair_param, 0);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group, test_initiator_unicast_group_delete)
+static void test_initiator_unicast_group_delete(void **state)
 {
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_delete(fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 	fixture->unicast_group = NULL;
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_delete_inval_null_group)
+static void test_initiator_unicast_group_delete_inval_null_group(void **state)
 {
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_delete(NULL);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_delete_inval_double_delete)
+static void test_initiator_unicast_group_delete_inval_double_delete(void **state)
 {
 	int err = 0;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_delete(fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_delete(fixture->unicast_group);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 	fixture->unicast_group = NULL;
 }
 
@@ -340,18 +348,18 @@ static bool unicast_group_foreach_stream_cb(struct bt_cap_stream *cap_stream, vo
 	return true;
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group, test_initiator_unicast_group_foreach_stream)
+static void test_initiator_unicast_group_foreach_stream(void **state)
 {
 	size_t expect_cnt = 0U;
 	size_t cnt = 0U;
 	int err;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_foreach_stream(fixture->unicast_group,
-						  unicast_group_foreach_stream_cb, &cnt);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+					  unicast_group_foreach_stream_cb, &cnt);
+	assert_int_equal(err, 0);
 
 	for (size_t i = 0; i < fixture->group_param->params_count; i++) {
 		if (fixture->group_param->params[i].rx_param != NULL) {
@@ -363,7 +371,7 @@ static ZTEST_F(cap_initiator_test_unicast_group, test_initiator_unicast_group_fo
 		}
 	}
 
-	zassert_equal(cnt, expect_cnt, "Unexpected cnt (%zu != %zu)", cnt, expect_cnt);
+	assert_int_equal(cnt, expect_cnt);
 }
 
 static bool unicast_group_foreach_stream_return_early_cb(struct bt_cap_stream *stream,
@@ -376,85 +384,157 @@ static bool unicast_group_foreach_stream_return_early_cb(struct bt_cap_stream *s
 	return false;
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_foreach_stream_return_early)
+static void test_initiator_unicast_group_foreach_stream_return_early(void **state)
 {
 	size_t cnt = 0U;
 	int err;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_foreach_stream(
 		fixture->unicast_group, unicast_group_foreach_stream_return_early_cb, &cnt);
-	zassert_equal(err, -ECANCELED, "Unexpected return value: %d", err);
-	zassert_equal(cnt, 1U, "Got %zu, expected %u", cnt, 1U);
+	assert_int_equal(err, -ECANCELED);
+	assert_int_equal(cnt, 1U);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_foreach_stream_inval_null_group)
+static void test_initiator_unicast_group_foreach_stream_inval_null_group(void **state)
 {
 	size_t expect_cnt = 0U;
 	size_t cnt = 0U;
 	int err;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_foreach_stream(NULL, unicast_group_foreach_stream_cb, &cnt);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 
-	zassert_equal(cnt, expect_cnt, "Unexpected cnt (%zu != %zu)", cnt, expect_cnt);
+	assert_int_equal(cnt, expect_cnt);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_foreach_stream_inval_null_func)
+static void test_initiator_unicast_group_foreach_stream_inval_null_func(void **state)
 {
 	size_t expect_cnt = 0U;
 	size_t cnt = 0U;
 	int err;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_foreach_stream(fixture->unicast_group, NULL, &cnt);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 
-	zassert_equal(cnt, expect_cnt, "Unexpected cnt (%zu != %zu)", cnt, expect_cnt);
+	assert_int_equal(cnt, expect_cnt);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group, test_initiator_unicast_group_get_info)
+static void test_initiator_unicast_group_get_info(void **state)
 {
 	struct bt_cap_unicast_group_info cap_info;
 	int err;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_get_info(fixture->unicast_group, &cap_info);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
-	zassert_not_null(cap_info.unicast_group);
+	assert_non_null(cap_info.unicast_group);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_get_info_inval_null_group)
+static void test_initiator_unicast_group_get_info_inval_null_group(void **state)
 {
 	struct bt_cap_unicast_group_info cap_info;
 	int err;
 
+	(void)state;
 	err = bt_cap_unicast_group_get_info(NULL, &cap_info);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
 }
 
-static ZTEST_F(cap_initiator_test_unicast_group,
-	       test_initiator_unicast_group_get_info_inval_null_info)
+static void test_initiator_unicast_group_get_info_inval_null_info(void **state)
 {
 	int err;
 
 	err = bt_cap_unicast_group_create(fixture->group_param, &fixture->unicast_group);
-	zassert_equal(err, 0, "Unexpected return value %d", err);
+	assert_int_equal(err, 0);
 
 	err = bt_cap_unicast_group_get_info(fixture->unicast_group, NULL);
-	zassert_equal(err, -EINVAL, "Unexpected return value %d", err);
+	assert_int_equal(err, -EINVAL);
+}
+
+int cap_initiator_unicast_group_suite_run(void)
+{
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_create,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_create_inval_null_param,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_create_inval_null_rx_stream,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_create_inval_null_tx_stream,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_create_inval_too_many_streams,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_reconfig,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_reconfig_inval_null_group,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_reconfig_inval_null_param,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_add_streams,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_add_streams_inval_null_group,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_add_streams_inval_null_param,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_add_streams_inval_0_param,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_delete,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_delete_inval_null_group,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_delete_inval_double_delete,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_foreach_stream,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_foreach_stream_return_early,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_foreach_stream_inval_null_group,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_foreach_stream_inval_null_func,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_get_info,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_get_info_inval_null_group,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+		cmocka_unit_test_setup_teardown(test_initiator_unicast_group_get_info_inval_null_info,
+					       cap_initiator_test_unicast_group_before,
+					       cap_initiator_test_unicast_group_after),
+	};
+
+	return cmocka_run_group_tests_name("cap_initiator_test_unicast_group", tests,
+					  cap_initiator_test_unicast_group_setup,
+					  cap_initiator_test_unicast_group_teardown);
 }
